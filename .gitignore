@@ -1,0 +1,37 @@
+# Local Claude settings (secrets, tokens) — do NOT commit
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# Node / Vite
+node_modules/
+dist/
+.vite/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Docker
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Local-only — NOT tracked (Ukrainian copy UA/, downloaded reference, personal notes)
+/LOCAL/
+# Session handoff — local only, not tracked
+/HANDOFF.md
+
+# Last reviewed/updated: 2026-05-27

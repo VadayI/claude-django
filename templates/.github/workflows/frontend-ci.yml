@@ -1,0 +1,17 @@
+# DEPRECATED (2026-05-27) — this workflow has been removed.
+# This repo is backend-only; the API contract is published as OpenAPI (drf-spectacular)
+# with a drift gate in backend-ci.yml. A real production frontend lives in a separate repo.
+#
+# Please delete this file on Windows: templates/.github/workflows/frontend-ci.yml
+# (the mount here does not allow file deletion).
+name: frontend-ci-deprecated
+on:
+  # Empty triggers — workflow never runs.
+  workflow_dispatch:
+jobs:
+  noop:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "deprecated"
+# Last reviewed/updated: 2026-05-27

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "opusplan",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh run:*)",
+      "Bash(gh api:*)",
+      "Bash(gh repo:*)",
+      "Bash(docker compose:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)"
+    ],
+    "deny": [
+      "Bash(git push origin main:*)",
+      "Bash(git push --force:*)",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(.claude/settings.local.json)"
+    ]
+  },
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "config.settings.dev"
+  },
+  "enabledPlugins": {
+    "superpowers@superpowers-marketplace": true,
+    "engineering@knowledge-work-plugins": true
+  },
+  "enabledMcpjsonServers": [
+    "github",
+    "context7"
+  ],
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "docker compose exec -T backend ruff format . 2>/dev/null || true",
+            "statusMessage": "Formatting Python (ruff format)..."
+          },
+          {
+            "type": "command",
+            "command": "docker compose exec -T backend ruff check --fix . 2>/dev/null || true",
+            "statusMessage": "Auto-fixing lint (ruff --fix)..."
+          }
+        ]
+      }
+    ]
+  },
+  "_last_reviewed": "2026-05-27"
+}

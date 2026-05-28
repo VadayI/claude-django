@@ -1,0 +1,48 @@
+# Place as backend/pyproject.toml
+[project]
+name = "backend"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "Django>=6.0,<7.0",
+    "djangorestframework>=3.15",
+    "psycopg[binary]>=3.1",
+    "django-environ>=0.11",
+    "django-filter>=24.0",
+    "drf-spectacular>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-django>=4.8",
+    "pytest-cov>=5.0",
+    "factory-boy>=3.3",
+    "ruff>=0.5",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["test_*.py", "tests.py"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+# FIX = flake8-fixme: fail on leftover TODO/FIXME/XXX/HACK markers (stub gate, see .claude/rules/no-stubs.md).
+# D   = pydocstyle: mandatory Google-style docstrings on public APIs (see .claude/rules/code-style.md).
+# (Add "TD" for strict TODO formatting too - noisier.)
+select = ["E", "F", "I", "UP", "DJ", "B", "FIX", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests, migrations, app/project __init__.py do not require docstrings on every member.
+"**/tests/**" = ["D"]
+"**/migrations/**" = ["D"]
+"**/__init__.py" = ["D104"]
+"config/**" = ["D100", "D101", "D102", "D103", "D104"]
+# Last reviewed/updated: 2026-05-27

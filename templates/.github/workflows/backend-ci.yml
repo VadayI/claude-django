@@ -1,0 +1,51 @@
+name: backend-ci
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "docs/STUBS.md"
+      - "docs/api/openapi.yml"
+      - "scripts/check_stubs.sh"
+      - "scripts/check_openapi_drift.sh"
+      - "scripts/check_app_readmes.sh"
+      - ".github/workflows/backend-ci.yml"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app" --health-interval 5s
+          --health-timeout 3s --health-retries 5
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DATABASE_URL: postgres://app:app@localhost:5432/app
+      DJANGO_SECRET_KEY: ci-secret
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - name: Stub gate (no unlogged stubs)
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/check_stubs.sh
+      - name: OpenAPI docs drift gate
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/check_openapi_drift.sh
+      - name: Per-app README gate
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/check_app_readmes.sh
+      - run: pytest --cov=apps --cov-report=term-missing
+# Last reviewed/updated: 2026-05-27
