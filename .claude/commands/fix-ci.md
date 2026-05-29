@@ -11,7 +11,7 @@ CRITICAL: For PR metadata, prefer `github` MCP tools over the `gh` CLI. For GitH
 ## Log
 
 ```bash
-mkdir -p .claude/memory && printf '{"ts":"%s","cmd":"/fix-ci","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+python scripts/log-cmd.py /fix-ci $ARGUMENTS
 ```
 
 ## Input
@@ -96,7 +96,8 @@ Instruct the developer to:
 - Apply the MINIMAL fix. Follow `CLAUDE.md`, `.claude/rules/code-style.md`, `.claude/rules/architecture.md`, `.claude/rules/tdd.md`.
 - For **lint**, verify:
   ```bash
-  docker compose exec backend ruff check . && docker compose exec backend ruff format --check .
+  docker compose exec backend ruff check .
+  docker compose exec backend ruff format --check .
   ```
 - For **tests**, verify the failing test then the suite:
   ```bash

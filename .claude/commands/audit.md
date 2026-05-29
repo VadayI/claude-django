@@ -11,8 +11,7 @@ Optional `$ARGUMENTS`: a focus area — `git`, `ci`, `docs`, `gates`, or empty (
 
 1. **Log this invocation:**
    ```bash
-   mkdir -p .claude/memory
-   printf '{"ts":"%s","cmd":"/audit","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+   python scripts/log-cmd.py /audit $ARGUMENTS
    ```
 
 2. **Dispatch `auditor`** (`subagent_type: "auditor"`) with the focus from `$ARGUMENTS`. It reads `.claude/memory/command-log.jsonl` + live state and produces a primary suggestion + up to 3 secondaries + a recent-activity table.

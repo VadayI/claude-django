@@ -1,6 +1,8 @@
 # Docker / environment commands
 
-> Run in the **WSL2 (Ubuntu)** terminal, from the project root. The code must live in the WSL2 filesystem (e.g. `~/projects/<project>`), NOT under `/mnt/c`.
+> **Shells:** these commands work in both bash (Linux / macOS / WSL2) and PowerShell (Windows native) — `docker compose`, `git`, `gh`, `python` are all cross-platform. WSL2 is **recommended** when the project lives under `/mnt/c|/mnt/d` because Docker bind-mounts to the Windows FS are slow; if the project is in `~/projects/<project>` inside WSL2 (or simply on the Windows D: with Docker Desktop's WSL2 backend), performance is fine.
+>
+> The `SessionStart` hook writes `.claude/memory/env-detect.json` with the active shell so agents can adapt syntax automatically. Bash idioms like `&&` chains, `$(…)` substitution, `rm -rf` will fail on PowerShell ≤ 5.1 — prefer Python one-liners (`python -c "..."`) when scripting cross-shell, or split chains into separate lines.
 
 ## Environment
 

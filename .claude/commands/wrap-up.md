@@ -7,7 +7,7 @@ You wrap up the current work session: summarize, persist context to Git-tracked 
 ## Log
 
 ```bash
-mkdir -p .claude/memory && printf '{"ts":"%s","cmd":"/wrap-up","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+python scripts/log-cmd.py /wrap-up $ARGUMENTS
 ```
 
 ## Input

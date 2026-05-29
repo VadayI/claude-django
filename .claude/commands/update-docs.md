@@ -7,7 +7,7 @@ You update project documentation to match the latest changes.
 ## Log
 
 ```bash
-mkdir -p .claude/memory && printf '{"ts":"%s","cmd":"/update-docs","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+python scripts/log-cmd.py /update-docs $ARGUMENTS
 ```
 
 ## Input

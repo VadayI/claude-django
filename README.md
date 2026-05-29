@@ -109,9 +109,27 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 ## Prerequisites
 
 - [Claude Code](https://code.claude.com) CLI
-- Windows + **WSL2 (Ubuntu)** + **Docker Desktop** (with WSL2 integration)
+- **Python 3.10+ on PATH as `python`** (hard requirement; the `SessionStart` hook runs `scripts/detect-env.py`). On Ubuntu install `python-is-python3` if only `python3` is present.
+- Docker Desktop with WSL2 backend
+- **Shell:** bash (Linux / macOS / WSL2) **or** PowerShell (Windows native) — both supported, see below
+- WSL2 (Ubuntu) — **recommended** when the project lives under `/mnt/c|/mnt/d` for faster Docker bind-mounts
 - Node.js 18+ (via `nvm`) — **optional** for this backend-only repo; needed only if you use `npx`-based skills (e.g., the Context7 MCP runs via `npx`)
 - A GitHub account ([@VadayI](https://github.com/VadayI))
+
+### Two supported shells
+
+The same commands and agents work in both shells. At every session start, `scripts/detect-env.py` writes `.claude/memory/env-detect.json` so every command and agent can pick shell-appropriate syntax without per-command detection.
+
+| | bash / zsh (Linux, macOS, WSL2) | PowerShell (Windows native) |
+|---|---|---|
+| Docker Desktop CLI | ✅ | ✅ |
+| `gh`, `git`, `python`, `npm` | ✅ | ✅ (Windows installs) |
+| `pytest`, `ruff`, `manage.py` | via `docker compose exec` ✅ | via `docker compose exec` ✅ |
+| Quick Start (clone + copy) | bash block | PowerShell `<details>` block below |
+| Bind-mount speed | native (Linux FS) | acceptable (Windows FS via Docker Desktop WSL2 backend) |
+| `/tmp/...` paths | Linux `/tmp` | resolves to `C:\tmp` — use `$env:TEMP` instead |
+
+What stays bash-only and intentionally so: the CI gate scripts (`scripts/check_*.sh`) that run on the Linux GitHub Actions runner. Everything you run locally is cross-shell.
 
 ---
 

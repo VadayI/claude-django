@@ -10,6 +10,15 @@ tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]
 
 Containerization and deployment. Local — WSL2 + Docker Desktop; staging — VPS `54.37.138.231` (Debian, many other projects).
 
+## Cross-shell awareness
+
+Before emitting any shell snippet, read `.claude/memory/env-detect.json` (rewritten by the `SessionStart` hook) and pick syntax matching its `shell` field:
+
+- `bash` / `zsh` (Linux, macOS, WSL2) — `rm -rf`, `cp -r`, `mkdir -p`, `&&` chains, `/tmp/...` are all fine.
+- `powershell` / `cmd` (Windows native) — use `Remove-Item -Recurse -Force`, `Copy-Item -Recurse`, `New-Item -ItemType Directory -Force`, `$env:TEMP`. For chaining, use separate statements.
+
+When in doubt, prefer **Python one-liners** (`python -c "..."`) and the native CLIs (`gh`, `git`, `docker compose exec -T`) — they work the same on every shell. Python is a project hard-requirement.
+
 ## What you do
 
 - `docker-compose.yml` (dev): postgres + backend; volume for the code; healthcheck.

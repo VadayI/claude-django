@@ -7,7 +7,7 @@ You run the **project kickoff preflight** — a hard gate that verifies agents h
 ## Log
 
 ```bash
-mkdir -p .claude/memory && printf '{"ts":"%s","cmd":"/preflight","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+python scripts/log-cmd.py /preflight $ARGUMENTS
 ```
 
 ## Contract

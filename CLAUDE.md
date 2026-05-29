@@ -38,6 +38,7 @@ You DO:
 
 - Use the available Skills for Django, DRF, pytest/TDD, PostgreSQL, React, Docker, CI.
 - If a Skill applies — prefer it over repeating rules here.
+- **Read `.claude/memory/env-detect.json` once per session** (it is rewritten by the `SessionStart` hook calling `scripts/detect-env.py`). Use its `shell` / `platform` / `is_wsl2` fields to pick shell-appropriate syntax when dispatching `Bash` calls and when instructing agents that emit commands. Bash idioms (`rm -rf`, `cp -r`, `mkdir -p`, `&&` chains, `/tmp/...`) work on `bash`/`zsh` only; on `powershell` or `cmd` they fail. Python one-liners (`python -c "..."`) and the native CLIs (`gh`, `git`, `docker compose exec`) work everywhere. Python is a hard project requirement — if `env-detect.json` is missing, the SessionStart hook failed; the user must install Python 3.10+.
 
 ## IMPORTANT
 

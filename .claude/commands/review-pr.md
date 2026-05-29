@@ -14,7 +14,7 @@ CRITICAL RULES:
 ## Log
 
 ```bash
-mkdir -p .claude/memory && printf '{"ts":"%s","cmd":"/review-pr","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+python scripts/log-cmd.py /review-pr $ARGUMENTS
 ```
 
 ## Input
@@ -60,11 +60,18 @@ The agent prompt MUST include:
 
 **Fallback — `gh` CLI (only if MCP fails):**
 ```bash
-SHA=$(gh api repos/<OWNER>/<REPO>/pulls/<NUMBER> --jq '.head.sha')
-gh api repos/<OWNER>/<REPO>/pulls/<NUMBER>/reviews --method POST \
-  --field commit_id="$SHA" --field event="COMMENT" \
-  --field body="<one concise sentence>" \
-  --field 'comments=[{"path":"<file>","line":<line>,"side":"RIGHT","body":"<comment>"}]'
+# Cross-shell: fetch the SHA via Python, then call gh in a single command
+python -c "
+import subprocess, json
+sha = subprocess.check_output(['gh','api','repos/<OWNER>/<REPO>/pulls/<NUMBER>','--jq','.head.sha']).decode().strip()
+subprocess.check_call([
+    'gh','api','repos/<OWNER>/<REPO>/pulls/<NUMBER>/reviews','--method','POST',
+    '--field', f'commit_id={sha}',
+    '--field', 'event=COMMENT',
+    '--field', 'body=<one concise sentence>',
+    '--field', 'comments=[{\"path\":\"<file>\",\"line\":<line>,\"side\":\"RIGHT\",\"body\":\"<comment>\"}]',
+])
+"
 ```
 
 Posting rules: each comment references the exact file + diff line; review body is one concise sentence; `REQUEST_CHANGES` for critical issues, otherwise `COMMENT`.

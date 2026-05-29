@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "detected_at": "2026-05-29T12:44:00.775447+00:00",
+  "platform": "linux",
+  "platform_release": "6.8.0-106-generic",
+  "is_wsl2": false,
+  "shell": "unknown",
+  "python": {
+    "version": "3.10.12",
+    "executable": "/usr/bin/python3"
+  },
+  "tools": {
+    "git": true,
+    "gh": false,
+    "docker": false,
+    "wsl": false,
+    "node": true,
+    "npm": true
+  },
+  "cwd": "/sessions/serene-dazzling-einstein/mnt/claude-django"
+}

@@ -7,7 +7,7 @@ You run a focused security audit over the working changes (or a given path).
 ## Log
 
 ```bash
-mkdir -p .claude/memory && printf '{"ts":"%s","cmd":"/security-check","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+python scripts/log-cmd.py /security-check $ARGUMENTS
 ```
 
 ## Input

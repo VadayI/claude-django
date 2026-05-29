@@ -7,7 +7,7 @@ You simplify the most recent changes without altering behavior (Code Simplifier)
 ## Log
 
 ```bash
-mkdir -p .claude/memory && printf '{"ts":"%s","cmd":"/simplify","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+python scripts/log-cmd.py /simplify $ARGUMENTS
 ```
 
 ## Input
@@ -28,7 +28,8 @@ Optional `$ARGUMENTS`: a path/glob to limit scope. If empty, use the current dif
 3. Apply minimal edits. Do NOT add features or change the public contract.
 4. Verify nothing broke:
    ```bash
-   docker compose exec backend ruff check . && docker compose exec backend ruff format .
+   docker compose exec backend ruff check .
+   docker compose exec backend ruff format .
    docker compose exec backend pytest
    ```
 5. Summarize: what was simplified and why, and confirm tests are green.

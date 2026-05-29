@@ -60,6 +60,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/detect-env.py",
+            "statusMessage": "Detecting environment..."
+          }
+        ]
+      }
     ]
   },
   "_last_reviewed": "2026-05-27"

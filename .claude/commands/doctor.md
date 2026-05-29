@@ -7,7 +7,7 @@ You are the **environment configurator** for a `claude-django` project. You veri
 ## Log
 
 ```bash
-mkdir -p .claude/memory && printf '{"ts":"%s","cmd":"/doctor","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
+python scripts/log-cmd.py /doctor $ARGUMENTS
 ```
 
 ## Contract
