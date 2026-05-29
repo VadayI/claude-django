@@ -15,7 +15,7 @@ Optional but recommended: a short "How to extend" pointer (e.g. "to add a new ex
 
 ## Lifecycle
 
-- A new app is **born with a README** — `/kickoff`-generated apps copy `templates/APP_README.md` into the new app folder. When creating an app by hand (`python manage.py startapp <name>`), copy the template immediately.
+- A new app is **born with a README** — newly scaffolded apps copy `templates/APP_README.md` into the new app folder (`/bootstrap` Mode A creates the initial skeleton from this template). When creating an app by hand (`python manage.py startapp <name>`), copy the template immediately.
 - The README is updated **in the same PR** as model/endpoint changes that affect it (the *Endpoints* and *Models* sections are the most volatile). `reviewer` flags PRs that change `apps/<app>/views.py` or `apps/<app>/models.py` without touching `apps/<app>/README.md`.
 - When deprecating an app, the README's *Purpose* becomes the deprecation note and links to the replacement.
 

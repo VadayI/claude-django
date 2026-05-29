@@ -11,7 +11,7 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands. Windows nati
 | Requirement | Expected | Check (bash) |
 |---|---|---|
 | **Python (HARD REQUIREMENT)** | 3.10+ on PATH as `python` | `python --version`. On Ubuntu, if only `python3` is installed: `sudo apt install -y python-is-python3`. Without Python the SessionStart hook (`scripts/detect-env.py`) cannot run. |
-| OS shell | WSL2 (Ubuntu) on Windows is REQUIRED — PowerShell/cmd not supported. Linux / macOS bash or zsh are fine natively. | `uname -a` should report Linux (or Darwin on macOS); if Windows-native shell is detected via `$PSVersionTable` — STOP and instruct user to switch to WSL2. |
+| OS shell | WSL2 (Ubuntu) on Windows is REQUIRED — PowerShell/cmd not supported. Linux / macOS bash or zsh are fine natively. | `uname -a` should report Linux (or Darwin on macOS); if `platform_supported: false` in `.claude/memory/env-detect.json` — STOP and instruct user to switch to WSL2. |
 | Working dir | If WSL2: in WSL2 FS (`~/projects/<p>`), NOT under `/mnt/c\|/mnt/d`. | `pwd` |
 | Docker Desktop | running, with WSL2 integration enabled if WSL2 is used | `docker info` |
 | docker compose | v2 available | `docker compose version` |

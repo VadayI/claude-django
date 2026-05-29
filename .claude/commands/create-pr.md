@@ -24,7 +24,7 @@ Optional `$ARGUMENTS`: a short title/intent. If empty, infer from the branch and
    If on `main`, stop and ask the user to create a feature branch.
 2. Ensure work is committed (Conventional Commits) and pushed:
    ```bash
-   # Cross-shell: works in bash, zsh, PowerShell, cmd (Python is a project requirement).
+   # Bash/zsh only (PowerShell/cmd not supported — see ADR 0005). Python is a project requirement.
    python -c "import subprocess as s; br=s.check_output(['git','rev-parse','--abbrev-ref','HEAD']).decode().strip(); s.check_call(['git','push','-u','origin',br])"
    ```
 3. Build the PR body using the template in @.claude/rules/git-operations.md (What / Why / How verified / Notes).

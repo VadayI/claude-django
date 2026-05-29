@@ -16,7 +16,7 @@ You read the **command log** (`.claude/memory/command-log.jsonl`, append-only JS
 ```json
 {"ts":"2026-05-27T14:23:11+00:00","cmd":"/preflight","args":""}
 ```
-- If the file is missing, the project hasn't been bootstrapped → suggest `/kickoff`.
+- If the file is missing, the project hasn't been bootstrapped → suggest `/bootstrap`.
 - For each command, take the most recent invocation.
 
 **Live state** (read-only commands):
@@ -28,13 +28,13 @@ gh pr checks                                  # CI status on current branch
 git log -1 --format=%cI -- docs/api/openapi.yml     # last schema commit
 git log -1 --format=%cI -- backend/apps                # last apps change
 grep -rE 'STUB:|NotImplementedError\(.*STUB' backend/apps 2>/dev/null | grep -vE '/tests?/' | wc -l
-test -d .claude/memory && echo INIT_OK || echo NEEDS_KICKOFF
+test -d .claude/memory && echo INIT_OK || echo NEEDS_BOOTSTRAP
 gh api repos/{owner}/{repo}/branches/main/protection >/dev/null 2>&1 && echo PROTECTED || echo UNPROTECTED
 ```
 
 ## Suggestion rules (apply in order; the first match is the primary suggestion)
 
-1. **Project not initialized** (no `.claude/memory/`, no `backend/`) → `/kickoff <slug>`.
+1. **Project not initialized** (no `.claude/memory/`, no `backend/`) → `/bootstrap <slug>`.
 2. **On `main` with uncommitted changes** → "switch to a feature branch first; never commit on `main`".
 3. **`main` not protected on GitHub** → `gh api -X PUT ...` (and recommend doing it via UI).
 4. **CI red on the current PR** → `/fix-ci <PR>`.
