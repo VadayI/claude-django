@@ -1,8 +1,8 @@
 # Docker / environment commands
 
-> **Shells:** these commands work in both bash (Linux / macOS / WSL2) and PowerShell (Windows native) — `docker compose`, `git`, `gh`, `python` are all cross-platform. WSL2 is **recommended** when the project lives under `/mnt/c|/mnt/d` because Docker bind-mounts to the Windows FS are slow; if the project is in `~/projects/<project>` inside WSL2 (or simply on the Windows D: with Docker Desktop's WSL2 backend), performance is fine.
+> **Shell:** bash (Linux / macOS / WSL2 Ubuntu). PowerShell on Windows native is NOT supported — see ADR `docs/decisions/0005-drop-windows-native-shell.md`. Keep the project in the WSL2 filesystem (`~/projects/<project>`), NOT under `/mnt/c|/mnt/d`, for fast Docker bind-mounts.
 >
-> The `SessionStart` hook writes `.claude/memory/env-detect.json` with the active shell so agents can adapt syntax automatically. Bash idioms like `&&` chains, `$(…)` substitution, `rm -rf` will fail on PowerShell ≤ 5.1 — prefer Python one-liners (`python -c "..."`) when scripting cross-shell, or split chains into separate lines.
+> The `SessionStart` hook writes `.claude/memory/env-detect.json` with the active shell so agents can verify their assumptions.
 
 ## Environment
 
@@ -45,4 +45,4 @@ docker compose -f docker-compose.staging.yml exec backend python manage.py migra
 ```
 
 > The VPS already runs many projects — use separate ports/network and a reverse-proxy (nginx/Traefik) with its own subdomain to avoid conflicts. Mobile testing — open the subdomain in the phone's browser.
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-05-29 -->

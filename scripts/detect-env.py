@@ -12,19 +12,26 @@ itself fails and the user is told to install Python 3.10+.
 Output schema (``.claude/memory/env-detect.json``)::
 
     {
-      "schema_version": 1,
+      "schema_version": 2,
       "detected_at": "<ISO 8601 UTC>",
       "platform": "windows" | "linux" | "darwin",
       "platform_release": "<uname -r equivalent>",
+      "platform_supported": true | false,
       "is_wsl2": true | false,
-      "shell": "powershell" | "cmd" | "bash" | "zsh" | "unknown",
+      "shell": "bash" | "zsh" | "unknown",
       "python": {"version": "...", "executable": "..."},
       "tools": {"git": bool, "gh": bool, "docker": bool, "wsl": bool, ...},
       "cwd": "<absolute path>"
     }
 
+``platform_supported`` is ``true`` on Linux / macOS / WSL2 and ``false`` on
+Windows-native shells (PowerShell / cmd). Windows-native shells are NOT
+supported — see ADR ``docs/decisions/0005-drop-windows-native-shell.md``. On
+Windows the user must install WSL2 Ubuntu and run every command (including
+``gh``, ``git``, ``python``, ``docker compose``) from inside WSL2.
+
 Commands and agents consult this file at the start of every session and pick
-shell-appropriate syntax (bash on Linux/WSL2, PowerShell on Windows native).
+bash-appropriate syntax (Linux / macOS / WSL2).
 """
 from __future__ import annotations
 
@@ -38,22 +45,12 @@ from datetime import datetime, timezone
 
 
 def detect_shell() -> str:
-    """Best-effort shell detection from environment variables.
-
-    Returns:
-        One of ``"powershell"``, ``"cmd"``, ``"bash"``, ``"zsh"``, ``"unknown"``.
-    """
+    """Detect active shell. Bash family only (Windows-native shells unsupported)."""
     sh = os.environ.get("SHELL", "")
     if sh.endswith("zsh"):
         return "zsh"
     if sh.endswith("bash"):
         return "bash"
-    # PowerShell sets PSModulePath; cmd.exe does not. On macOS pwsh may set it,
-    # but a Unix-y SHELL will already have been matched above.
-    if os.environ.get("PSModulePath"):
-        return "powershell"
-    if platform.system() == "Windows" and os.environ.get("PROMPT"):
-        return "cmd"
     return "unknown"
 
 
@@ -69,11 +66,16 @@ def is_wsl2() -> bool:
 
 def main() -> int:
     """Detect the environment and write ``.claude/memory/env-detect.json``."""
+    platform_supported = (
+        platform.system() in ("Linux", "Darwin")
+        or is_wsl2()
+    )
     info = {
-        "schema_version": 1,
+        "schema_version": 2,
         "detected_at": datetime.now(timezone.utc).isoformat(),
         "platform": platform.system().lower(),  # 'windows' | 'linux' | 'darwin'
         "platform_release": platform.release(),
+        "platform_supported": platform_supported,
         "is_wsl2": is_wsl2(),
         "shell": detect_shell(),
         "python": {
