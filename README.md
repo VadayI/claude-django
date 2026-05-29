@@ -119,7 +119,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 
 ```bash
 # in WSL2, from the root of your project
-git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
+rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
 cp -r /tmp/claude-django/.claude ./
 cp /tmp/claude-django/CLAUDE.md ./
 # templates if needed:
@@ -147,7 +147,7 @@ The same sequence by hand (if you prefer manual or `/kickoff` failed on a step):
 First, get the config onto your machine. **Clone claude-django to a path OUTSIDE your future project** (e.g. `/tmp/claude-django`). We copy *files* from it into the new project — never the directory itself — so claude-django's git history never ends up tracked in your project.
 
 ```bash
-git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
+rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
 ```
 
 Now create the new project repo. The easiest way is to make this repository a **template** on GitHub (Settings → Template repository), so new projects are created with the **"Use this template"** button. Or manually:
