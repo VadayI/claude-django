@@ -2,7 +2,7 @@
 model: sonnet
 ---
 
-Change the output language for this project after kickoff. Idempotent — running it twice with the same answer leaves the repo unchanged.
+Change the output language for this project after bootstrap. Idempotent — running it twice with the same answer leaves the repo unchanged.
 
 ## Log
 
@@ -53,6 +53,4 @@ Optional `$ARGUMENTS`: language code (`en`, `uk`, `ru`, `pl`) or native name (`�
 
 - No `git commit` — leave changes staged so the user can review the diff before committing.
 - Never touch application source code (`backend/apps/`, `backend/config/`, `tests/`).
-- Never invent a native name the user did not pick; if "Other" was used and the user typed something ambiguous, ask one follow-up to confirm spelling.
-
-<!-- Last reviewed/updated: 2026-05-29 -->
+- Never invent a native name the user did not pick; if "Other" was used and the user typed something ambiguous, ask one follow-up to confirm

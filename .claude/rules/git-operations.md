@@ -5,6 +5,12 @@
 **NEVER commit or push directly to `main`.**
 Only: branch → commits → `push` → Pull Request → review → merge.
 
+### Documented exception (one-shot)
+
+`/bootstrap` in **Mode A (fresh project)** performs the very first commit and `git push -u origin main` because there is no branch protection to bypass yet and there are no reviewers — this is the bootstrap commit that lays down the initial scaffold. After that commit, `/bootstrap` immediately enables branch protection on `main`, and from that moment the iron rule applies again.
+
+All other `/bootstrap` work (Mode B resume) and every other command (`/synthesize-brief`, feature pipelines, `/fix-ci`, etc.) goes through a PR.
+
 ## Branches
 
 - Naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, `docs/<slug>`, `test/<slug>`.
@@ -58,7 +64,7 @@ At the end of a session, update and commit: `docs/WORKLOG.md`, and if needed `.c
 
 ## Prohibitions
 
-- `git push origin main` — forbidden (branch protection + this rule).
+- `git push origin main` — forbidden EXCEPT the documented `/bootstrap` Mode A exception above.
 - `git push --force` to shared branches — forbidden.
 - Committing secrets/`.env` — forbidden (see `.gitignore`).
 <!-- Last reviewed/updated: 2026-05-27 -->

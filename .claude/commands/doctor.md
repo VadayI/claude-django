@@ -27,6 +27,14 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
    - when reporting GitHub auth, treat `gh auth status` as the source of truth: if `GITHUB_PERSONAL_ACCESS_TOKEN` is set AND `gh auth status` succeeds → ✅ (gh uses the token automatically; `gh auth login` will refuse to store separate creds and that is EXPECTED, not an error). To switch to stored creds, the user must unset the env var (`Remove-Item Env:GITHUB_TOKEN` in PowerShell or remove the export from `~/.bashrc`/`~/.profile` in WSL2), restart the terminal, then `gh auth login` — only propose this if the user explicitly asks for login-stored creds.
    It returns a per-item result: ✅ ok / ⚠️ attention / ❌ missing-or-broken / ℹ️ not-set-up-yet.
 
+1b. **Scenario detection.** Classify the project state into ONE of four:
+   - `no-config` — `.claude/`, `CLAUDE.md`, `templates/` missing → recommend the README Quick start.
+   - `fresh` — config copied but no `.git/` and no `backend/` → recommend `/bootstrap` (Mode A).
+   - `existing-incomplete` — has `.git/` + GitHub remote BUT one or more of: no drf-spectacular in settings, no `docs/api/openapi.yml`, no branch protection, missing per-app READMEs → recommend `/bootstrap` (Mode B).
+   - `active` — has everything → recommend `/preflight` and start a feature.
+
+   Print the detected scenario at the top of the report.
+
 2. **Report a checklist**, grouped by the four scopes (System tools · Claude config & access · Project state · Git hygiene). One line per item: `<icon> <requirement> — <observed>`.
 
 3. **Propose fixes.** For every ⚠️/❌, list the exact remediation command from the spec's *Remediation policy*. Split into:
@@ -36,7 +44,13 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 
 4. **Apply approved fixes** (after the user picks). Dispatch `devops` (or the right agent) to run only the approved *safe* commands. For "needs your input" items, print the precise command/steps for the user to run themselves. Re-run the relevant checks and report the new state.
 
-5. **Summary.** End with the residual ⚠️/❌ (if any) and the single most useful next step (e.g. "run `gh auth login`", or "ready — start a feature with the pipeline").
+5. **Summary.** End with the residual ⚠️/❌ (if any) and recommend exactly ONE next command based on the detected scenario from step 1b:
+   - `no-config` → "Run the Quick start in README to copy the config first."
+   - `fresh` → "Run `/bootstrap` to scaffold the Django project."
+   - `existing-incomplete` → "Run `/bootstrap` — Mode B will PR each missing piece."
+   - `active` → "Run `/preflight` to verify build inputs, then start a feature."
+
+   Optional second-line hint if `docs/` exists but `docs/PROJECT.md` is missing: "Also consider `/synthesize-brief`." 
 
 ## Hard limits
 

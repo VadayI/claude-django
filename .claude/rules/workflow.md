@@ -37,9 +37,15 @@ Decision tree:
 5. Requirements ambiguous? → ONE round of `AskUserQuestion`, then pipeline.
 6. Research question ("how does X work in this codebase?") → `Explore`.
 
-## Project kickoff preflight (MANDATORY hard gate)
+## Project bootstrap & preflight (MANDATORY hard gates)
 
-On a **new project**, before dispatching `ba` / the first feature pipeline, run the preflight gate (spec: @.claude/rules/preflight.md). Verify access to: (1) project brief/description, (2) tech stack, (3) library docs via Context7, (4) the GitHub project. If any CRITICAL item is missing — STOP, do NOT start coding; ask the user or fix access. On demand: `/preflight`. (Environment readiness is separate: `/doctor`.)
+On a **new project**, the orchestrator's first action depends on detected state (use `/doctor` to find out):
+
+1. `/doctor` — detect scenario (`fresh` / `existing-incomplete` / `active` / `no-config`) and recommend the next command.
+2. `/bootstrap` — execute scaffold (Mode A: fresh) or PR each missing piece (Mode B: resume). `/bootstrap` is a **binary command, NOT part of the feature pipeline**.
+3. `/synthesize-brief` (optional but recommended) — synthesize `docs/PROJECT.md` from `docs/**`. Run AFTER placing brief/ТЗ/PDFs into `docs/`, BEFORE `/preflight`.
+4. `/preflight` — build-inputs gate before the first feature.
+5. Standard feature pipeline (`ba → api-architect → ...`).
 
 ## Plan Mode (default for non-trivial tasks)
 
