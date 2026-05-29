@@ -23,6 +23,8 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
    - run only read-only commands (the `Check` column of the spec);
    - never echo the *values* of `GITHUB_PERSONAL_ACCESS_TOKEN`, `CONTEXT7_API_KEY`, or `.env` — only whether they are set;
    - in a brand-new repo with no Django project yet, mark missing skeleton/`.env`/services as "not set up yet" (info), not failures.
+   - when reporting `gh`, distinguish **Linux `gh` inside this WSL2 shell** (`command -v gh` in the WSL2 shell) from a Windows `gh.exe` installed via `winget` — only the former counts; flag `gh.exe`-only as ❌ with the remedy `sudo apt install -y gh` (or the official `cli.github.com` repo on older Ubuntu/Debian).
+   - when reporting GitHub auth, treat `gh auth status` as the source of truth: if `GITHUB_PERSONAL_ACCESS_TOKEN` is set AND `gh auth status` succeeds → ✅ (gh uses the token automatically; `gh auth login` will refuse to store separate creds and that is EXPECTED, not an error). To switch to stored creds, the user must unset the env var (`Remove-Item Env:GITHUB_TOKEN` in PowerShell or remove the export from `~/.bashrc`/`~/.profile` in WSL2), restart the terminal, then `gh auth login` — only propose this if the user explicitly asks for login-stored creds.
    It returns a per-item result: ✅ ok / ⚠️ attention / ❌ missing-or-broken / ℹ️ not-set-up-yet.
 
 2. **Report a checklist**, grouped by the four scopes (System tools · Claude config & access · Project state · Git hygiene). One line per item: `<icon> <requirement> — <observed>`.

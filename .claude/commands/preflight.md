@@ -20,7 +20,7 @@ Optional `$ARGUMENTS`: a scope — `brief`, `stack`, `docs`, `github`. Default: 
 
 1. **Access checks** — dispatch `devops` (`subagent_type: "devops"`) to verify, read-only:
    - `context7` MCP reachable (`resolve-library-id` for "django"); `CONTEXT7_API_KEY` set (report set/unset, never the value);
-   - `gh auth status` authenticated and `gh repo view` succeeds for the project repo; `GITHUB_PERSONAL_ACCESS_TOKEN` set;
+   - `gh auth status` authenticated (via `GITHUB_PERSONAL_ACCESS_TOKEN` env OR stored creds — either is fine) and `gh repo view` succeeds for the project repo. NOTE: if the env var is set, `gh auth login` will refuse to store separate creds — that is EXPECTED, not a failure; auth is green as long as `gh auth status` succeeds. Also verify that `gh` here means **Linux `gh` in WSL2**, not a Windows `gh.exe` from `winget`.
    - tech stack declared (CLAUDE.md / README) and `backend/pyproject.toml` deps resolvable.
 
 2. **Brief / stack comprehension** — dispatch `ba` (`subagent_type: "ba"`) to confirm there is a usable project brief/description (`docs/PROJECT.md`, README, or user-provided) and that the declared stack is unambiguous. If the brief is missing/vague, `ba` returns the specific questions to ask.

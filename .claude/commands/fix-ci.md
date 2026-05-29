@@ -6,6 +6,8 @@ You are diagnosing and fixing CI/CD failures on a Pull Request in this project's
 
 CRITICAL: For PR metadata, prefer `github` MCP tools over the `gh` CLI. For GitHub Actions CI data (run logs, job status), use `gh` CLI — `gh run list`, `gh run view`, `gh pr checks`. Do NOT scrape GitHub URLs or use `curl`/`WebFetch` for CI data.
 
+> **Prereq:** Linux `gh` installed in **this WSL2 shell** and authenticated (`gh auth status`). A Windows `gh.exe` from `winget` does NOT count. If anything below errors with `gh: command not found` or auth failure — run `/doctor` first.
+
 ## Log
 
 ```bash

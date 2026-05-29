@@ -9,6 +9,8 @@ CRITICAL RULES:
 - NEVER mention AI, Claude, LLM, or automation — write as a human engineer.
 - Post findings as INLINE review comments on specific diff lines, NOT as one summary comment.
 
+> **Prereq:** Linux `gh` installed in **this WSL2 shell** and authenticated (`gh auth status`). A Windows `gh.exe` from `winget` does NOT count. If anything below errors with `gh: command not found` or auth failure — run `/doctor` first.
+
 ## Log
 
 ```bash
