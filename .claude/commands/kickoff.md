@@ -123,6 +123,24 @@ for name in ('CLAUDE.md', '.mcp.json', '.gitignore'):
 
 If `VadayI/claude-django` returns 404 — the template repo is not published yet. Publish from `D:\Dev\claude-django` on Windows or use the local-copy fallback (substitute `SRC` accordingly).
 
+## Output language (ask once, before delegating to agents)
+
+Run this AFTER preflight passes but BEFORE step 1 below — so every commit, comment, PR description, and agent message produced by `/kickoff` is in the chosen language from the start.
+
+1. Ask the user via `AskUserQuestion` with header `Language`:
+   - **English** (Recommended) — default; no extra config will be written.
+   - **Українська**
+   - **Русский**
+   - **Polski**
+   - (the harness adds "Other" automatically for any language not listed; the user can type the native name there, e.g. `Deutsch`, `Español`, `日本語`)
+2. If the user picked **English** — skip the rest of this section and go to "Steps". No file changes needed; English is the default behaviour of every agent and rule.
+3. Otherwise, dispatch `devops` (`subagent_type: "devops"`) to perform these idempotent edits:
+   - **Copy** `templates/output-language.md` → `.claude/rules/output-language.md`, replacing the literal token `{LANGUAGE_NATIVE}` with the chosen native name (e.g., `українська`, `русский`, `polski`, `Deutsch`). Replace **both** occurrences in the file.
+   - **Reference it from `CLAUDE.md`**: append the line `@.claude/rules/output-language.md` to the existing `@.claude/rules/*.md` block at the top of `CLAUDE.md` (right after `@.claude/rules/preflight.md`). Skip if the line is already present.
+4. Verify by reading back the new rule file's first line — it should start with `# Output language` and the body must NOT contain the literal `{LANGUAGE_NATIVE}` placeholder anymore.
+
+> The rule is loaded as a top-level `@-include` so every agent (`ba`, `django-developer`, `docs-writer`, `reviewer`, …) sees it as part of CLAUDE.md context automatically — no per-agent change needed. To change the language after kickoff, run `/set-language`.
+
 ## Steps (delegate; never edit application source code yourself)
 
 1. **GitHub repo** — confirm or create. If no remote yet:
