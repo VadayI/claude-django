@@ -119,6 +119,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 
 ```bash
 # in WSL2, from the root of your project
+# WSL2 only — if your prompt starts with `PS ` (PowerShell), run `wsl` first to switch into Ubuntu
 rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
 cp -r /tmp/claude-django/.claude ./
 cp /tmp/claude-django/CLAUDE.md ./
@@ -147,6 +148,7 @@ The same sequence by hand (if you prefer manual or `/kickoff` failed on a step):
 First, get the config onto your machine. **Clone claude-django to a path OUTSIDE your future project** (e.g. `/tmp/claude-django`). We copy *files* from it into the new project — never the directory itself — so claude-django's git history never ends up tracked in your project.
 
 ```bash
+# WSL2 only — if your prompt starts with `PS ` (PowerShell), run `wsl` first to switch into Ubuntu
 rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
 ```
 
