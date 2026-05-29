@@ -38,7 +38,7 @@ You DO:
 
 - Use the available Skills for Django, DRF, pytest/TDD, PostgreSQL, React, Docker, CI.
 - If a Skill applies — prefer it over repeating rules here.
-- **Read `.claude/memory/env-detect.json` once per session** (it is rewritten by the `SessionStart` hook calling `scripts/detect-env.py`). Use its `shell` / `platform` / `is_wsl2` fields to pick shell-appropriate syntax when dispatching `Bash` calls and when instructing agents that emit commands. Bash idioms (`rm -rf`, `cp -r`, `mkdir -p`, `&&` chains, `/tmp/...`) work on `bash`/`zsh` only; on `powershell` or `cmd` they fail. Python one-liners (`python -c "..."`) and the native CLIs (`gh`, `git`, `docker compose exec`) work everywhere. Python is a hard project requirement — if `env-detect.json` is missing, the SessionStart hook failed; the user must install Python 3.10+.
+- **Read `.claude/memory/env-detect.json` once per session** (it is rewritten by the `SessionStart` hook calling `scripts/detect-env.py`). Use its `platform_supported` / `shell` / `is_wsl2` fields to pick shell-appropriate syntax when dispatching `Bash` calls and when instructing agents that emit commands. On Windows native (no WSL2), `platform_supported: false` — STOP and instruct the user to install WSL2. PowerShell/cmd are not supported (see `docs/decisions/0005-drop-windows-native-shell.md`). Bash idioms (`rm -rf`, `cp -r`, `mkdir -p`, `&&` chains, `/tmp/...`) work everywhere we operate. Python is a hard project requirement — if `env-detect.json` is missing, the SessionStart hook failed; the user must install Python 3.10+.
 
 ## IMPORTANT
 
@@ -53,11 +53,11 @@ You DO:
 
 Core (default pipeline): `ba`, `api-architect`, `django-developer`, `tester`, `dba`, `reviewer`, `security-scanner`, `debugger`, `devops`, `ci-cd-engineer`, `docs-writer`
 
-Optional (activate only when relevant, not used in every project): `auditor` (workflow audit via `/audit` — reads `.claude/memory/command-log.jsonl` + live state, suggests next command), `qa` (E2E/Playwright), `celery-specialist` (async/Celery), `integration-architect` (OAuth/webhooks/payments), `devil` (challenge the plan), `django-refactoring-expert` (refactoring/N+1/tech debt), `domain-architect` (DDD-lite for complex domains)
+Optional (activate only when relevant, not used in every project): `auditor` (workflow audit via `/audit` — reads `.claude/memory/command-log.jsonl` + live state, suggests next command), `brief-synthesizer` (PROJECT.md synthesis via `/synthesize-brief`), `qa` (E2E/Playwright), `celery-specialist` (async/Celery), `integration-architect` (OAuth/webhooks/payments), `devil` (challenge the plan), `django-refactoring-expert` (refactoring/N+1/tech debt), `domain-architect` (DDD-lite for complex domains)
 
 ## Stack
 
-Python 3.13 · Django 6 · Django REST Framework · PostgreSQL 18 · Docker · pytest + pytest-django · ruff · Vite + React (JavaScript). Environment — WSL2 + Docker Desktop. Staging — VPS `54.37.138.231` (Debian).
+Python 3.13 · Django 6 · Django REST Framework · PostgreSQL 18 · Docker · pytest + pytest-django · ruff. Environment — WSL2 + Docker Desktop. Staging — VPS `54.37.138.231` (Debian).
 
 ## Setup
 
@@ -67,7 +67,7 @@ System requirements, installation, and common commands — see @README.md and @.
 
 This config is also an **environment configurator**. The expected local environment is specified in @.claude/rules/environment.md. When connecting to a project (especially on a fresh machine) or whenever the environment is in doubt, run **`/doctor`**: it audits the live machine against the spec across four scopes (system tools · Claude config & access · project state · git hygiene), reports a checklist, and proposes fixes — applying them **only after you confirm** (never auto-fixing risky things, never pushing, never printing secrets).
 
-## Project kickoff preflight (hard gate)
+## Project bootstrap & preflight
 
-On a **new project**, before agents start the first feature, run the preflight gate (spec: @.claude/rules/preflight.md, on demand: **`/preflight`**). It verifies access to the inputs needed to build: project brief/description, tech stack, library docs (Context7), and the GitHub project. If any CRITICAL item is missing, agents do NOT start coding — the orchestrator stops and asks the user or fixes access. `/doctor` covers the environment; `/preflight` covers the build inputs.
-<!-- Last reviewed/updated: 2026-05-27 -->
+On a **new project**, the order is: `/doctor` (detects scenario, recommends `/bootstrap`) → `/bootstrap` (Mode A scaffolds from scratch, Mode B PRs missing pieces) → optionally `/synthesize-brief` (PROJECT.md from `docs/**`) → `/preflight` (build-inputs gate) → first feature via the pipeline. Spec: @.claude/rules/preflight.md.
+<!-- Last reviewed/updated: 2026-05-29 -->

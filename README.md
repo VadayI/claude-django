@@ -3,7 +3,7 @@
 A ready-made Claude Code configuration for **Django REST Framework** backend projects with **Test-Driven Development** discipline, an **API-first** process, **mandatory OpenAPI documentation** (drf-spectacular) locked by a CI drift gate, and work done **exclusively through Pull Requests**. A real production frontend, if needed, lives in a separate repository. This config turns Claude Code into a development team: an orchestrator delegates tasks to specialized agents through a clear pipeline.
 
 **Stack:** Python 3.13 · Django 6 · Django REST Framework · PostgreSQL 18 · Docker · pytest + pytest-django · ruff · drf-spectacular (OpenAPI)
-**Environment:** Windows + WSL2 + Docker Desktop (×2 machines) · Staging — Debian VPS · GitHub as the source of truth
+**Environment:** Windows + WSL2 + Docker Desktop (on Windows: WSL2 mandatory) · Staging — Debian VPS · GitHub as the source of truth
 **Author:** [@VadayI](https://github.com/VadayI)
 
 ---
@@ -75,7 +75,8 @@ These are standalone Anthropic skills, not vendored into the repo — enable the
 
 Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands need the `github` MCP from `.mcp.json` + an authenticated `gh`). Every command appends a single line to `.claude/memory/command-log.jsonl` so the `auditor` agent can suggest what to run next.
 
-- `/kickoff [slug]` — bootstrap a new project: creates the skeleton, copies templates, stands up `docker compose`, runs `django-admin startproject`, configures `drf-spectacular`, commits the initial state, sets `main` branch protection, then verifies via `/doctor` + `/preflight`. Run **once** per new project.
+- `/bootstrap [slug]` — scaffold a Django backend. Two modes: **A. Fresh** (empty repo with `.claude/`+templates copied — creates GitHub repo, lays skeleton, configures drf-spectacular, first commit + push to main, branch protection), **B. Resume** (existing repo with partial scaffold — detects each missing piece and ships it as a separate PR). Run once per new project; can re-run in Mode B to fix gaps.
+- `/synthesize-brief` — recursively read `docs/**` (briefs, ТЗ, PDFs, .docx, screenshots) and synthesize a structured `docs/PROJECT.md` via the `brief-synthesizer` agent. Output via feature branch + PR.
 - `/audit [focus]` — workflow audit via the `auditor` agent: reads the command log + live state (git/CI/schema/STUBs) and proposes the next command to run. `focus` ∈ `git|ci|docs|gates` (default: all).
 - `/doctor [scope]` — environment configurator: audits the machine against `.claude/rules/environment.md` (system tools · Claude config & access · project state · git hygiene), reports a checklist, and proposes fixes — applied only after you confirm. `scope` ∈ `system|claude|project|git` (default: all).
 - `/preflight [scope]` — project kickoff hard gate: verifies access to the build inputs (project brief/description, tech stack, library docs via Context7, the GitHub project) before any feature work. If a critical input is missing, agents stop instead of guessing. `scope` ∈ `brief|stack|docs|github` (default: all).
@@ -111,25 +112,16 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 - [Claude Code](https://code.claude.com) CLI
 - **Python 3.10+ on PATH as `python`** (hard requirement; the `SessionStart` hook runs `scripts/detect-env.py`). On Ubuntu install `python-is-python3` if only `python3` is present.
 - Docker Desktop with WSL2 backend
-- **Shell:** bash (Linux / macOS / WSL2) **or** PowerShell (Windows native) — both supported, see below
-- WSL2 (Ubuntu) — **recommended** when the project lives under `/mnt/c|/mnt/d` for faster Docker bind-mounts
+- **Shell:** bash in WSL2 Ubuntu (Windows), bash/zsh (Linux/macOS). PowerShell native NOT supported.
+- WSL2 (Ubuntu) — **mandatory on Windows**; keep the project under `~/projects/<slug>` inside WSL2 FS for fast Docker bind-mounts
 - Node.js 18+ (via `nvm`) — **optional** for this backend-only repo; needed only if you use `npx`-based skills (e.g., the Context7 MCP runs via `npx`)
 - A GitHub account ([@VadayI](https://github.com/VadayI))
 
-### Two supported shells
+### Shell: bash only
 
-The same commands and agents work in both shells. At every session start, `scripts/detect-env.py` writes `.claude/memory/env-detect.json` so every command and agent can pick shell-appropriate syntax without per-command detection.
+On Windows, install WSL2 Ubuntu and run every command from inside it (`docker compose`, `git`, `gh`, `python`, `npm`). PowerShell is not supported — see `docs/decisions/0005-drop-windows-native-shell.md`. At every session start, `scripts/detect-env.py` writes `.claude/memory/env-detect.json`; if `platform_supported: false`, `/doctor` stops with instructions to install WSL2.
 
-| | bash / zsh (Linux, macOS, WSL2) | PowerShell (Windows native) |
-|---|---|---|
-| Docker Desktop CLI | ✅ | ✅ |
-| `gh`, `git`, `python`, `npm` | ✅ | ✅ (Windows installs) |
-| `pytest`, `ruff`, `manage.py` | via `docker compose exec` ✅ | via `docker compose exec` ✅ |
-| Quick Start (clone + copy) | bash block | PowerShell `<details>` block below |
-| Bind-mount speed | native (Linux FS) | acceptable (Windows FS via Docker Desktop WSL2 backend) |
-| `/tmp/...` paths | Linux `/tmp` | resolves to `C:\tmp` — use `$env:TEMP` instead |
-
-What stays bash-only and intentionally so: the CI gate scripts (`scripts/check_*.sh`) that run on the Linux GitHub Actions runner. Everything you run locally is cross-shell.
+The CI gate scripts (`scripts/check_*.sh`) intentionally stay bash — they run on the Linux GitHub Actions runner.
 
 ---
 
@@ -146,198 +138,21 @@ cp /tmp/claude-django/templates/docker-compose.yml ./
 mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/* .github/workflows/
 ```
 
-<details>
-<summary><b>PowerShell variant (Windows)</b> — clone + copy only; Docker / pytest / <code>gh</code> still need WSL2</summary>
-
-```powershell
-# in PowerShell, from the root of your existing project
-$tmp = "$env:TEMP\claude-django"
-if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp }
-git clone https://github.com/VadayI/claude-django.git $tmp
-
-Copy-Item -Recurse -Force "$tmp\.claude" .
-Copy-Item -Force "$tmp\CLAUDE.md" .
-# optional — MCP servers and .gitignore:
-Copy-Item -Force "$tmp\.mcp.json" . -ErrorAction SilentlyContinue
-Copy-Item -Force "$tmp\.gitignore" . -ErrorAction SilentlyContinue
-# templates if needed:
-Copy-Item -Recurse -Force "$tmp\templates" .
-New-Item -ItemType Directory -Force -Path .github\workflows | Out-Null
-Copy-Item -Force "$tmp\templates\.github\workflows\*" .github\workflows\
-```
-
-> After this, **switch to WSL2** (run `wsl`) for everything else — `docker compose`, `pytest`, `gh`, plugins. PowerShell only gets you the files into place.
-
-</details>
-
-Then install the plugins (see below) and adjust `CLAUDE.md` for the project name. Run **`/doctor`** inside `claude` to verify the environment is configured correctly (it checks tools, plugins, MCP access, project state, and git, and proposes any fixes).
+Then install the plugins (see below) and adjust `CLAUDE.md` for the project name. Then run **`/doctor`** inside `claude` — it detects the scenario and recommends the next command.
 
 ---
 
 ## Step-by-step: a NEW project from scratch
 
-**Recommended path: run `/kickoff <slug>` inside `claude`** — it executes all of the steps below automatically: creates the GitHub repo, lays the skeleton from `templates/`, runs `docker compose up`, runs `django-admin startproject`, configures `drf-spectacular`, commits the initial state, sets `main` branch protection, then runs `/doctor` + `/preflight`. One command, one pass.
+1. **Quick start** (above) — copy `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `templates/` into the new project folder under `~/projects/<slug>` in WSL2.
+2. `claude` → `/doctor` — verifies environment and detects scenario `fresh`; recommends `/bootstrap`.
+3. `claude` → `/bootstrap` — interactive: asks GitHub login (default = `gh api user`) and slug (default = CWD basename) and output language; runs the full scaffold (`gh repo create`, skeleton, `django-admin startproject`, settings split, drf-spectacular config + URLs, `docker compose up`, `migrate`, generate `docs/api/openapi.yml`, prompt for `createsuperuser`, first commit + push `origin main`, branch protection). This is the only command that direct-pushes to main (documented exception in `.claude/rules/git-operations.md`).
+4. (manual) Drop your input documents into `docs/` — briefs, ТЗ, PDFs, .docx, screenshots — keeping `docs/api/`, `docs/decisions/`, `docs/plans/` for their existing purpose.
+5. `claude` → `/synthesize-brief` — recursively reads `docs/**` (excluding service folders), delegates to `brief-synthesizer`, writes `docs/PROJECT.md` via feature branch + PR.
+6. `claude` → `/doctor` → `/preflight` — re-verify environment and build inputs.
+7. First feature through the standard pipeline (`ba → api-architect → ...`).
 
-The same sequence by hand (if you prefer manual or `/kickoff` failed on a step):
-
-<details>
-<summary><b>Manual fallback — Steps 1–9</b></summary>
-
-> Run in the **WSL2 (Ubuntu)** terminal. Keep the code in the WSL2 filesystem (e.g. `~/projects/`), NOT under `/mnt/c` — it is significantly faster for Docker.
-
-### Step 1. Clone claude-django (the config) and create the new project
-
-First, get the config onto your machine. **Clone claude-django to a path OUTSIDE your future project** (e.g. `/tmp/claude-django`). We copy *files* from it into the new project — never the directory itself — so claude-django's git history never ends up tracked in your project.
-
-```bash
-# WSL2 only — if your prompt starts with `PS ` (PowerShell), run `wsl` first to switch into Ubuntu
-rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
-```
-
-Now create the new project repo. The easiest way is to make this repository a **template** on GitHub (Settings → Template repository), so new projects are created with the **"Use this template"** button. Or manually:
-
-```bash
-mkdir -p ~/projects && cd ~/projects
-gh repo create my-project --private --clone
-cd my-project
-
-# Copy what you need — files only, not the source directory:
-cp -r /tmp/claude-django/.claude .
-cp /tmp/claude-django/CLAUDE.md .
-cp /tmp/claude-django/.gitignore .
-cp /tmp/claude-django/templates/docker-compose.yml .
-cp /tmp/claude-django/templates/.env.example .
-mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/* .github/workflows/
-
-# Safety net: never track claude-django (or accidental nested clones of it) in this project.
-grep -qxF '/claude-django/'         .gitignore || echo '/claude-django/'         >> .gitignore
-grep -qxF '/tmp/claude-django/'     .gitignore || echo '/tmp/claude-django/'     >> .gitignore
-grep -qxF 'claude-django/'          .gitignore || echo 'claude-django/'          >> .gitignore
-```
-
-> Sanity check before the next step: `git status` from the new project should NOT list anything starting with `claude-django/`. If it does, move that directory out of the project — only the contents of `.claude/`, `CLAUDE.md`, `templates/...` files, and the `.gitignore` should end up tracked.
-
-### Step 2. Lay out the skeleton
-
-```bash
-mkdir -p backend docs/api docs/decisions docs/plans .claude/memory scripts
-cp /tmp/claude-django/templates/backend.Dockerfile backend/Dockerfile
-cp /tmp/claude-django/templates/pyproject.toml backend/pyproject.toml
-cp /tmp/claude-django/templates/scripts/check_stubs.sh scripts/ && chmod +x scripts/check_stubs.sh
-cp /tmp/claude-django/templates/scripts/check_openapi_drift.sh scripts/ && chmod +x scripts/check_openapi_drift.sh
-cp /tmp/claude-django/templates/scripts/check_app_readmes.sh scripts/ && chmod +x scripts/check_app_readmes.sh
-cp /tmp/claude-django/templates/STUBS.md docs/STUBS.md   # stub ledger (see .claude/rules/no-stubs.md)
-cp /tmp/claude-django/templates/APP_README.md docs/APP_README.md   # per-app README template (see .claude/rules/app-readme.md)
-cp .env.example .env            # edit the secrets
-touch docs/WORKLOG.md
-```
-
-### Step 3. Initialize the Django backend
-
-```bash
-docker compose run --rm backend django-admin startproject config .
-# split config/settings/{base,dev,staging}.py and configure DATABASES via DATABASE_URL
-docker compose up -d
-docker compose exec backend python manage.py migrate
-docker compose exec backend python manage.py createsuperuser
-```
-
-### Step 4. Enable `main` branch protection on GitHub
-
-Settings → Branches → Add rule for `main`:
-
-- Require a pull request before merging
-- Require status checks to pass (select `backend-ci`)
-- (optional) Require review
-
-Now a direct push to `main` is impossible — only via PR.
-
-### Step 5. Install Claude Code plugins
-
-Inside `claude` in the project folder:
-
-```
-/plugin marketplace add obra/superpowers-marketplace
-/plugin install superpowers@superpowers-marketplace      # TDD, planning, code-review workflows
-/plugin install engineering@knowledge-work-plugins       # code-review, testing-strategy, architecture, tech-debt, docs
-/plugin marketplace add jarrodwatts/claude-hud
-/plugin install claude-hud
-/claude-hud:setup                                         # statusline: model, context, agents
-```
-
-### Step 6. First feature through the pipeline (example)
-
-> Before the first feature, run **`/preflight`** — a hard gate that checks the orchestrator has the build inputs (project brief/description, tech stack, library docs via Context7, GitHub project access). If something critical is missing, agents stop and ask instead of guessing.
-
-Just describe the task to Claude — the orchestrator runs it through the pipeline itself:
-
-> "Add user registration: POST /api/v1/auth/register/ (email + password), returns 201 without the password in the response, 409 on a duplicate email."
-
-Claude: `ba` (requirements) → `api-architect` (contract) → `tester` (failing tests) → `django-developer` (code to green) → `reviewer`/`security-scanner`/`dba` (Quality Gate) → `docs-writer` (docs + `gh pr create`).
-
-Verify locally:
-
-```bash
-docker compose exec backend pytest
-docker compose exec backend ruff check .
-```
-
-### Step 7. PR and merge
-
-```bash
-git checkout -b feat/auth-register
-git add -A && git commit -m "feat: user registration"
-git push -u origin feat/auth-register
-gh pr create --fill
-# CI green + review → Merge (Squash)
-git checkout main && git pull
-```
-
-### Step 8. OpenAPI documentation (mandatory)
-
-Configure `drf-spectacular`, expose Swagger UI, and lock the contract:
-
-```python
-# config/settings/base.py
-INSTALLED_APPS += ["drf_spectacular"]
-REST_FRAMEWORK["DEFAULT_SCHEMA_CLASS"] = "drf_spectacular.openapi.AutoSchema"
-SPECTACULAR_SETTINGS = {"TITLE": "<project>", "VERSION": "1.0.0"}
-```
-
-```python
-# config/urls.py
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-urlpatterns += [
-    path("api/schema/",         SpectacularAPIView.as_view(),    name="schema"),
-    path("api/schema/swagger/", SpectacularSwaggerView.as_view(url_name="schema")),
-    path("api/schema/redoc/",   SpectacularRedocView.as_view(url_name="schema")),
-]
-```
-
-Generate and commit the schema, then verify the gate locally:
-
-```bash
-mkdir -p docs/api
-docker compose exec -T backend python manage.py spectacular --file ../docs/api/openapi.yml --format openapi-yaml
-bash scripts/check_openapi_drift.sh   # must report: "schema in sync with code - OK"
-```
-
-Open `http://localhost:8000/api/schema/swagger/` to test endpoints interactively. CI re-runs the drift gate on every PR — if the schema in code disagrees with `docs/api/openapi.yml`, the PR fails. See `.claude/rules/api-docs.md`.
-
-> This repo is backend-only. A real production frontend, if needed, lives in a separate repository and consumes `docs/api/openapi.yml` as the contract.
-
-### Step 9. Deploy to staging (VPS)
-
-```bash
-ssh <user>@54.37.138.231
-cd ~/projects/my-project && git pull
-docker compose -f docker-compose.staging.yml up -d --build
-docker compose -f docker-compose.staging.yml exec backend python manage.py migrate
-```
-
-The VPS already hosts other projects — use separate ports/network and a reverse-proxy (nginx/Traefik) with its own subdomain and HTTPS so you can open the API from a mobile browser.
-
-</details>
+For an existing project from a second machine: skip step 1 (clone instead), run `/doctor` — it will detect `active` or `existing-incomplete` and tell you whether to run `/bootstrap` in resume mode.
 
 ---
 
@@ -345,7 +160,8 @@ The VPS already hosts other projects — use separate ports/network and a revers
 
 | Command | When to run | How often |
 |---|---|---|
-| `/kickoff <slug>` | Once per new project, immediately after copying this config | Once |
+| `/bootstrap [slug]` | Once per new project (Mode A) after copying this config; or in Mode B to ship missing pieces of an in-progress repo | Once for Mode A; as needed for Mode B |
+| `/synthesize-brief` | When input documents accumulate in `docs/` (briefs/ТЗ/PDFs); after Mode A bootstrap; whenever the source documents change | Once per project initially, as needed for updates |
 | `/doctor [scope]` | On a fresh machine; whenever environment feels off | Rare; ~once per machine |
 | `/preflight [scope]` | Before the first feature on a project; after long pauses | Once per project, rare repeats |
 | `/audit [focus]` | Start of a session; whenever you ask "what should I do now?" | Each session |
@@ -404,7 +220,7 @@ Rules:
 
 ## How to use (commands · agents · skills)
 
-**Commands** are slash-commands you type inside `claude` from the project folder, with an optional argument: `/kickoff my-project`, `/audit`, `/doctor`, `/preflight`, `/wrap-up "release notes"`, `/fix-ci 42`, `/review-pr 42`, `/security-check apps/auth`. The full list with descriptions is in the *Commands* subsection above; PR-scoped commands need the `github` MCP and an authenticated `gh`. Every invocation is logged to `.claude/memory/command-log.jsonl` so `auditor` can suggest what to run next.
+**Commands** are slash-commands you type inside `claude` from the project folder, with an optional argument: `/bootstrap my-project`, `/synthesize-brief`, `/audit`, `/doctor`, `/preflight`, `/wrap-up "release notes"`, `/fix-ci 42`, `/review-pr 42`, `/security-check apps/auth`. The full list with descriptions is in the *Commands* subsection above; PR-scoped commands need the `github` MCP and an authenticated `gh`. Every invocation is logged to `.claude/memory/command-log.jsonl` so `auditor` can suggest what to run next.
 
 **Agents** you do NOT call directly in the default flow — just describe the task and the orchestrator routes it through the pipeline defined in `.claude/rules/workflow.md` (e.g. a feature goes `ba` → `api-architect` → `tester (RED)` → `django-developer (GREEN)` → Quality Gate → `docs-writer`; see Step 6 for a worked example). You can still name an agent explicitly when you want to (`"use ba to draft user stories for X"`, `"have debugger investigate this 500 first"`). Each agent's triggers and remit live in `.claude/agents/<name>.md`.
 
@@ -423,4 +239,4 @@ Wire it into orchestration — mention the agent in `.claude/rules/workflow.md` 
 ## License
 
 MIT
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-05-29 -->
