@@ -128,6 +128,30 @@ cp /tmp/claude-django/templates/docker-compose.yml ./
 mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/* .github/workflows/
 ```
 
+<details>
+<summary><b>PowerShell variant (Windows)</b> — clone + copy only; Docker / pytest / <code>gh</code> still need WSL2</summary>
+
+```powershell
+# in PowerShell, from the root of your existing project
+$tmp = "$env:TEMP\claude-django"
+if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp }
+git clone https://github.com/VadayI/claude-django.git $tmp
+
+Copy-Item -Recurse -Force "$tmp\.claude" .
+Copy-Item -Force "$tmp\CLAUDE.md" .
+# optional — MCP servers and .gitignore:
+Copy-Item -Force "$tmp\.mcp.json" . -ErrorAction SilentlyContinue
+Copy-Item -Force "$tmp\.gitignore" . -ErrorAction SilentlyContinue
+# templates if needed:
+Copy-Item -Recurse -Force "$tmp\templates" .
+New-Item -ItemType Directory -Force -Path .github\workflows | Out-Null
+Copy-Item -Force "$tmp\templates\.github\workflows\*" .github\workflows\
+```
+
+> After this, **switch to WSL2** (run `wsl`) for everything else — `docker compose`, `pytest`, `gh`, plugins. PowerShell only gets you the files into place.
+
+</details>
+
 Then install the plugins (see below) and adjust `CLAUDE.md` for the project name. Run **`/doctor`** inside `claude` to verify the environment is configured correctly (it checks tools, plugins, MCP access, project state, and git, and proposes any fixes).
 
 ---
