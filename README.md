@@ -36,13 +36,14 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 | `ci-cd-engineer` | GitHub Actions CI on every PR | sonnet |
 | `docs-writer` | `docs/api`, OpenAPI sync, ADR, WORKLOG, PR description | sonnet |
 
-### Optional agents (7) — opt-in
+### Optional agents (8) — opt-in
 
 Not used in every project — activate only when the task calls for it:
 
 | Agent | Purpose | Model |
 | --- | --- | --- |
 | `auditor` | Workflow auditor — reads `.claude/memory/command-log.jsonl` + live state, suggests the next command (run via `/audit`) | sonnet |
+| `brief-synthesizer` | Reads `docs/**` (md/txt/pdf/docx/images) and writes a structured `docs/PROJECT.md` (run via `/synthesize-brief`) | sonnet |
 | `qa` | E2E/browser tests (Playwright), incl. mobile via staging | opus |
 | `celery-specialist` | Background/async tasks: Celery + Redis/RabbitMQ | sonnet |
 | `integration-architect` | OAuth, webhooks, payments, third-party APIs | sonnet |
@@ -75,7 +76,7 @@ These are standalone skills, not vendored into the repo — enable them in your 
 
 `docker-compose.yml`, `backend.Dockerfile`, `pyproject.toml` (includes `drf-spectacular` + ruff `FIX`, `D` for Google-style docstrings), `.env.example`, `.github/workflows/backend-ci.yml` (runs ruff + stub gate + OpenAPI drift gate + per-app README gate + pytest), `scripts/check_stubs.sh` (stub gate — fails on unlogged `# STUB:`/`NotImplementedError`), `scripts/check_openapi_drift.sh` (OpenAPI gate — fails if `docs/api/openapi.yml` doesn't match the schema regenerated from code), `scripts/check_app_readmes.sh` (per-app README gate — fails if any `backend/apps/<app>/` lacks `README.md`), `STUBS.md` (copy to `docs/STUBS.md` — the stub ledger), `APP_README.md` (copy to `docs/APP_README.md` — template that `django-developer` copies into each new app) — ready to copy into a new project.
 
-### Commands (11) — `.claude/commands/`
+### Commands (13) — `.claude/commands/`
 
 Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands need the `github` MCP from `.mcp.json` + an authenticated `gh`). Every command appends a single line to `.claude/memory/command-log.jsonl` so the `auditor` agent can suggest what to run next.
 
@@ -91,6 +92,7 @@ Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands 
 - `/security-check [path]` — focused security audit of the working changes via `security-scanner`.
 - `/update-docs [scope]` — refresh `docs/api`, `WORKLOG`, ADR, `lessons.md` via `docs-writer`.
 - `/wrap-up [note]` — end-of-session: summarize, update `WORKLOG`/`lessons`, run ruff/pytest, show `git status`, propose a commit (never auto-push).
+- `/set-language` — pick the response language for this project (writes `.claude/rules/output-language.md` from `templates/output-language.md` with the chosen native name). Run once after `/bootstrap` if you want a non-English working language.
 
 ### MCP servers — `.mcp.json`
 
