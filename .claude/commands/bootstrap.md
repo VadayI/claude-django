@@ -104,7 +104,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    ```bash
    python -c "import os; print(os.path.basename(os.getcwd()))"
    ```
-3. **Output language.** `AskUserQuestion` (header `Language`):
+3. **Output language.** **Skip this step entirely if `.claude/rules/output-language.md` already exists** (likely set by `/doctor` Step 0 in the previous command run, or by a prior `/bootstrap`). Otherwise ask via `AskUserQuestion` (header `Language`):
    - **English** (Recommended) — default; no extra config will be written.
    - **Українська**
    - **Русский**

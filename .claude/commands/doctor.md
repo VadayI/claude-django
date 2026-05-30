@@ -19,6 +19,23 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 
 ## Steps
 
+0. **Output language gate (FIRST, before audit).** If `.claude/rules/output-language.md` does NOT exist, ask via `AskUserQuestion` (header `Language`):
+   - `English` (Recommended) — default; no extra config will be written.
+   - `Українська`
+   - `Русский`
+   - `Polski`
+   - (the harness adds "Other" automatically — user can type any native name)
+
+   If user picks **English** → skip the file edits, proceed to Step 1.
+   Otherwise dispatch `devops`:
+   - `mkdir -p .claude/rules` (no-op if exists).
+   - Copy `templates/output-language.md` → `.claude/rules/output-language.md`, replacing both occurrences of `{LANGUAGE_NATIVE}` with the chosen native name.
+   - If `CLAUDE.md` exists at repo root, append `@.claude/rules/output-language.md` to the top import block (after `@.claude/rules/preflight.md`). Skip if already present.
+
+   If `templates/output-language.md` is missing (e.g. user attached `.claude/` but skipped `templates/`), report it as a Quick start gap (`NO_TEMPLATES`) and proceed in English without writing the rule. From now on (this turn and onward), respond in the chosen language.
+
+   Skip Step 0 entirely if `.claude/rules/output-language.md` already exists.
+
 1. **Audit (read-only).** Dispatch the `devops` agent (`subagent_type: "devops"`) to run the read-only checks from `@.claude/rules/environment.md` for the requested scope(s). Instruct it explicitly:
    - run only read-only commands (the `Check` column of the spec);
    - never echo the *values* of `GITHUB_PERSONAL_ACCESS_TOKEN`, `CONTEXT7_API_KEY`, or `.env` — only whether they are set;
