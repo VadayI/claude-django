@@ -218,6 +218,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/PROJECT.md` -> `docs/PROJECT.md` (brief skeleton — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}`; leave `{TODO}` markers for `/synthesize-brief` or the user to fill)
      - `templates/api_INDEX.md` -> `docs/api/INDEX.md` (endpoint index — replace `{SLUG}`)
      - `templates/WORKLOG.md` -> `docs/WORKLOG.md` (seed with first entry — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}`)
+     - `templates/HANDOFF.md` -> `docs/HANDOFF.md` (multi-session handoff seed — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}`)
    - Substitution tokens (`{SLUG}`, `{DATE_ISO}`, `{OWNER}`) are replaced inline by `devops`; `{TODO}` remains as a visible placeholder so the user knows what to fill later. Do this with a simple `sed -i` chain or Python `pathlib.write_text(read_text().replace(...))` — do NOT leave any of `{SLUG}` / `{DATE_ISO}` / `{OWNER}` in the destination files.
    - (No `touch docs/WORKLOG.md` — the WORKLOG template above already seeds it with an initial bootstrap entry.)
 
@@ -235,7 +236,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    - Ask the user interactively whether to run `createsuperuser` now.
 
 4. **Initial commit + push + register CI** — dispatch `devops`:
-   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all 17 files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the four new scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
+   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all 18 files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the five scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md`). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
    - `git add -A && git status` (show the user what is staged)
    - `git commit -m "chore: bootstrap project from claude-django"`
    - `git branch -M main`
@@ -268,31 +269,87 @@ Run AFTER preflight passes but BEFORE any side-effects.
 
 5. **Branch protection** — dispatch `ci-cd-engineer`:
 
-   Auto path (when `HAS_ADMIN == True` from the front-loaded preflight):
+   Always **attempt the API call first**, regardless of the front-loaded `HAS_ADMIN` flag. `HAS_ADMIN` is a best-effort prediction (and is always false for fine-grained PATs that don't expose scopes), but the real authority lives on GitHub. A repo can fail protection setup for several reasons even when the prediction looked fine: token doesn't own the repo, organization policy overrides, rule already exists with a different shape, etc. Try, capture the HTTP status, branch on the result.
+
    ```bash
    OWNER=$(gh api user --jq .login)
-   gh api -X PUT "repos/$OWNER/$SLUG/branches/main/protection" \
-     -f required_status_checks='{"strict":true,"checks":[{"context":"backend-ci"}]}' \
-     -f enforce_admins=true \
-     -f required_pull_request_reviews='{"required_approving_review_count":0}' \
-     -f restrictions=null \
-     && echo "v Branch protection enabled (backend-ci required, PR required)" \
-     || { echo "! Auto branch protection failed; fall through to manual steps below"; HAS_ADMIN=False; }
+   RULE_BODY=$(cat <<'JSON'
+   {
+     "required_status_checks": {"strict": true, "checks": [{"context": "backend-ci"}]},
+     "enforce_admins": true,
+     "required_pull_request_reviews": {"required_approving_review_count": 0},
+     "restrictions": null,
+     "required_linear_history": false,
+     "allow_force_pushes": false,
+     "allow_deletions": false
+   }
+   JSON
+   )
+
+   # Capture both stdout (rule JSON on success) and stderr+code (on failure).
+   set +e
+   PROT_STDERR=$(gh api -X PUT "repos/$OWNER/$SLUG/branches/main/protection" \
+     --input - <<<"$RULE_BODY" 2>&1 >/tmp/prot.stdout)
+   PROT_CODE=$?
+   set -e
+
+   if [ $PROT_CODE -eq 0 ]; then
+     echo "✓ Branch protection enabled on $OWNER/$SLUG (backend-ci required, PR required, no bypass)"
+   else
+     # Parse HTTP status from gh stderr — gh prints lines like:
+     #   "HTTP 403: Resource not accessible by personal access token (...)"
+     HTTP_STATUS=$(printf '%s' "$PROT_STDERR" | grep -oE 'HTTP [0-9]+' | head -1 | awk '{print $2}')
+     HTTP_STATUS=${HTTP_STATUS:-unknown}
+     echo "✗ Branch protection setup failed: HTTP $HTTP_STATUS"
+     echo "$PROT_STDERR" | sed -n '1,4p'
+     case "$HTTP_STATUS" in
+       403)
+         echo
+         echo "Cause: the active PAT lacks 'admin:repo_hook' (or is a fine-grained PAT without"
+         echo "       'administration: write' on this repo). Branch protection requires admin scope."
+         echo "Fix:   create a classic PAT with admin:repo_hook and re-run, OR enable protection"
+         echo "       manually via the UI (instructions below)."
+         ;;
+       404)
+         echo
+         echo "Cause: GitHub returned 404 — the token cannot see repo $OWNER/$SLUG (wrong owner,"
+         echo "       repo not yet created, or the token's user is not a collaborator)."
+         echo "Fix:   verify 'gh repo view $OWNER/$SLUG' succeeds; re-run /bootstrap from Step 1 if"
+         echo "       the repo was never created."
+         ;;
+       422)
+         echo
+         echo "Cause: GitHub returned 422 — the protection rule already exists with a different"
+         echo "       shape, or the schema we sent collided with an existing setting."
+         echo "Fix:   inspect 'gh api repos/$OWNER/$SLUG/branches/main/protection' to see the"
+         echo "       current rule; either accept it as-is or delete and re-create via the UI."
+         ;;
+       *)
+         echo
+         echo "Cause: unexpected status. See the full error above and the GitHub status page."
+         ;;
+     esac
+   fi
    ```
 
-   Manual fallback (when `HAS_ADMIN != True` or auto-path failed): print the
-   exact GitHub UI steps for the user:
-   1. Open `https://github.com/<owner>/<slug>/settings/branches`
-   2. Add a branch protection rule for `main`.
-   3. Enable "Require a pull request before merging" (Approvals: 0).
-   4. Enable "Require status checks to pass before merging" and add `backend-ci`.
-   5. Enable "Do not allow bypassing the above settings".
+   Manual UI fallback (when the auto-call fails OR the user prefers UI):
+
+   1. Open https://github.com/$OWNER/$SLUG/settings/branches (replace `$OWNER`/`$SLUG`).
+   2. Click **Add branch protection rule** (or **Add classic branch protection rule** if the new ruleset UI is shown — both work).
+   3. Branch name pattern: `main`.
+   4. Enable **Require a pull request before merging** — set "Required approvals" to `0` for solo work, raise it later.
+   5. Enable **Require status checks to pass before merging** and pick `backend-ci` from the list (it appears only after the workflow has run at least once — Step 4 already triggered it via `workflow_dispatch`; wait up to ~30 s if it's still not visible).
+   6. Enable **Do not allow bypassing the above settings**.
+   7. Optional: enable **Require linear history** and disable **Allow force pushes** / **Allow deletions** (the API path sets these by default).
+   8. Click **Create** / **Save changes**.
 
    ### ⏸ Checkpoint — Resume from this step
 
-   After enabling branch protection manually, type `continue bootstrap` (or
-   re-run `/bootstrap`) — Mode B will skip the now-completed protection probe
-   and proceed to the remaining pieces.
+   If the auto-call succeeded — proceed to Step 6. If it failed and you enabled
+   protection via UI — type `continue bootstrap` (or re-run `/bootstrap`); Mode B
+   detection sees protection now exists and skips this probe. If you skip
+   protection entirely (not recommended), record the decision in
+   `docs/decisions/` so the absence is intentional, not a forgotten step.
 
 6. **Manual follow-ups (plugins)** — ❗ **Requires your action in the Claude UI; cannot be automated by the agent.** This does NOT block starting work — you can paste these later. Print these for the user to paste inside `claude`:
    ```
@@ -360,4 +417,4 @@ When `$ARGUMENTS` contains `--dry-run`:
 
 > Pairs with `/doctor` (mode detection / scenario classification) and `/synthesize-brief` (next step after Mode A if briefs are present in `docs/`).
 
-<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap robustness P0 + scaffolding templates P1 — PROJECT_README/PROJECT/api_INDEX/WORKLOG seeded) -->
+<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap P0+P1+P2 — preflight robustness, scaffolding templates, HANDOFF + branch-protection 403/404/422 fallback) -->

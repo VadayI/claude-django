@@ -1,5 +1,46 @@
 # WORKLOG — claude-django
 
+## 2026-05-30 — HANDOFF + branch protection fallback + lessons seed (P2)
+
+Closed the P2 backlog from plans 0002 / 0003.
+
+**Created in `templates/`:**
+
+- `HANDOFF.md` — multi-session handoff seed (Current state / Last finished / In progress / Next step / Open questions / Environment notes). Copied to `docs/HANDOFF.md` of the derived project. Updated by `/wrap-up` at end of session; read FIRST when a new session opens the project.
+
+**Modified in `templates/`:**
+
+- `lessons.md` — title now carries `{SLUG}` substitution; seeded with a first entry ("Bootstrap completed") that demonstrates the entry format, instead of an empty `## Entries` block.
+
+**bootstrap.md changes:**
+
+- Step 5 (Branch protection) fully rewritten:
+  - Always attempt `gh api PUT branches/main/protection` regardless of the front-loaded `HAS_ADMIN` prediction (that flag is best-effort and always false for fine-grained PATs that don't expose scopes).
+  - Capture HTTP status from `gh` stderr; branch on 403 / 404 / 422 / other with cause-specific remediation text:
+    - 403 → PAT lacks `admin:repo_hook` (or fine-grained without `administration: write`);
+    - 404 → token cannot see repo (wrong owner / not collaborator / repo never created);
+    - 422 → rule already exists with a different shape.
+  - Manual UI fallback now has a clickable URL (`https://github.com/$OWNER/$SLUG/settings/branches`), 8 numbered steps including a note that `backend-ci` appears in the status check dropdown only after the workflow has run at least once (already triggered by Step 4 via `workflow_dispatch`).
+  - Removed the buggy `&& echo ... || { HAS_ADMIN=False }` pattern that re-assigned a variable but didn't actually re-evaluate the next branch.
+- Step 2: added `templates/HANDOFF.md` → `docs/HANDOFF.md` copy line with the same `{SLUG}`/`{DATE_ISO}`/`{OWNER}` substitution as the other P1 scaffolding templates.
+- Step 4 cleanup verification: `17 files` → `18 files`, with the new file in the explicit list (`docs/HANDOFF.md`).
+
+**README.md changes:**
+
+- Docs seeds line in the Templates subsection now lists `HANDOFF.md` with its destination and purpose; `lessons.md` description clarified to "seeded with a first entry".
+
+**Plan:** `docs/plans/0004-bootstrap-handoff-and-branch-protection.md`.
+
+**Out of scope (true P3, not started):**
+
+- A `/handoff` command (extension of `/wrap-up`) that writes `docs/HANDOFF.md` from current session state automatically.
+- A pre-bootstrap permission probe that calls `gh api -X GET /user --jq '.permissions // empty'` to predict `createRepository` capability for fine-grained tokens.
+- A "wsl gate" Skill that quiets the WSL warnings on Linux / macOS hosts (where they don't apply).
+
+**Verification:** `templates/HANDOFF.md` 2147 B with 8 substitution tokens; `templates/lessons.md` now has both `{SLUG}` (title) and `{DATE_ISO}` (seed entry); `bootstrap.md` 27160 B with `HANDOFF`, `18 files`, `HTTP 403/404/422`, `workflow_dispatch` markers all present; `README.md` Docs seeds line includes `HANDOFF.md`.
+
+---
+
 ## 2026-05-30 — Project-scaffolding templates (P1)
 
 Followed P0 with the deferred P1 items so that a derived project is born with the documents the agent pipeline assumes already exist.
