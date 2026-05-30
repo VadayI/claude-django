@@ -1,5 +1,36 @@
 # WORKLOG — claude-django
 
+## 2026-05-30 — /handoff command + repo conflict probe + auditor reads HANDOFF (P3)
+
+Closed the P3 backlog from plans 0002-0004. Reframed the original "WSL gate Skill" (a misnamed non-issue — `environment.md` already conditions WSL2 checks on Windows-only) into a third concrete polish item: the `auditor` agent reads `docs/HANDOFF.md` so `/audit` surfaces stale "Next step" and open questions in its suggestions.
+
+**Created:**
+
+- `.claude/commands/handoff.md` — new `/handoff` command. Read-only on everything except `docs/HANDOFF.md`. Probes: `git branch`, `git status`, `git rev-list ahead/behind`, `gh pr list --json statusCheckRollup`, `gh pr list --state merged`, `docs/STUBS.md` count, `docs/todo.md ## Now`. Generates six sections (Current state / Last finished / In progress / Next step / Open questions / Environment notes) via a 7-rule decision ladder for "Next step". "Open questions" and "Environment notes" are carry-over (the command never deletes them). Supports `--note "..."` to append a free-text line to "Current state" and `--print` for preview without writing.
+
+**Modified:**
+
+- `.claude/commands/bootstrap.md` Step 1 — added Guard B: `gh repo view "$OWNER/$SLUG"` probe BEFORE `gh repo create`. If repo exists remotely but local has no `origin` → STOP with new flag `REPO_ALREADY_EXISTS` and two remedies (link local to existing repo and use Mode B, or pick different slug). Closes the gap that the carlsberg run exposed (user manually created the repo mid-bootstrap; a second `/bootstrap` would otherwise re-call `gh repo create` and fail with a buried GitHub error). `REPO_ALREADY_EXISTS` is documented in the per-flag remediation block.
+- `.claude/agents/auditor.md` — added `docs/HANDOFF.md` to the read list (extracts "Next step" paragraph + open `## Open questions`). New Suggestion rule 1a: **if HANDOFF.md "Next step" is concrete (not a `{TODO}` placeholder) → use it verbatim as the primary suggestion**. Rationale: the previous session already decided what comes next; surface that decision before re-deriving one from probes. Open questions surface in the Secondary list when present (up to 3).
+
+**bootstrap.md numbering:** `REPO_ALREADY_EXISTS` slots in next to `FINE_GRAINED_PAT_NOT_SUPPORTED` and `UNSUPPORTED_PLATFORM` in the preflight remediation table.
+
+**README.md changes:**
+
+- Commands count `13 → 14`; new entry for `/handoff [--note "..."] [--print]` in the Commands subsection right after `/wrap-up`.
+
+**Plan:** `docs/plans/0005-handoff-command-and-repo-probe.md`.
+
+**Future ideas (P4, not started):**
+
+- `/handoff --append` mode that snapshots without overwriting (for keeping a history of session-end states).
+- `/audit` automatically refreshing `docs/HANDOFF.md` before suggesting (call `/handoff --print` internally).
+- A pre-bootstrap classic-PAT capability probe (`gh api /user --jq '.permissions'`) for the case where a classic PAT user is unexpectedly missing repo capabilities.
+
+**Verification:** `.claude/commands/handoff.md` 6575 B, sections present (Log/Input/Probes/Generation/Write/Hard limits); `bootstrap.md` 28857 B with markers `REPO_ALREADY_EXISTS` (2), `Guard B` (1), `gh repo view` (1+); `auditor.md` 5324 B with markers `HANDOFF.md` (3+) and the new rule 1a present; README Commands count is 14 and `/handoff` line at row 123.
+
+---
+
 ## 2026-05-30 — HANDOFF + branch protection fallback + lessons seed (P2)
 
 Closed the P2 backlog from plans 0002 / 0003.

@@ -104,7 +104,7 @@ Language: `output-language.md` (copy to `.claude/rules/output-language.md` when 
 
 All scaffolding templates use `{SLUG}`, `{DATE_ISO}`, `{OWNER}` substitution tokens that `/bootstrap` Step 2 replaces inline. `{TODO}` tokens are intentionally left as visible placeholders for the user to fill later.
 
-### Commands (13) — `.claude/commands/`
+### Commands (14) — `.claude/commands/`
 
 Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands need the `github` MCP from `.mcp.json` + an authenticated `gh`). Every command appends a single line to `.claude/memory/command-log.jsonl` so the `auditor` agent can suggest what to run next.
 
@@ -120,6 +120,7 @@ Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands 
 - `/security-check [path]` — focused security audit of the working changes via `security-scanner`.
 - `/update-docs [scope]` — refresh `docs/api`, `WORKLOG`, ADR, `lessons.md` via `docs-writer`.
 - `/wrap-up [note]` — end-of-session: summarize, update `WORKLOG`/`lessons`, run ruff/pytest, show `git status`, propose a commit (never auto-push).
+- `/handoff [--note "..."] [--print]` — regenerate `docs/HANDOFF.md` (rolling snapshot: Current state / Last finished / In progress / Next step / Open questions / Environment notes) from current git/PR/CI state. Read-only on everything except HANDOFF.md. Pairs with `/wrap-up` and is the file `/audit`'s `auditor` reads to promote a concrete next step.
 - `/set-language` — pick the response language for this project (writes `.claude/rules/output-language.md` from `templates/output-language.md` with the chosen native name). Run once after `/bootstrap` if you want a non-English working language.
 
 ### MCP servers — `.mcp.json`

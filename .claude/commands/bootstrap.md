@@ -129,6 +129,7 @@ Decision:
 ### Per-flag remediation
 
 - `NO_PYTHON` (only when the hook itself failed) -> Install Python 3.10+ and reopen Claude. This is the only flag that cannot be auto-diagnosed from `env-detect.json` because the file does not exist.
+- `REPO_ALREADY_EXISTS` -> A GitHub repo at `$OWNER/$SLUG` already exists, but the local working directory has no `origin` pointing at it. Step 1 refuses to overwrite or shadow it. Remedy: either link the local dir to the existing repo (`git remote add origin git@github.com:$OWNER/$SLUG.git`) and re-run `/bootstrap` so mode detection routes to Mode B, or pick a different slug (`/bootstrap <new-slug>`).
 - `FINE_GRAINED_PAT_NOT_SUPPORTED` -> The active credential is a **fine-grained PAT** (prefix `github_pat_`), detected by `scripts/detect-env.py` via `gh.pat_kind`. Fine-grained PATs do not expose OAuth scopes via the `X-OAuth-Scopes` response header and typically lack the `createRepository` and `administration:write` permissions that `/bootstrap` needs (repo creation, branch protection). `/bootstrap` cannot reliably proceed. Create a **classic** PAT instead and re-run:
   ```
   # 1) Create classic PAT with the right scopes
@@ -179,18 +180,36 @@ Run AFTER preflight passes but BEFORE any side-effects.
 
 ## Mode A — fresh start (delegate; never edit application source code yourself)
 
-1. **GitHub repo** — confirm or create. Idempotent guard for re-runs (if `origin`
-   was already added by an earlier aborted attempt):
+1. **GitHub repo** — confirm or create. Two idempotent guards (local remote already added → reuse; GitHub-side repo already exists with the same slug under this owner → STOP):
    ```bash
+   OWNER=$(gh api user --jq .login)
+
+   # Guard A — local: an earlier aborted attempt already added origin.
    if git remote get-url origin >/dev/null 2>&1; then
-     echo "i origin already exists, will push to existing remote at Step 4"
+     echo "i origin already exists locally, will push to existing remote at Step 4"
    else
+     # Guard B — remote: probe GitHub side BEFORE create.
+     if gh repo view "$OWNER/$SLUG" >/dev/null 2>&1; then
+       echo "✗ REPO_ALREADY_EXISTS: $OWNER/$SLUG exists on GitHub but has no local origin"
+       echo
+       echo "Two ways forward:"
+       echo "  A) Use the existing repo (recommended if it's yours and intentional):"
+       echo "       git init                                        # if not already a git dir"
+       echo "       git remote add origin git@github.com:$OWNER/$SLUG.git"
+       echo "       /bootstrap                                      # re-run; mode detection routes to Mode B"
+       echo
+       echo "  B) Pick a different slug:"
+       echo "       /bootstrap <new-slug>"
+       exit 2
+     fi
      gh repo create "$SLUG" --private --source=. --remote=origin
    fi
    ```
    Do NOT pass `--push` here — the first push happens in Step 4 after the
    skeleton is in place. Pushing an empty repo confuses Step 5 (branch
    protection has no commits to protect).
+
+   > The remote probe (Guard B) catches the case where the user manually created the repo on GitHub mid-bootstrap (e.g. when their PAT lacked `createRepository` and they were instructed to create it by hand). Without this probe, the second `/bootstrap` run would call `gh repo create` again and fail with a confusing GitHub error message buried in the agent output.
 
    ### ⏸ Checkpoint — Resume from this step
 
@@ -417,4 +436,4 @@ When `$ARGUMENTS` contains `--dry-run`:
 
 > Pairs with `/doctor` (mode detection / scenario classification) and `/synthesize-brief` (next step after Mode A if briefs are present in `docs/`).
 
-<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap P0+P1+P2 — preflight robustness, scaffolding templates, HANDOFF + branch-protection 403/404/422 fallback) -->
+<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap P0+P1+P2+P3 — preflight robustness, scaffolding templates, branch-protection fallback, /handoff + REPO_ALREADY_EXISTS probe) -->
