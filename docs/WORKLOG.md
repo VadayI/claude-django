@@ -1,5 +1,25 @@
 # WORKLOG — claude-django
 
+## 2026-05-30 — read:org scope + env-var auth path clarification (hotfix)
+
+Real-run on `carlsberg-ir-data-service`: after creating a classic PAT via our recommended URL and running `gh auth login`, the CLI rejected the token with `missing required scope 'read:org'`. Two gaps in the docs:
+
+1. **Missing scope in the recommended PAT URL.** `gh auth login` validates `read:org` minimum (standard for the interactive flow), but our URL only listed `repo,workflow,admin:repo_hook,delete_repo`. `/bootstrap` operations themselves (`gh repo create`, branch protection PUT, PRs) don't need `read:org`, but anyone who follows the interactive auth path hits the wall.
+2. **Two auth paths weren't documented as alternatives.** `gh` can use either an exported `GITHUB_PERSONAL_ACCESS_TOKEN` env var OR stored credentials from `gh auth login`. The env-var path skips the `read:org` requirement entirely. The previous docs hinted at both but didn't say "pick ONE" or note the scope difference.
+
+**Fixes (single commit):**
+
+- All four files that reference the PAT scope URL or `gh auth refresh` command: `repo,workflow,admin:repo_hook,delete_repo` → `repo,workflow,admin:repo_hook,delete_repo,read:org`. 10 occurrences across `bootstrap.md`, `doctor.md`, `environment.md`, `README.md`.
+- `.claude/commands/bootstrap.md` — `FINE_GRAINED_PAT_NOT_SUPPORTED` block now shows the two auth paths side-by-side with a per-scope explanation comment block (so users understand which scope is for which operation). `NO_GH_AUTH` remediation rewritten the same way (A. env-var, B. stored creds), explicitly noting that `read:org` is required for B but not A.
+- `.claude/commands/doctor.md` — PAT scope audit clarifies the same nuance and downgrades `read:org` to ℹ️ when env-var auth is detected.
+- `.claude/rules/environment.md` — Scope 2 PAT scopes row notes that `read:org` is only needed for `gh auth login` (not for env-var auth).
+
+**Plan:** none — this is a docs hotfix from a real-run gap.
+
+**Verification:** `grep -c "delete_repo,read:org"` returns 5+2+2+1 = 10 across the four files; `bootstrap.md` size 30264 → 30264 + clarification block; doctor.md size grew by ~130 B; environment.md size grew by ~130 B.
+
+---
+
 ## 2026-05-30 — /handoff command + repo conflict probe + auditor reads HANDOFF (P3)
 
 Closed the P3 backlog from plans 0002-0004. Reframed the original "WSL gate Skill" (a misnamed non-issue — `environment.md` already conditions WSL2 checks on Windows-only) into a third concrete polish item: the `auditor` agent reads `docs/HANDOFF.md` so `/audit` surfaces stale "Next step" and open questions in its suggestions.

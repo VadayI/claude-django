@@ -114,16 +114,16 @@ Decision:
 
   Two ways forward:
    A) Refresh the active PAT (recommended, fastest):
-        gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo
+        gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org
       Then re-run /bootstrap.
 
    B) Create a new PAT with the right scopes:
-        https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo&description=claude-django-bootstrap
+        https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo,read:org&description=claude-django-bootstrap
       Then export GITHUB_PERSONAL_ACCESS_TOKEN=<token> and re-run /bootstrap.
   ```
 - If `HAS_ADMIN != True` -> **WARN** (not a blocker): branch protection will fall back to manual GitHub UI steps in Step 5. To automate it on the next run, add `admin:repo_hook`:
   ```
-  gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo
+  gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org
   ```
 
 ### Per-flag remediation
@@ -133,23 +133,37 @@ Decision:
 - `FINE_GRAINED_PAT_NOT_SUPPORTED` -> The active credential is a **fine-grained PAT** (prefix `github_pat_`), detected by `scripts/detect-env.py` via `gh.pat_kind`. Fine-grained PATs do not expose OAuth scopes via the `X-OAuth-Scopes` response header and typically lack the `createRepository` and `administration:write` permissions that `/bootstrap` needs (repo creation, branch protection). `/bootstrap` cannot reliably proceed. Create a **classic** PAT instead and re-run:
   ```
   # 1) Create classic PAT with the right scopes
-  open: https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo&description=claude-django-bootstrap
+  #    Scopes explained:
+  #      repo            - create/push to private repos
+  #      workflow        - register backend-ci as a status check
+  #      admin:repo_hook - enable branch protection automatically (Step 5)
+  #      delete_repo     - lets you remove a botched test repo without leaving the CLI
+  #      read:org        - NOT used by /bootstrap operations, but `gh auth login`
+  #                        validates that you have it. Skip if you only use env-var auth.
+  open: https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo,read:org&description=claude-django-bootstrap
 
-  # 2) Authenticate gh with it (interactive) ...
-  gh auth login   # paste the token when prompted
-  #    ... or via env var:
+  # 2) Make gh use the token. EITHER ONE of these is sufficient:
+  #
+  #    A) Env-var path (recommended — no read:org needed):
   export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx   # classic PAT, NOT github_pat_xxx
+  gh auth status   # verify: "Logged in to github.com as <user> (GITHUB_PERSONAL_ACCESS_TOKEN)"
+  #       Do NOT run `gh auth login` after this — gh uses the env var directly.
+  #       `gh auth login` would refuse to overwrite it and that is expected.
+  #
+  #    B) Stored creds path (interactive — requires read:org on the token):
+  unset GITHUB_PERSONAL_ACCESS_TOKEN   # remove the export first (and from ~/.bashrc)
+  gh auth login   # HTTPS -> paste the token; only works when the token has read:org
 
   # 3) Re-run /bootstrap (SessionStart hook will re-detect pat_kind=classic)
   ```
   Do NOT attempt to satisfy the gate by re-authenticating fine-grained again — `pat_kind` is determined from the token prefix and will keep blocking.
-- `NO_GH_SCOPES` -> Refresh the active PAT with `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo` (or create a new PAT with those scopes), then re-run `/bootstrap`. The session hook will re-detect scopes on the next start. (If `pat_kind == "fine-grained"`, the earlier `FINE_GRAINED_PAT_NOT_SUPPORTED` gate fires first.)
+- `NO_GH_SCOPES` -> Refresh the active PAT with `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org` (or create a new PAT with those scopes), then re-run `/bootstrap`. The session hook will re-detect scopes on the next start. (If `pat_kind == "fine-grained"`, the earlier `FINE_GRAINED_PAT_NOT_SUPPORTED` gate fires first.)
 - `UNSUPPORTED_PLATFORM` -> **Hard STOP — no override.** Windows native shells (PowerShell, cmd, Git Bash / MINGW64) are NOT supported. Install WSL2 Ubuntu and run every command (including `gh`, `git`, `python`, `docker compose`, and `claude` itself) from inside WSL2. See ADR `docs/decisions/0005-drop-windows-native-shell.md`. Do NOT offer the user an `AskUserQuestion` "Proceed anyway" branch — there is no documented Windows-native happy path; bind-mount semantics, bash idioms, and Docker behavior all diverge silently.
 - `NO_GH_BIN` -> `gh` is not on PATH in this shell. Install:
   - WSL2 / Linux: `sudo apt update && sudo apt install -y gh` (fallback to the official repo at https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
   - macOS: `brew install gh`.
   - Note: a Windows `gh.exe` is NOT reachable from inside a WSL2 shell.
-- `NO_GH_AUTH` -> Run `gh auth login` (HTTPS, browser). If `GITHUB_TOKEN` is exported, that token IS used by `gh` automatically — `gh auth login` will refuse to store separate creds, and that is **expected behavior, not an error**. Verify with `gh auth status`.
+- `NO_GH_AUTH` -> Two equivalent options. **A)** Env-var path (recommended, no extra scopes needed): `export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx`; verify with `gh auth status` (must report `Logged in to github.com as <user> (GITHUB_PERSONAL_ACCESS_TOKEN)`). Do NOT also run `gh auth login` after this — it would refuse to overwrite the env var, and that is **expected behavior, not an error**. **B)** Stored creds path: `unset GITHUB_PERSONAL_ACCESS_TOKEN` (also remove the export from `~/.bashrc` / `~/.profile`), then `gh auth login` (HTTPS, paste token). This path requires `read:org` scope on the token in addition to `repo`+`workflow`+`admin:repo_hook` — `gh auth login` validates it. The env-var path does not need `read:org` since `/bootstrap` operations (`repo create`, branch protection, PRs) use `repo`+`workflow`+`admin:repo_hook` only.
 - `NO_DOCKER` -> Start **Docker Desktop**. On Windows enable WSL2 integration (Settings -> Resources -> WSL Integration -> enable your distro).
 - `NO_TEMPLATES` -> This folder is missing the claude-django config. Run the Quick start in `README.md` first to copy `.claude/`, `CLAUDE.md`, `templates/` into the CWD.
 
@@ -436,4 +450,4 @@ When `$ARGUMENTS` contains `--dry-run`:
 
 > Pairs with `/doctor` (mode detection / scenario classification) and `/synthesize-brief` (next step after Mode A if briefs are present in `docs/`).
 
-<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap P0+P1+P2+P3 — preflight robustness, scaffolding templates, branch-protection fallback, /handoff + REPO_ALREADY_EXISTS probe) -->
+<!-- Last reviewed/updated: 2026-05-30 (PR: P0-P3 + read:org scope clarification — env-var auth path vs gh auth login path) -->
