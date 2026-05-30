@@ -155,6 +155,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    - Ask the user interactively whether to run `createsuperuser` now.
 
 4. **Initial commit + push** — dispatch `devops`:
+   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all 13 files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` → `.claude/rules/output-language.md` if a non-English language was chosen).
    - `git add -A && git status` (show the user what's staged)
    - `git commit -m "chore: bootstrap project from claude-django"`
    - `git branch -M main && git push -u origin main`
