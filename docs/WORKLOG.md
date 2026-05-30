@@ -1,5 +1,39 @@
 # WORKLOG — claude-django
 
+## 2026-05-30 — Project-scaffolding templates (P1)
+
+Followed P0 with the deferred P1 items so that a derived project is born with the documents the agent pipeline assumes already exist.
+
+**Created in `templates/`:**
+
+- `PROJECT_README.md` — copied to the derived project's root `README.md` (Quick start, Docker commands, link to `CLAUDE.md` + `/doctor`/`/preflight`/`/synthesize-brief`, "where things live" map, staging deploy).
+- `PROJECT.md` — copied to `docs/PROJECT.md`. Skeleton with empty sections (`Project`, `Goal`, `Scope`, `Domain`, `Stakeholders`, `Constraints`, `Assumptions`, `Open questions`, `Glossary`, `References`) — `/synthesize-brief` fills these from anything under `docs/`. Removes the prior failure mode where `ba` ran without a brief.
+- `api_INDEX.md` — copied to `docs/api/INDEX.md`. Required by `.claude/rules/api-docs.md` lifecycle; previously absent → `docs-writer` had no file to update.
+- `WORKLOG.md` — copied to `docs/WORKLOG.md` (replaces the empty `touch`). Seeded with a first "Bootstrapped from claude-django" entry plus a "Next" checklist (verify branch protection, fill `PROJECT.md`, run `/preflight`).
+
+**Substitution tokens:** `{SLUG}`, `{DATE_ISO}`, `{OWNER}` — replaced inline by `devops` during Step 2 (sed or `pathlib.write_text(read_text().replace(...))`). `{TODO}` is intentionally left as a visible placeholder for the user.
+
+**bootstrap.md changes:**
+
+- Step 2 (Mode A): four new `cp` operations + explicit substitution instructions; removed the `touch docs/WORKLOG.md` (template now seeds it).
+- Step 4 cleanup verification: `13 files` → `17 files`, plus a grep check to assert no unresolved tokens leak into the project.
+
+**README.md changes:**
+
+- Templates subsection split into four labeled groups: Infrastructure / Docs seeds / Project scaffolding (P1, new) / Language. Each template now lists its destination path and purpose.
+
+**Plan:** `docs/plans/0003-bootstrap-project-scaffolding-templates.md`.
+
+**Out of scope (deferred):**
+
+- Branch protection 403 fallback when even classic-PAT `gh api PUT` fails.
+- HANDOFF.md placeholder for multi-session derived projects.
+- `lessons.md` initial entry seeding (file already gets copied; first entry can wait).
+
+**Verification:** new templates 4367 / 1548 / 2665 / 1855 bytes; tokens present per file (PROJECT_README: 5, PROJECT: 15, api_INDEX: 1, WORKLOG: 3). `bootstrap.md` grep matches all expected markers; README "Project scaffolding (P1, new)" line in place.
+
+---
+
 ## 2026-05-30 — Bootstrap robustness (P0)
 
 Real-run audit of `/bootstrap` on `carlsberg-ir-data-service` (Windows Git Bash + fine-grained PAT + Cowork) surfaced four systemic preflight bypasses. All four were silent: the bootstrap "succeeded" because the gates never fired.
@@ -19,12 +53,12 @@ Real-run audit of `/bootstrap` on `carlsberg-ir-data-service` (Windows Git Bash 
 
 **Plan:** `docs/plans/0002-bootstrap-robustness.md`.
 
-**Out of scope (deferred to P1):**
+**Out of scope (deferred to P1, now done above):**
 
-- `templates/PROJECT_README.md` for new projects.
-- `docs/api/INDEX.md` and `docs/PROJECT.md` placeholders in bootstrap Step 2.
-- WORKLOG initial entry in derived projects.
-- Branch protection fallback when `gh api PUT` returns 403 even with a classic PAT.
+- ~`templates/PROJECT_README.md` for new projects.~ Done in P1.
+- ~`docs/api/INDEX.md` and `docs/PROJECT.md` placeholders in bootstrap Step 2.~ Done in P1.
+- ~WORKLOG initial entry in derived projects.~ Done in P1.
+- Branch protection fallback when `gh api PUT` returns 403 even with a classic PAT. (Still deferred to P2.)
 
 **Verification:** `python scripts/detect-env.py` AST-parses; markers `FINE_GRAINED_PAT_NOT_SUPPORTED`, `pat_kind`, `Where this runs`, `Never hand-write` present in expected files; total batch ~76 KB across six files; no Edit-on-mount truncations after retrying critical writes via `python pathlib`.
 

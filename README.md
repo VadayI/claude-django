@@ -94,7 +94,15 @@ These are standalone skills, not vendored into the repo — enable them in your 
 
 ### Templates — `templates/`
 
-`docker-compose.yml`, `backend.Dockerfile`, `pyproject.toml` (includes `drf-spectacular` + ruff `FIX`, `D` for Google-style docstrings), `.env.example`, `.github/workflows/backend-ci.yml` (runs ruff + stub gate + OpenAPI drift gate + per-app README gate + pytest), `scripts/check_stubs.sh` (stub gate — fails on unlogged `# STUB:`/`NotImplementedError`), `scripts/check_openapi_drift.sh` (OpenAPI gate — fails if `docs/api/openapi.yml` doesn't match the schema regenerated from code), `scripts/check_app_readmes.sh` (per-app README gate — fails if any `backend/apps/<app>/` lacks `README.md`), `STUBS.md` (copy to `docs/STUBS.md` — the stub ledger), `APP_README.md` (copy to `docs/APP_README.md` — template that `django-developer` copies into each new app) — ready to copy into a new project.
+Infrastructure: `docker-compose.yml`, `backend.Dockerfile`, `pyproject.toml` (includes `drf-spectacular` + ruff `FIX`, `D` for Google-style docstrings), `.env.example`, `.github/workflows/backend-ci.yml` (runs ruff + stub gate + OpenAPI drift gate + per-app README gate + pytest), `scripts/check_stubs.sh` (stub gate — fails on unlogged `# STUB:`/`NotImplementedError`), `scripts/check_openapi_drift.sh` (OpenAPI gate — fails if `docs/api/openapi.yml` doesn't match the schema regenerated from code), `scripts/check_app_readmes.sh` (per-app README gate — fails if any `backend/apps/<app>/` lacks `README.md`).
+
+Docs seeds: `STUBS.md` (copy to `docs/STUBS.md` — the stub ledger), `APP_README.md` (copy to `docs/APP_README.md` — template that `django-developer` copies into each new app), `lessons.md` (copy to `docs/lessons.md` — append-only feedback log), `todo.md` (copy to `docs/todo.md` — cross-session backlog).
+
+Project scaffolding (P1, new): `PROJECT_README.md` (copy to `README.md` of the derived project — Quick start, Docker commands, link to `CLAUDE.md` and `/doctor`/`/preflight`), `PROJECT.md` (copy to `docs/PROJECT.md` — brief skeleton with empty `Project`/`Goal`/`Scope`/`Domain`/`Stakeholders`/`Constraints`/`Glossary`/`Open questions` sections for `/synthesize-brief` or hand-fill), `api_INDEX.md` (copy to `docs/api/INDEX.md` — human endpoint index pointing at OpenAPI as the contract), `WORKLOG.md` (copy to `docs/WORKLOG.md` — seeded with an initial "Bootstrapped from claude-django" entry instead of an empty `touch`).
+
+Language: `output-language.md` (copy to `.claude/rules/output-language.md` when the user picks a non-English working language; `/bootstrap` and `/set-language` substitute `{LANGUAGE_NATIVE}`).
+
+All scaffolding templates use `{SLUG}`, `{DATE_ISO}`, `{OWNER}` substitution tokens that `/bootstrap` Step 2 replaces inline. `{TODO}` tokens are intentionally left as visible placeholders for the user to fill later.
 
 ### Commands (13) — `.claude/commands/`
 

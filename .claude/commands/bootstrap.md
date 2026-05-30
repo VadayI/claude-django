@@ -214,7 +214,12 @@ Run AFTER preflight passes but BEFORE any side-effects.
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent)
      - `templates/.github/workflows/backend-ci.yml` -> `.github/workflows/backend-ci.yml`
      - `templates/docker-compose.yml` -> `docker-compose.yml`
-   - `touch docs/WORKLOG.md`
+     - `templates/PROJECT_README.md` -> `README.md` (project root README — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}` with real values; leave `{TODO}` markers for the user to fill, especially `## License`)
+     - `templates/PROJECT.md` -> `docs/PROJECT.md` (brief skeleton — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}`; leave `{TODO}` markers for `/synthesize-brief` or the user to fill)
+     - `templates/api_INDEX.md` -> `docs/api/INDEX.md` (endpoint index — replace `{SLUG}`)
+     - `templates/WORKLOG.md` -> `docs/WORKLOG.md` (seed with first entry — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}`)
+   - Substitution tokens (`{SLUG}`, `{DATE_ISO}`, `{OWNER}`) are replaced inline by `devops`; `{TODO}` remains as a visible placeholder so the user knows what to fill later. Do this with a simple `sed -i` chain or Python `pathlib.write_text(read_text().replace(...))` — do NOT leave any of `{SLUG}` / `{DATE_ISO}` / `{OWNER}` in the destination files.
+   - (No `touch docs/WORKLOG.md` — the WORKLOG template above already seeds it with an initial bootstrap entry.)
 
 3. **Stand up containers + Django** — dispatch `devops`:
    - `docker compose up -d`
@@ -230,7 +235,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    - Ask the user interactively whether to run `createsuperuser` now.
 
 4. **Initial commit + push + register CI** — dispatch `devops`:
-   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all 13 files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy).
+   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all 17 files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the four new scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
    - `git add -A && git status` (show the user what is staged)
    - `git commit -m "chore: bootstrap project from claude-django"`
    - `git branch -M main`
@@ -355,4 +360,4 @@ When `$ARGUMENTS` contains `--dry-run`:
 
 > Pairs with `/doctor` (mode detection / scenario classification) and `/synthesize-brief` (next step after Mode A if briefs are present in `docs/`).
 
-<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap robustness — fine-grained PAT, platform hard-STOP, env-detect non-fabrication) -->
+<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap robustness P0 + scaffolding templates P1 — PROJECT_README/PROJECT/api_INDEX/WORKLOG seeded) -->
