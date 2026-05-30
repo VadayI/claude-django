@@ -26,6 +26,10 @@ P0/P1/P2/P3 were not derived from re-reading `bootstrap.md` against the project 
 
 `Edit` and `Write` on `D:\Dev\claude-django\...` silently truncate larger writes (observed on README.md and detect-env.py during P0; the file ended mid-sentence with `wc -c` reporting a believable-but-wrong size). Mitigation that worked: for any file > ~5 KB or any patch chain, fetch the original from `git show HEAD:<path>`, apply patches via `python pathlib.Path(...).write_text(...)`, then verify with `wc -c` AND `grep` for the new markers AND `tail -c` for the file's actual ending. Small targeted Edits still work but should be verified the same way. Saved in user memory as `feedback_cowork_write_unreliable_on_mount.md` so future sessions don't re-learn this.
 
+## 2026-05-30 — Recommended scopes != minimum scopes for `gh auth login`
+
+We told users to create a classic PAT at `?scopes=repo,workflow,admin:repo_hook,delete_repo` — exactly the scopes `/bootstrap` operations need (repo creation, branch protection, etc.). All correct from the API perspective. Then a user followed the docs, made the PAT, and ran `gh auth login` to "make it stick" — and the CLI rejected the token with `missing required scope 'read:org'`. Turns out `gh auth login` validates a wider scope set than the operations it grants access to; `read:org` is its minimum for stored creds, even though `/bootstrap` itself never reads org data. Fixed in commit `fc975bb` by splitting the doc into two auth paths (env-var: no `read:org`; stored creds: requires `read:org`). **Lesson:** when we recommend OAuth scopes for a tool, distinguish "scopes the agent operations need" from "scopes the CLI requires for its own auth flow" — they are not the same set, and the gap is invisible until someone trips on it.
+
 <!-- New entries appended below. Newest at the bottom. -->
 
 <!-- Last reviewed/updated: 2026-05-30 (session: P0+P1+P2+P3 — first three project lessons) -->

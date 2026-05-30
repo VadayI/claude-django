@@ -6,17 +6,19 @@
 
 ## Current state
 
-On `main`, working tree clean, in sync with `origin/main`. Last commit: `b565a68 feat(bootstrap): /handoff command + repo conflict probe + auditor reads HANDOFF`. Four batches (P0/P1/P2/P3) closing the `/bootstrap` robustness backlog landed in this session — three separate commits in `main`:
+On `main`, working tree clean, in sync with `origin/main`. Last commit: `fc975bb docs(bootstrap): add read:org to PAT URLs + clarify env-var vs gh-auth-login paths`. The four P0-P3 batches AND a follow-up `read:org` hotfix all landed in this session — five separate commits in `main`:
 
 - `8cdb6a6` — P0 (preflight robustness) + P1 (scaffolding templates) merged
 - `e03c0c3` — P2 (HANDOFF template, lessons seed, branch protection 403 fallback)
 - `b565a68` — P3 (`/handoff` command, `REPO_ALREADY_EXISTS` probe, auditor reads HANDOFF)
+- `36dd18b` — session-end snapshot (docs/HANDOFF.md + docs/lessons.md)
+- `fc975bb` — `read:org` scope clarification + env-var vs `gh auth login` split
 
-`docs/WORKLOG.md` carries the full per-batch chronicle. `docs/plans/0002-0005` carry the matching plans.
+`docs/WORKLOG.md` carries the full per-batch chronicle. `docs/plans/0002-0005` carry the matching plans (no plan for the `read:org` hotfix — it was a direct doc fix from a real-run gap).
 
 ## Last finished
 
-- Commit `b565a68` (P3 batch) — pushed to `main` on 2026-05-30, 4 batches done in one sitting (P0+P1+P2+P3).
+- Commit `fc975bb` (read:org hotfix) — pushed to `main` on 2026-05-30. The carlsberg real-run had hit `gh auth login: missing required scope 'read:org'` after creating a classic PAT via our recommended URL; docs now distinguish the env-var auth path (no `read:org` needed) from the stored-creds path (requires `read:org`).
 
 ## In progress
 
@@ -44,6 +46,7 @@ Expected: 0 manual interventions except the one-time PAT login (must be **classi
 - [ ] Should `/handoff --append` be implemented as P4 (snapshot history) or is the overwrite model good enough long-term?
 - [ ] Worth front-loading a classic-PAT capability probe (`gh api /user --jq '.permissions'`) on top of `pat_kind` detection, or is `pat_kind == "classic"` already a sufficient predictor?
 - [ ] `templates/output-language.md` substitution token `{LANGUAGE_NATIVE}` is the only one outside the `{SLUG}/{DATE_ISO}/{OWNER}/{TODO}` convention — keep it for backward compat or unify?
+- [ ] Are there other `gh` subcommands (besides `auth login`) that silently require scopes beyond what `/bootstrap` operations actually use? The `read:org` discovery suggests there might be more — worth a `gh` surface audit before someone else hits one.
 
 ## Environment notes
 
