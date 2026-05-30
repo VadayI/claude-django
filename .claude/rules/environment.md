@@ -30,6 +30,19 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands. Windows nati
 | `context7` MCP env | `CONTEXT7_API_KEY` set | `[ -n "$CONTEXT7_API_KEY" ]` (never print the value) |
 | GitHub auth | `gh` authenticated (via env token OR stored creds — either is fine; if `GITHUB_TOKEN`/`GITHUB_PERSONAL_ACCESS_TOKEN` is set, `gh auth login` will refuse to store separate creds and that is EXPECTED) | `gh auth status` |
 | `gh` PAT scopes | `repo` + `workflow` REQUIRED for `/bootstrap` Mode A; `admin:repo_hook` recommended for auto branch protection | `python -c "import json,pathlib; print(json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())['gh']['scopes'])"`. Missing scopes → `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo` |
+| `gh` PAT kind | **Classic** PAT (`ghp_...`) REQUIRED for `/bootstrap` Mode A. Fine-grained PATs (`github_pat_...`) lack `createRepository` / `administration:write` and don't expose OAuth scopes via response headers; `pat_kind == "fine-grained"` is a hard blocker | `python -c "import json,pathlib; print(json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())['gh']['pat_kind'])"` — must print `classic`. If `fine-grained`: create a classic PAT at `https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo` and re-authenticate (`gh auth login` or `export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx`) |
+
+### env-detect.json integrity (hard rule)
+
+`.claude/memory/env-detect.json` is the source of truth for `platform_supported`, `gh.pat_kind`, `gh.scopes`, and tool availability. It is rewritten by `scripts/detect-env.py` via the `SessionStart` hook on every Claude Code CLI session.
+
+**Never hand-write or "patch" this file** to skip past a blocker. The file's fields drive `/bootstrap` and `/doctor` hard gates (`UNSUPPORTED_PLATFORM`, `FINE_GRAINED_PAT_NOT_SUPPORTED`, `NO_GH_SCOPES`); fabricated values silently bypass safety checks. If the file is missing:
+
+1. Run `python scripts/detect-env.py` manually and verify it writes the file honestly.
+2. If the script fails, fix the underlying problem (install Python 3.10+ / fix PATH) — do NOT invent a JSON document with happy-path values.
+3. If you cannot run a SessionStart hook in your environment, this config is the wrong tool for that environment — see `README.md` "Where this runs".
+
+This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`. An agent that fabricates `env-detect.json` to get past preflight has not satisfied preflight — it has just hidden a real failure.
 
 ## Scope 3 — Project state
 
@@ -62,4 +75,4 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands. Windows nati
 - **Ask explicitly, never silently:** anything that writes secrets, force operations, deleting files, enabling branch protection (account-level), pushing. For unsetting a leaked token: `unset GITHUB_TOKEN` for the current shell, plus removing the export line from `~/.bashrc` / `~/.profile` (or `~/.zshrc`).
 - **Forbidden in `/doctor`:** committing, `git push`, pushing to `main`, printing secret values, editing application source code.
 
-<!-- Last reviewed/updated: 2026-05-29 -->
+<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap robustness — pat_kind row + env-detect non-fabrication rule) -->

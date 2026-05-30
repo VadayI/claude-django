@@ -50,6 +50,8 @@ else:
 
 ## Hard preflight (refuse to start if any blocker is true)
 
+> **Runtime policy.** `/bootstrap` is supported only in **Claude Code CLI** running on Linux / macOS / WSL2 (see `README.md` "Where this runs"). In any other environment the `SessionStart` hook does not run and `.claude/memory/env-detect.json` does not exist. **Do NOT hand-write or "fake" `env-detect.json` to get past this section** — its fields drive three hard gates (`UNSUPPORTED_PLATFORM`, `NO_GH_SCOPES`, `FINE_GRAINED_PAT_NOT_SUPPORTED`); fabricated values silently bypass safety checks and produce a bootstrap that looks fine while having unverified PAT permissions and a mis-detected shell. If the file is missing, the only allowed action is to run `python scripts/detect-env.py` manually once and let it write the file honestly; if that itself fails, STOP with `NO_PYTHON` and ask the user to install Python 3.10+.
+
 Read `.claude/memory/env-detect.json` first (the `SessionStart` hook keeps it fresh).
 
 ### Blockers (STOP if any are present)
@@ -61,6 +63,8 @@ env = json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())
 flags = []
 if not env.get('platform_supported', True):
     flags.append('UNSUPPORTED_PLATFORM')
+if env.get('gh', {}).get('pat_kind') == 'fine-grained':
+    flags.append('FINE_GRAINED_PAT_NOT_SUPPORTED')
 if not env['tools'].get('gh'):     flags.append('NO_GH_BIN')
 if not env['tools'].get('docker'): flags.append('NO_DOCKER')
 if not (pathlib.Path('.claude').is_dir() and pathlib.Path('CLAUDE.md').is_file() and pathlib.Path('templates').is_dir()):
@@ -74,9 +78,13 @@ Then check the live system (not via Python):
 - `gh auth status` succeeds -> `NO_GH_AUTH` if it fails.
 - `docker info` succeeds -> `NO_DOCKER` if it fails (already flagged above via PATH, but verify the daemon actually answers).
 
-> If `.claude/memory/env-detect.json` is missing, the `SessionStart` hook failed — almost always because `python` is not on PATH. **Python 3.10+ is a hard requirement** of this project. STOP with `NO_PYTHON` and install instructions:
-> - Ubuntu/Debian (WSL2): `sudo apt install -y python-is-python3` (so `python` resolves to `python3`)
-> - macOS: `brew install python@3.13`
+> If `.claude/memory/env-detect.json` is missing, **STOP**. Two possible causes:
+> 1. The `SessionStart` hook failed because `python` is not on PATH. **Python 3.10+ is a hard requirement.** Install:
+>    - Ubuntu/Debian (WSL2): `sudo apt install -y python-is-python3` (so `python` resolves to `python3`)
+>    - macOS: `brew install python@3.13`
+> 2. You are NOT inside Claude Code CLI (e.g. running from Cowork, Claude API/SDK, or a fresh shell where hooks haven't fired). In that case run `python scripts/detect-env.py` manually once and re-invoke `/bootstrap`. If you cannot run a SessionStart hook in your environment, this config is the wrong tool for that environment — see `README.md` "Where this runs".
+>
+> **Never hand-write `env-detect.json`** to skip past this. Its fields drive hard gates; fabricated values silently bypass safety checks. If the script cannot run, the answer is to fix Python / the shell, not to invent the file.
 
 Note: `env.get('platform_supported', True)` — graceful fallback. In PR #1 the field does not yet exist in `env-detect.json`; defaulting to `True` preserves current behaviour. PR #2 adds the field and Windows-native will start failing this probe with `UNSUPPORTED_PLATFORM`.
 
@@ -121,8 +129,21 @@ Decision:
 ### Per-flag remediation
 
 - `NO_PYTHON` (only when the hook itself failed) -> Install Python 3.10+ and reopen Claude. This is the only flag that cannot be auto-diagnosed from `env-detect.json` because the file does not exist.
-- `NO_GH_SCOPES` -> Refresh the active PAT with `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo` (or create a new PAT with those scopes), then re-run `/bootstrap`. The session hook will re-detect scopes on the next start.
-- `UNSUPPORTED_PLATFORM` -> Windows native PowerShell/cmd is not supported. Install WSL2 Ubuntu and run every command (including `gh`, `git`, `python`, `docker compose`) from inside it. See ADR `docs/decisions/0005-drop-windows-native-shell.md`.
+- `FINE_GRAINED_PAT_NOT_SUPPORTED` -> The active credential is a **fine-grained PAT** (prefix `github_pat_`), detected by `scripts/detect-env.py` via `gh.pat_kind`. Fine-grained PATs do not expose OAuth scopes via the `X-OAuth-Scopes` response header and typically lack the `createRepository` and `administration:write` permissions that `/bootstrap` needs (repo creation, branch protection). `/bootstrap` cannot reliably proceed. Create a **classic** PAT instead and re-run:
+  ```
+  # 1) Create classic PAT with the right scopes
+  open: https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo&description=claude-django-bootstrap
+
+  # 2) Authenticate gh with it (interactive) ...
+  gh auth login   # paste the token when prompted
+  #    ... or via env var:
+  export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx   # classic PAT, NOT github_pat_xxx
+
+  # 3) Re-run /bootstrap (SessionStart hook will re-detect pat_kind=classic)
+  ```
+  Do NOT attempt to satisfy the gate by re-authenticating fine-grained again — `pat_kind` is determined from the token prefix and will keep blocking.
+- `NO_GH_SCOPES` -> Refresh the active PAT with `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo` (or create a new PAT with those scopes), then re-run `/bootstrap`. The session hook will re-detect scopes on the next start. (If `pat_kind == "fine-grained"`, the earlier `FINE_GRAINED_PAT_NOT_SUPPORTED` gate fires first.)
+- `UNSUPPORTED_PLATFORM` -> **Hard STOP — no override.** Windows native shells (PowerShell, cmd, Git Bash / MINGW64) are NOT supported. Install WSL2 Ubuntu and run every command (including `gh`, `git`, `python`, `docker compose`, and `claude` itself) from inside WSL2. See ADR `docs/decisions/0005-drop-windows-native-shell.md`. Do NOT offer the user an `AskUserQuestion` "Proceed anyway" branch — there is no documented Windows-native happy path; bind-mount semantics, bash idioms, and Docker behavior all diverge silently.
 - `NO_GH_BIN` -> `gh` is not on PATH in this shell. Install:
   - WSL2 / Linux: `sudo apt update && sudo apt install -y gh` (fallback to the official repo at https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
   - macOS: `brew install gh`.
@@ -334,4 +355,4 @@ When `$ARGUMENTS` contains `--dry-run`:
 
 > Pairs with `/doctor` (mode detection / scenario classification) and `/synthesize-brief` (next step after Mode A if briefs are present in `docs/`).
 
-<!-- Last reviewed/updated: 2026-05-30 -->
+<!-- Last reviewed/updated: 2026-05-30 (PR: bootstrap robustness — fine-grained PAT, platform hard-STOP, env-detect non-fabrication) -->

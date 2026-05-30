@@ -8,6 +8,26 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 ---
 
+## Where this runs (supported runtime)
+
+This config is designed for **Claude Code CLI** (the terminal tool, `claude` command) running inside one of:
+
+- **WSL2 Ubuntu** on Windows (mandatory on Windows — see ADR `docs/decisions/0005-drop-windows-native-shell.md`),
+- **Linux** native (any modern distro),
+- **macOS** native (bash or zsh).
+
+**Not supported:**
+
+- **Cowork** (the Claude desktop app) — its sandbox has no `SessionStart` hooks, no `/plugin` marketplace command, and only routes file/bash through MCP tools. Several `/bootstrap` gates depend on the SessionStart hook writing `.claude/memory/env-detect.json` honestly; without it, hard preflight cannot fire.
+- **Windows native shells** (PowerShell, cmd, Git Bash / MINGW64). `detect-env.py` reports `platform_supported: false` and `/bootstrap` STOPs with `UNSUPPORTED_PLATFORM`. WSL2 is required so the bash idioms used by every agent (`rm -rf`, `cp -r`, `mkdir -p`, `&&` chains, `/tmp/...`) work, and so Docker bind-mounts behave correctly.
+- **Claude API / SDK** standalone — there is no SessionStart hook lifecycle there; agents won't be loaded from `.claude/agents/`.
+
+Why the strictness: `/bootstrap` and `/doctor` rely on `.claude/memory/env-detect.json` being written by the `SessionStart` hook (configured in `.claude/settings.json` and registered automatically by Claude Code CLI). The file drives three hard gates (`UNSUPPORTED_PLATFORM`, `NO_GH_SCOPES`, `NO_PYTHON`). In Cowork / Windows-native there is no hook, the file isn't created, and the gates are bypassed silently — the bootstrap looks like it succeeded but the project ends up with mis-detected platform and unverified PAT permissions.
+
+If you must work from Cowork or another environment, use it as an editor / chat companion **after** running `/bootstrap`, `/doctor`, `/synthesize-brief`, and `/preflight` from Claude Code CLI.
+
+---
+
 ## Process philosophy
 
 1. **API-first.** The backend REST API is the primary contract: design it, then build it test-first (models → serializers → views → routes → permissions → tests → docs). Everything else hangs off the contract.

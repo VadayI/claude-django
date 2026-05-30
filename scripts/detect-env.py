@@ -12,7 +12,7 @@ itself fails and the user is told to install Python 3.10+.
 Output schema (``.claude/memory/env-detect.json``)::
 
     {
-      "schema_version": 2,
+      "schema_version": 3,
       "detected_at": "<ISO 8601 UTC>",
       "platform": "windows" | "linux" | "darwin",
       "platform_release": "<uname -r equivalent>",
@@ -22,9 +22,20 @@ Output schema (``.claude/memory/env-detect.json``)::
       "python": {"version": "...", "executable": "..."},
       "tools": {"git": bool, "gh": bool, "docker": bool, "wsl": bool, ...},
       "tool_versions": {"git": "git version 2.43.0", "gh": "gh version 2.40.1", ...},
-      "gh": {"available": bool, "scopes": list[str], "has_repo_scope": bool, ...},
+      "gh": {
+        "available": bool, "scopes": list[str], "has_repo_scope": bool, ...,
+        "pat_kind": "classic" | "fine-grained" | "unknown"
+      },
       "cwd": "<absolute path>"
     }
+
+The ``pat_kind`` field is derived from the **prefix** of the token returned by
+``gh auth token`` -- never the value itself. Fine-grained PATs (prefix
+``github_pat_``) do not expose OAuth scopes via response headers, so the
+existing ``has_*_scope`` probes always report ``false`` for them; consumers
+(``/bootstrap``, ``/doctor``) must treat ``pat_kind == "fine-grained"`` as a
+hard blocker and ask the user for a classic PAT (``ghp_...``) with ``repo`` +
+``workflow`` scopes.
 
 ``platform_supported`` is ``true`` on Linux / macOS / WSL2 and ``false`` on
 Windows-native shells (PowerShell / cmd). Windows-native shells are NOT
@@ -82,6 +93,46 @@ def _tool_version(cmd: list[str]) -> str | None:
         return None
 
 
+def _gh_pat_kind() -> str:
+    """Return ``"classic"`` / ``"fine-grained"`` / ``"unknown"`` for the active credential.
+
+    Determined from the prefix of ``gh auth token`` (per GitHub token-format
+    conventions). The token value itself is NEVER logged or returned -- only
+    the prefix is matched and discarded. Used by ``/bootstrap`` and
+    ``/doctor`` to hard-block fine-grained PATs, which don't expose OAuth
+    scopes via response headers and lack ``createRepository`` /
+    ``administration:write`` permissions for the operations the bootstrap
+    automation needs.
+
+    Prefix table (GitHub docs):
+        - ``ghp_``         -> classic PAT
+        - ``gho_``         -> OAuth user-to-server (carries scopes; treated as classic)
+        - ``ghu_``         -> GitHub App user-to-server (treated as classic)
+        - ``ghs_``         -> GitHub App server-to-server (treated as classic)
+        - ``github_pat_``  -> fine-grained PAT
+        - anything else / missing token -> ``"unknown"``
+    """
+    if not shutil.which("gh"):
+        return "unknown"
+    try:
+        r = subprocess.run(
+            ["gh", "auth", "token"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        token = (r.stdout or "").strip()
+        if not token:
+            return "unknown"
+        if token.startswith("github_pat_"):
+            return "fine-grained"
+        if token.startswith(("ghp_", "gho_", "ghu_", "ghs_")):
+            return "classic"
+        return "unknown"
+    except Exception:
+        return "unknown"
+
+
 def _gh_scopes() -> list[str]:
     """Return the OAuth scopes attached to the active ``gh`` credential.
 
@@ -116,8 +167,9 @@ def main() -> int:
         or is_wsl2()
     )
     scopes = _gh_scopes()
+    pat_kind = _gh_pat_kind()
     info = {
-        "schema_version": 2,
+        "schema_version": 3,
         "detected_at": datetime.now(timezone.utc).isoformat(),
         "platform": platform.system().lower(),  # 'windows' | 'linux' | 'darwin'
         "platform_release": platform.release(),
@@ -149,6 +201,7 @@ def main() -> int:
             "has_repo_scope": "repo" in scopes,
             "has_workflow_scope": "workflow" in scopes,
             "has_admin_scope": any(s.startswith("admin:") for s in scopes),
+            "pat_kind": pat_kind,
         },
         "cwd": str(pathlib.Path.cwd()),
     }
