@@ -21,6 +21,8 @@ Output schema (``.claude/memory/env-detect.json``)::
       "shell": "bash" | "zsh" | "unknown",
       "python": {"version": "...", "executable": "..."},
       "tools": {"git": bool, "gh": bool, "docker": bool, "wsl": bool, ...},
+      "tool_versions": {"git": "git version 2.43.0", "gh": "gh version 2.40.1", ...},
+      "gh": {"available": bool, "scopes": list[str], "has_repo_scope": bool, ...},
       "cwd": "<absolute path>"
     }
 
@@ -40,6 +42,7 @@ import os
 import pathlib
 import platform
 import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 
@@ -64,12 +67,55 @@ def is_wsl2() -> bool:
         return False
 
 
+def _tool_version(cmd: list[str]) -> str | None:
+    """Return the first line of ``cmd --version`` output, or ``None`` on failure.
+
+    Used by the SessionStart hook to record exact tool versions in
+    ``env-detect.json`` so agents can detect outdated tooling without re-shelling
+    out. Short timeout because every probe runs on every session start.
+    """
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        out = (r.stdout or r.stderr).strip()
+        return out.splitlines()[0] if out else None
+    except Exception:
+        return None
+
+
+def _gh_scopes() -> list[str]:
+    """Return the OAuth scopes attached to the active ``gh`` credential.
+
+    Parses the ``X-OAuth-Scopes`` response header from ``gh api /user --include``.
+    Returns an empty list if ``gh`` is not on PATH or the user is not
+    authenticated. Used by ``/bootstrap`` and ``/doctor`` to verify that the
+    active PAT carries ``repo``, ``workflow``, and ``admin:repo_hook`` before
+    attempting automated repo creation and branch protection.
+    """
+    if not shutil.which("gh"):
+        return []
+    try:
+        r = subprocess.run(
+            ["gh", "api", "/user", "--include"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        for line in r.stderr.splitlines() + r.stdout.splitlines():
+            if line.lower().startswith("x-oauth-scopes:"):
+                _, _, scopes = line.partition(":")
+                return [s.strip() for s in scopes.split(",") if s.strip()]
+    except Exception:
+        pass
+    return []
+
+
 def main() -> int:
     """Detect the environment and write ``.claude/memory/env-detect.json``."""
     platform_supported = (
         platform.system() in ("Linux", "Darwin")
         or is_wsl2()
     )
+    scopes = _gh_scopes()
     info = {
         "schema_version": 2,
         "detected_at": datetime.now(timezone.utc).isoformat(),
@@ -89,6 +135,20 @@ def main() -> int:
             "wsl": shutil.which("wsl") is not None,
             "node": shutil.which("node") is not None,
             "npm": shutil.which("npm") is not None,
+        },
+        "tool_versions": {
+            "git": _tool_version(["git", "--version"]),
+            "gh": _tool_version(["gh", "--version"]),
+            "docker": _tool_version(["docker", "--version"]),
+            "node": _tool_version(["node", "--version"]),
+            "python": _tool_version([sys.executable, "--version"]),
+        },
+        "gh": {
+            "available": shutil.which("gh") is not None,
+            "scopes": scopes,
+            "has_repo_scope": "repo" in scopes,
+            "has_workflow_scope": "workflow" in scopes,
+            "has_admin_scope": any(s.startswith("admin:") for s in scopes),
         },
         "cwd": str(pathlib.Path.cwd()),
     }
