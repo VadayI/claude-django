@@ -29,14 +29,16 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands. Windows nati
 | `github` MCP env | `GITHUB_PERSONAL_ACCESS_TOKEN` set | `[ -n "$GITHUB_PERSONAL_ACCESS_TOKEN" ]` (never print the value) |
 | `context7` MCP env | `CONTEXT7_API_KEY` set | `[ -n "$CONTEXT7_API_KEY" ]` (never print the value) |
 | GitHub auth | `gh` authenticated (via env token OR stored creds — either is fine; if `GITHUB_TOKEN`/`GITHUB_PERSONAL_ACCESS_TOKEN` is set, `gh auth login` will refuse to store separate creds and that is EXPECTED) | `gh auth status` |
+| `gh` PAT scopes | `repo` + `workflow` REQUIRED for `/bootstrap` Mode A; `admin:repo_hook` recommended for auto branch protection | `python -c "import json,pathlib; print(json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())['gh']['scopes'])"`. Missing scopes → `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo` |
 
 ## Scope 3 — Project state
 
 | Requirement | Expected | Check |
 |---|---|---|
 | Skeleton | `backend/`, `docs/api/`, `docs/decisions/`, `docs/plans/`, `.claude/memory/` exist | `test -d <dir>` |
-| Config files | `CLAUDE.md`, `.claude/`, `docker-compose.yml`, `.env` present | `test -f <file>` |
-| `.env` | exists (copied from `.env.example`); secrets filled | `test -f .env` (never print contents) |
+| Config files | `CLAUDE.md`, `.claude/`, `docker-compose.yml`, `.env.example` present (committed) | `test -f <file>` |
+| `.env.example` | committed canonical key list; new clones use it to seed `.env` | `test -f .env.example` |
+| `.env` | local-only (gitignored), copied from `.env.example`; secrets filled | `test -f .env` (never print contents). Missing → `cp .env.example .env && $EDITOR .env` |
 | Services | `postgres` + `backend` up and healthy | `docker compose ps` |
 | Migrations | applied (no unapplied) | `docker compose exec -T backend python manage.py showmigrations --plan` — output should not contain `[ ]` |
 | Tests | pytest green | `docker compose exec -T backend pytest -q` |
