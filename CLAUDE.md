@@ -36,7 +36,7 @@ You DO:
 
 ## Claude-specific behavior
 
-- Use the available Skills for Django, DRF, pytest/TDD, PostgreSQL, React, Docker, CI.
+- Use the available Skills for Django, DRF, pytest/TDD, PostgreSQL, Docker, CI.
 - If a Skill applies — prefer it over repeating rules here.
 - **Read `.claude/memory/env-detect.json` once per session** (it is rewritten by the `SessionStart` hook calling `scripts/detect-env.py`). Use its `platform_supported` / `shell` / `is_wsl2` fields to pick shell-appropriate syntax when dispatching `Bash` calls and when instructing agents that emit commands. On Windows native (no WSL2), `platform_supported: false` — STOP and instruct the user to install WSL2. PowerShell/cmd are not supported (see `docs/decisions/0005-drop-windows-native-shell.md`). Bash idioms (`rm -rf`, `cp -r`, `mkdir -p`, `&&` chains, `/tmp/...`) work everywhere we operate. Python is a hard project requirement — if `env-detect.json` is missing, the SessionStart hook failed; the user must install Python 3.10+.
 

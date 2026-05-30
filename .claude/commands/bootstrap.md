@@ -134,6 +134,8 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/scripts/check_app_readmes.sh` -> `scripts/` (+ chmod +x)
      - `templates/STUBS.md` -> `docs/STUBS.md`
      - `templates/APP_README.md` -> `docs/APP_README.md` (template that `django-developer` copies into each new app folder)
+     - `templates/lessons.md` -> `docs/lessons.md` (append-only feedback log; maintained by `docs-writer` at `/wrap-up`)
+     - `templates/todo.md` -> `docs/todo.md` (cross-session backlog; read by `auditor` at `/audit`)
      - `templates/.env.example` -> `.env` (placeholders; ask user for real secrets at the end, do not invent)
      - `templates/.github/workflows/backend-ci.yml` -> `.github/workflows/backend-ci.yml`
      - `templates/docker-compose.yml` -> `docker-compose.yml`

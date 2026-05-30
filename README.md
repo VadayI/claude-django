@@ -1,4 +1,4 @@
-# Claude Code configuration for Django + React projects
+# Claude Code configuration for Django REST Framework projects
 
 A ready-made Claude Code configuration for **Django REST Framework** backend projects with **Test-Driven Development** discipline, an **API-first** process, **mandatory OpenAPI documentation** (drf-spectacular) locked by a CI drift gate, and work done **exclusively through Pull Requests**. A real production frontend, if needed, lives in a separate repository. This config turns Claude Code into a development team: an orchestrator delegates tasks to specialized agents through a clear pipeline.
 
@@ -62,10 +62,14 @@ Review & strategy: `code-reviewer`, `security-reviewer`, `playwright-e2e`, `test
 
 #### Recommended external skills (enable per machine)
 
-These are standalone Anthropic skills, not vendored into the repo — enable them in your environment (Cowork → "Add", or `/plugin`/skills install) rather than copying their content here:
+These are standalone skills, not vendored into the repo — enable them in your environment (Cowork → "Add", or `/plugin`/skills install) rather than copying their content here:
 
+- `brainstorming` (Superpowers) — structured ideation for ambiguous tasks. Used during Plan Mode by the orchestrator and `ba` / `api-architect` before locking the contract. Highly recommended.
+- `plan-writing` (Superpowers) — disciplined plan format (scope · sub-tasks · affected files · risks · open questions). Pairs with the Plan Mode rule in `workflow.md`. Highly recommended.
 - `mcp-builder` — building MCP servers (Python/FastMCP or Node SDK). Useful when extending `.mcp.json` with a project-specific server.
-- `web-artifacts-builder` — elaborate React/Tailwind/shadcn HTML artifacts. Optional — the project's Vite mini-client is intentionally simple.
+- `web-artifacts-builder` — elaborate React/Tailwind/shadcn HTML artifacts. Optional — this repo is backend-only; the interactive API client is Swagger UI / Redoc (drf-spectacular), not a hand-rolled frontend.
+
+> Superpowers marketplace is already enabled via `.claude/settings.json` (`enabledPlugins.superpowers@superpowers-marketplace`), so `brainstorming` and `plan-writing` are available without extra setup — just confirm with `/plugin` if they show as installed.
 
 ### Templates — `templates/`
 
