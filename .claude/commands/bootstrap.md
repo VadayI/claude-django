@@ -80,9 +80,48 @@ Then check the live system (not via Python):
 
 Note: `env.get('platform_supported', True)` — graceful fallback. In PR #1 the field does not yet exist in `env-detect.json`; defaulting to `True` preserves current behaviour. PR #2 adds the field and Windows-native will start failing this probe with `UNSUPPORTED_PLATFORM`.
 
+### Hard preflight — GitHub PAT scopes (front-loaded)
+
+`/bootstrap` Mode A automates `gh repo create`, the initial `push`, the
+`backend-ci` status-check registration, and (optionally) `main` branch
+protection. All of these need specific PAT scopes. Check **before** doing
+anything destructive so the user is not asked to refresh credentials in the
+middle of a bootstrap.
+
+```bash
+ENV_FILE=.claude/memory/env-detect.json
+SCOPES=$(python -c "import json,pathlib; print(','.join(json.loads(pathlib.Path('$ENV_FILE').read_text()).get('gh',{}).get('scopes',[])))")
+HAS_REPO=$(python -c "import json,pathlib; print(json.loads(pathlib.Path('$ENV_FILE').read_text()).get('gh',{}).get('has_repo_scope',False))")
+HAS_WORKFLOW=$(python -c "import json,pathlib; print(json.loads(pathlib.Path('$ENV_FILE').read_text()).get('gh',{}).get('has_workflow_scope',False))")
+HAS_ADMIN=$(python -c "import json,pathlib; print(json.loads(pathlib.Path('$ENV_FILE').read_text()).get('gh',{}).get('has_admin_scope',False))")
+echo "scopes=$SCOPES repo=$HAS_REPO workflow=$HAS_WORKFLOW admin=$HAS_ADMIN"
+```
+
+Decision:
+
+- If `HAS_REPO != True` OR `HAS_WORKFLOW != True` -> **STOP** with `NO_GH_SCOPES`. Print:
+  ```
+  PAT is missing required scopes. Current: <SCOPES>.
+  Required: repo, workflow. Recommended: admin:repo_hook (auto branch protection).
+
+  Two ways forward:
+   A) Refresh the active PAT (recommended, fastest):
+        gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo
+      Then re-run /bootstrap.
+
+   B) Create a new PAT with the right scopes:
+        https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo&description=claude-django-bootstrap
+      Then export GITHUB_PERSONAL_ACCESS_TOKEN=<token> and re-run /bootstrap.
+  ```
+- If `HAS_ADMIN != True` -> **WARN** (not a blocker): branch protection will fall back to manual GitHub UI steps in Step 5. To automate it on the next run, add `admin:repo_hook`:
+  ```
+  gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo
+  ```
+
 ### Per-flag remediation
 
 - `NO_PYTHON` (only when the hook itself failed) -> Install Python 3.10+ and reopen Claude. This is the only flag that cannot be auto-diagnosed from `env-detect.json` because the file does not exist.
+- `NO_GH_SCOPES` -> Refresh the active PAT with `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo` (or create a new PAT with those scopes), then re-run `/bootstrap`. The session hook will re-detect scopes on the next start.
 - `UNSUPPORTED_PLATFORM` -> Windows native PowerShell/cmd is not supported. Install WSL2 Ubuntu and run every command (including `gh`, `git`, `python`, `docker compose`) from inside it. See ADR `docs/decisions/0005-drop-windows-native-shell.md`.
 - `NO_GH_BIN` -> `gh` is not on PATH in this shell. Install:
   - WSL2 / Linux: `sudo apt update && sudo apt install -y gh` (fallback to the official repo at https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
@@ -119,10 +158,23 @@ Run AFTER preflight passes but BEFORE any side-effects.
 
 ## Mode A — fresh start (delegate; never edit application source code yourself)
 
-1. **GitHub repo** — confirm or create. If no remote yet:
+1. **GitHub repo** — confirm or create. Idempotent guard for re-runs (if `origin`
+   was already added by an earlier aborted attempt):
    ```bash
-   gh repo create <slug> --private --source=. --remote=origin
+   if git remote get-url origin >/dev/null 2>&1; then
+     echo "i origin already exists, will push to existing remote at Step 4"
+   else
+     gh repo create "$SLUG" --private --source=. --remote=origin
+   fi
    ```
+   Do NOT pass `--push` here — the first push happens in Step 4 after the
+   skeleton is in place. Pushing an empty repo confuses Step 5 (branch
+   protection has no commits to protect).
+
+   ### ⏸ Checkpoint — Resume from this step
+
+   If you stop here, re-run `/bootstrap` — the guard above is idempotent and
+   will pick up the existing `origin` without recreating the repo.
 
 2. **Skeleton** — dispatch `devops` (`subagent_type: "devops"`) to:
    - `mkdir -p backend docs/api docs/decisions docs/plans .claude/memory scripts`
@@ -136,7 +188,9 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/APP_README.md` -> `docs/APP_README.md` (template that `django-developer` copies into each new app folder)
      - `templates/lessons.md` -> `docs/lessons.md` (append-only feedback log; maintained by `docs-writer` at `/wrap-up`)
      - `templates/todo.md` -> `docs/todo.md` (cross-session backlog; read by `auditor` at `/audit`)
-     - `templates/.env.example` -> `.env` (placeholders; ask user for real secrets at the end, do not invent)
+     - `templates/.env.example` -> **TWO destinations**:
+       1. `.env.example` (committed; the canonical key list for new clones)
+       2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent)
      - `templates/.github/workflows/backend-ci.yml` -> `.github/workflows/backend-ci.yml`
      - `templates/docker-compose.yml` -> `docker-compose.yml`
    - `touch docs/WORKLOG.md`
@@ -154,19 +208,67 @@ Run AFTER preflight passes but BEFORE any side-effects.
    - `docker compose exec -T backend python manage.py spectacular --file ../docs/api/openapi.yml --format openapi-yaml`
    - Ask the user interactively whether to run `createsuperuser` now.
 
-4. **Initial commit + push** — dispatch `devops`:
-   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all 13 files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` → `.claude/rules/output-language.md` if a non-English language was chosen).
-   - `git add -A && git status` (show the user what's staged)
+4. **Initial commit + push + register CI** — dispatch `devops`:
+   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all 13 files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy).
+   - `git add -A && git status` (show the user what is staged)
    - `git commit -m "chore: bootstrap project from claude-django"`
-   - `git branch -M main && git push -u origin main`
+   - `git branch -M main`
+   - Idempotent push (handles re-runs where the remote already exists):
+     ```bash
+     git push -u origin main || {
+       echo "Push failed; attempting to set upstream and retry"
+       git push --set-upstream origin main
+     }
+     ```
+   - **Trigger an initial CI run** so GitHub registers `backend-ci` as a known
+     status check. Without this, Step 5 (branch protection) would reference a
+     check GitHub has never seen, and the very first PR would be permanently
+     blocked.
+     ```bash
+     echo "Triggering initial backend-ci run to register the status check..."
+     gh workflow run backend-ci.yml --ref main 2>/dev/null \
+       || echo "i workflow_dispatch not yet available; the push trigger above will register it"
+     # Give GitHub ~8s to register the run before Step 5 references the check.
+     sleep 8
+     ```
 
    > **Documented exception:** this single push to `main` is the ONLY direct-main push allowed in the whole project — see `@.claude/rules/git-operations.md` *Documented exception*. Step 5 immediately enables branch protection so the iron rule kicks back in.
 
-5. **Branch protection** — dispatch `ci-cd-engineer`:
-   - `gh api -X PUT repos/{owner}/{repo}/branches/main/protection -f required_status_checks='{"strict":true,"checks":[{"context":"backend-ci"}]}' -f enforce_admins=true -f required_pull_request_reviews='{"required_approving_review_count":0}' -f restrictions=null`
-   - If `gh api` is not permitted, print the exact GitHub UI steps for the user.
+   ### ⏸ Checkpoint — Resume from this step
 
-6. **Plugins** — print these for the user to paste inside `claude`:
+   If anything fails here (push rejected, network drop, etc.), re-run
+   `/bootstrap`. Mode detection will route to Mode B (because `.git/` and the
+   remote now exist) and Mode B will PR each remaining piece.
+
+5. **Branch protection** — dispatch `ci-cd-engineer`:
+
+   Auto path (when `HAS_ADMIN == True` from the front-loaded preflight):
+   ```bash
+   OWNER=$(gh api user --jq .login)
+   gh api -X PUT "repos/$OWNER/$SLUG/branches/main/protection" \
+     -f required_status_checks='{"strict":true,"checks":[{"context":"backend-ci"}]}' \
+     -f enforce_admins=true \
+     -f required_pull_request_reviews='{"required_approving_review_count":0}' \
+     -f restrictions=null \
+     && echo "v Branch protection enabled (backend-ci required, PR required)" \
+     || { echo "! Auto branch protection failed; fall through to manual steps below"; HAS_ADMIN=False; }
+   ```
+
+   Manual fallback (when `HAS_ADMIN != True` or auto-path failed): print the
+   exact GitHub UI steps for the user:
+   1. Open `https://github.com/<owner>/<slug>/settings/branches`
+   2. Add a branch protection rule for `main`.
+   3. Enable "Require a pull request before merging" (Approvals: 0).
+   4. Enable "Require status checks to pass before merging" and add `backend-ci`.
+   5. Enable "Do not allow bypassing the above settings".
+
+   ### ⏸ Checkpoint — Resume from this step
+
+   After enabling branch protection manually, type `continue bootstrap` (or
+   re-run `/bootstrap`) — Mode B will skip the now-completed protection probe
+   and proceed to the remaining pieces.
+
+6. **Manual follow-ups (plugins)** — ❗ **Requires your action in the Claude UI; cannot be automated by the agent.** This does NOT block starting work — you can paste these later. Print these for the user to paste inside `claude`:
    ```
    /plugin marketplace add obra/superpowers-marketplace
    /plugin install superpowers@superpowers-marketplace
@@ -175,6 +277,11 @@ Run AFTER preflight passes but BEFORE any side-effects.
    /plugin install claude-hud
    /claude-hud:setup
    ```
+
+   ### ⏸ Checkpoint — Resume from this step
+
+   Plugins are independent of repo state; once installed, no follow-up
+   `/bootstrap` is needed.
 
 7. **Verify** — run `/doctor` (environment), then `/preflight` (build inputs). Both must report green before the first feature.
 
@@ -193,7 +300,7 @@ Run each probe; if it fails, that piece is missing.
 3. **Backend CI workflow.** `test -f .github/workflows/backend-ci.yml`.
 4. **Gate scripts.** `test -f scripts/check_stubs.sh && test -f scripts/check_openapi_drift.sh && test -f scripts/check_app_readmes.sh`.
 5. **Branch protection.** `gh api repos/{owner}/{repo}/branches/main/protection` returns 200.
-6. **Env file.** `test -f .env`.
+6. **Env file (committed key list).** `test -f .env.example`. The `.env` file itself is gitignored and machine-local, so its absence here is **not** a Mode B blocker — `.env.example` is the durable, committed contract. If `.env` is missing locally, print a one-liner for the user: `cp .env.example .env && $EDITOR .env` (fill in secrets).
 7. **Per-app READMEs.** For every directory under `backend/apps/`, `test -f backend/apps/<name>/README.md`.
 8. **Docs scaffolding.** `test -f docs/STUBS.md && test -f docs/APP_README.md`.
 
@@ -223,8 +330,8 @@ When `$ARGUMENTS` contains `--dry-run`:
 - Mode B: NEVER direct push to `main` — every fix is a PR.
 - No business code; only scaffold from templates + framework setup.
 - Never invent or print secret values (`.env`, tokens). Ask the user.
-- Stop immediately on any failed delegated step and report — don't pretend success.
+- Stop immediately on any failed delegated step and report — do not pretend success.
 
 > Pairs with `/doctor` (mode detection / scenario classification) and `/synthesize-brief` (next step after Mode A if briefs are present in `docs/`).
 
-<!-- Last reviewed/updated: 2026-05-29 -->
+<!-- Last reviewed/updated: 2026-05-30 -->
