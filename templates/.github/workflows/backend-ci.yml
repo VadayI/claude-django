@@ -9,6 +9,22 @@ on:
       - "scripts/check_openapi_drift.sh"
       - "scripts/check_app_readmes.sh"
       - ".github/workflows/backend-ci.yml"
+  # Run on push to main so GitHub registers `backend-ci` as a known status
+  # check on the very first push. Without this, branch protection that
+  # requires `backend-ci` blocks every subsequent PR (chicken-and-egg).
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "docs/STUBS.md"
+      - "docs/api/openapi.yml"
+      - "scripts/check_stubs.sh"
+      - "scripts/check_openapi_drift.sh"
+      - "scripts/check_app_readmes.sh"
+      - ".github/workflows/backend-ci.yml"
+  # Manual trigger so /bootstrap can register the status check before the
+  # first PR exists, via `gh workflow run backend-ci.yml --ref main`.
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
