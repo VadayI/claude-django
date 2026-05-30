@@ -131,12 +131,25 @@ The CI gate scripts (`scripts/check_*.sh`) intentionally stay bash — they run 
 
 ## Quick start (attach the config to an existing project)
 
+> **Before you start — enter WSL2 and switch to the WSL filesystem.**
+>
+> If your prompt starts with `PS ` (PowerShell), launch WSL with `wsl` (not `wls`). After launch, your shell may land in `/mnt/c/...`, `/mnt/d/...`, or `/mnt/host/d/...` (the exact path depends on your distro) because PowerShell was already in `D:\Dev\...`. **Do NOT work from `/mnt/...`** — Docker bind-mounts there are slow, files appear with stale mtime, CRLF↔LF flips bite, and Windows file locks block `rm` (we've seen all three on this repo). `cd` into the native WSL filesystem first:
+>
+> ```bash
+> cd ~                                  # or `cd ~/projects/<slug>` if the folder exists
+> mkdir -p ~/projects/<slug> && cd $_   # for a brand-new project
+> ```
+>
+> Verify with `pwd` — you should see `/root/...` or `/home/<user>/...`, never `/mnt/...`.
+
 ```bash
-# in WSL2, from the root of your project
-# WSL2 only — if your prompt starts with `PS ` (PowerShell), run `wsl` first to switch into Ubuntu
+# in WSL2, from the root of your project (inside ~/projects/<slug>, NOT /mnt/...)
 rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
 cp -r /tmp/claude-django/.claude ./
 cp /tmp/claude-django/CLAUDE.md ./
+cp /tmp/claude-django/.mcp.json ./
+cp /tmp/claude-django/.gitignore ./
+cp /tmp/claude-django/.gitattributes ./
 # templates if needed:
 cp /tmp/claude-django/templates/docker-compose.yml ./
 mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/* .github/workflows/
@@ -230,17 +243,4 @@ Rules:
 
 **Skills** activate **automatically**: each agent reads its tools and, based on the `description:` field of a skill in `.claude/skills/<name>/SKILL.md`, picks up the right one when its triggers match the task (e.g. `pytest-tdd` engages when `tester` writes tests; `drf-api-design` when `api-architect` defines an endpoint; `security-reviewer` when `security-scanner` runs). You don't invoke skills directly, but you can ask for one by name when relevant (`"use the postgresql-optimization skill on this query"`). To enable Anthropic standalone skills like `mcp-builder` or `web-artifacts-builder` (listed under *Recommended external skills* above), add them in Cowork; they are not vendored into the repo.
 
-Two starting rituals worth knowing: on a fresh machine run **`/doctor`** to bring the environment up to spec, then **`/preflight`** before the first feature to verify the orchestrator has the build inputs (brief, stack, library docs, GitHub access). During every session, **`/audit`** asks the auditor what's the most useful next command — based on the command log + live state.
-
-## Customization
-
-Add an agent — `.claude/agents/<name>.md` with YAML frontmatter (`name`, `description` with trigger words, `model`, `tools`).
-Add a rule — `.claude/rules/<name>.md` (auto-loaded).
-Add a skill — `.claude/skills/<name>/SKILL.md`.
-Add a command — `.claude/commands/<name>.md` (add a log step to `.claude/memory/command-log.jsonl` so `/audit` sees it).
-Wire it into orchestration — mention the agent in `.claude/rules/workflow.md` and the list in `CLAUDE.md`.
-
-## License
-
-MIT
-<!-- Last reviewed/updated: 2026-05-29 -->
+Two starting rituals worth knowing: on a fresh machine run **`/doctor`** to bring the environment up to spec, then **`/preflight`** before the first feature to verify the orchestrator has the build inputs (brief,
