@@ -378,3 +378,80 @@ Rules:
 **Skills** activate **automatically**: each agent reads its tools and, based on the `description:` field of a skill in `.claude/skills/<name>/SKILL.md`, picks up the right one when its triggers match the task (e.g. `pytest-tdd` engages when `tester` writes tests; `drf-api-design` when `api-architect` defines an endpoint; `security-reviewer` when `security-scanner` runs). You don't invoke skills directly, but you can ask for one by name when relevant (`"use the postgresql-optimization skill on this query"`). To enable Anthropic standalone skills like `mcp-builder` or `web-artifacts-builder` (listed under *Recommended external skills* above), add them in Cowork; they are not vendored into the repo.
 
 Two starting rituals worth knowing: on a fresh machine run **`/doctor`** to bring the environment up to spec, then **`/preflight`** before the first feature to verify the orchestrator has the build inputs (brief, declared stack, Context7 reachability, and GitHub project access) before any code is written.
+
+---
+
+## Worked example: one feature, end to end
+
+The pipeline is easiest to grasp on a single feature. Suppose the brief asks for a
+**"create resource"** endpoint with deduplication — e.g. importing a record that must
+not be inserted twice. You do **not** call agents by hand; you describe the feature and
+the orchestrator runs the pipeline. Here is what each phase produces.
+
+**0. You describe the task (Plan Mode for anything non-trivial).**
+
+```text
+Work in Plan Mode.
+
+Task: a POST endpoint that imports a resource and refuses to create a duplicate
+(returns the existing one instead).
+
+Context:
+- Stack: Django 6 / DRF / PostgreSQL 18 / Docker; drf-spectacular for OpenAPI.
+- Dedup key: a content hash, unique at the DB level.
+- Roles: only authenticated editors may import; read-only users get 403.
+
+Rules: TDD (failing test first), minimal change, then pytest + ruff and regenerate
+docs/api/openapi.yml.
+```
+
+**1. `ba` — requirements.** Turns the request into user stories + an explicit scope and
+edge-case list (happy path, duplicate, unauthorized, malformed input). What's IN and
+what's deferred to a later feature.
+
+**2. `api-architect` — the contract.** Locks the endpoint *before* any code: method,
+path, request body, response shapes and status codes, permissions, and the serializer
+fields with `@extend_schema` annotations. For our example:
+
+```text
+POST /api/v1/<resource>/import/
+  201 Created  → new record {id, ...}
+  200 OK       → duplicate: return the existing record (deduplicated: true)
+  400          → validation error (field-keyed)
+  401 / 403    → anonymous / read-only role
+  Permissions: IsAuthenticated + editor role
+```
+
+**3. `tester` — RED.** Writes *failing* DRF `APIClient` tests for the contract, using
+**triangulation** (2–3 distinct cases so a hardcoded return can't pass): create-new
+(201), duplicate-returns-existing (200), validation (400), anonymous (401), wrong-role
+(403). Runs them — all fail because the endpoint doesn't exist yet. This is the expected
+RED state. (The `pytest-tdd` skill activates automatically.)
+
+**4. `django-developer` — GREEN.** Adds the model + migration + serializer + thin view +
+route — just enough to turn the tests green. Any temporary stub is marked `# STUB:` and
+logged in `docs/STUBS.md` so it can't silently reach `main`.
+
+**5. Quality Gate — parallel.** Three independent reviews at once: `reviewer` (code
+quality, thin views / fat models, no unlogged stubs), `security-scanner` (401/403, roles,
+IDOR, secrets), `dba` (model/migration/indexes, the unique constraint at the DB level,
+N+1). Any 🔴/🟡 sends it back to `django-developer`, then the gate re-runs (max 2 cycles).
+
+**6. `docs-writer` — docs + PR.** Regenerates `docs/api/openapi.yml` (the CI drift gate
+must pass), updates the app's `README.md` and `docs/WORKLOG.md`, then opens a PR via `gh`
+— never a direct commit to `main`.
+
+The result is one reviewed PR for one feature, with tests, docs, and an up-to-date schema.
+For the next feature you repeat from step 0. If a feature would touch more than ~3 files,
+split it into smaller features and run each through the pipeline separately.
+
+**Naming an agent explicitly (optional).** The orchestrator routes for you, but you can
+still address one directly when you want to:
+
+```text
+"use ba to split the import epic into user stories"
+"have api-architect lock the contract for POST /api/v1/<resource>/import/"
+"use dba to design the unique index for the dedup key"
+"have security-scanner audit the role model"
+"use debugger to find why a duplicate import still creates a second row"
+```
