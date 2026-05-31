@@ -56,4 +56,4 @@ Assert behavior from at least 2–3 distinct cases (different inputs → differe
 ## Tools
 
 - `pytest` + `pytest-django` (fixtures, `@pytest.mark.django_db`).
-- `factory_boy` for factories instead of manual object creat
+- `factory_boy` for factories instead of manual object creation.
