@@ -37,3 +37,7 @@ While adding the Context7 section to `README.md` from Cowork, the `Edit` tool re
 <!-- New entries appended below. Newest at the bottom. -->
 
 <!-- Last reviewed/updated: 2026-05-31 (session: command runtime-hardening + Russian removal + backend-only cleanup + mount-truncation casualty) -->
+
+## 2026-05-31 — Hardening a gate's error path is not the same as fixing what trips it
+
+The NO_ENV_DETECT batch made `/doctor`/`/bootstrap`/`/preflight` STOP cleanly and stop fabricating values when `env-detect.json` is absent — a real improvement. But it never asked *why the file was absent on a correctly-followed setup*. The true cause surfaced only on a fresh `carlsberg-ir-data-service` clone: the README Quick start `cp` block copies `.claude/` + a full `templates/` but never the **root `scripts/`** dir, so `scripts/detect-env.py` was missing and the SessionStart hook failed silently. `detect-env.py`/`log-cmd.py` live in root `scripts/`, separate from `templates/scripts/` (CI gates only), so "copy all of templates/" does not bring the hook script along. **Lesson:** when a gate fires, harden the gate AND trace the input that tripped it back to its origin — here the setup instructions. A "stranger user" run from the *very first copy step* (not from an already-populated project) is what exposes copy-list omissions; verifying the gate's message was never going to. Fixed in commit `dfdfa2f` (README clone block + prose now copy `scripts/`; `doctor.md` NO_ENV_DETECT lists the missing script as cause #1).
