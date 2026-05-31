@@ -23,7 +23,7 @@ Up-to-date library docs.
 | Tool | When to use |
 |------|-------------|
 | `resolve-library-id` | Find the library id first |
-| `query-docs` | Current docs for Django, DRF, React/Vite when knowledge may be stale |
+| `query-docs` | Current docs for Django, DRF, PostgreSQL when knowledge may be stale |
 
 ## Notes
 

@@ -1,9 +1,9 @@
 ---
 name: github-actions-django
-description: GitHub Actions CI for Django (ruff + pytest with a postgres service) and a Vite build for the frontend; the gate before merging to main. Activate for CI/CD.
+description: GitHub Actions CI for Django (ruff + pytest with a postgres service); the gate before merging to main. Activate for CI/CD.
 ---
 
-# GitHub Actions for Django/React
+# GitHub Actions for Django
 
 ## backend-ci.yml (on pull_request)
 - `services.postgres` (parity with dev/staging).

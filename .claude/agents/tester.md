@@ -36,5 +36,5 @@ docker compose exec backend pytest -k <pattern>
 docker compose exec backend pytest --cov=apps --cov-report=term-missing
 ```
 
-> Browser E2E and manual UI checks are done by `frontend`/the user. Skill: `pytest-tdd`.
+> Browser E2E and manual UI checks are done by the `qa` agent (against staging / the separate frontend repo) or the user. Skill: `pytest-tdd`.
 <!-- Last reviewed/updated: 2026-05-27 -->

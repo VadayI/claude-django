@@ -126,6 +126,21 @@ Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands 
 
 `github` (PR data; needs env `GITHUB_PERSONAL_ACCESS_TOKEN`) and `context7` (up-to-date Django/DRF docs; needs `CONTEXT7_API_KEY`). Enable them in `.claude/settings.json` (`enabledMcpjsonServers`).
 
+#### Context7 setup (`CONTEXT7_API_KEY`)
+
+Context7 (by Upstash) serves **current** library documentation to agents, so `api-architect` / `django-developer` verify Django and DRF APIs against today's docs instead of relying on the model's training cutoff. `/preflight` treats Context7 reachability as a **hard gate** (waivable only on explicit override — see `.claude/rules/preflight.md`), so set the key before the first feature.
+
+1. **Get the key.** Sign in at [context7.com](https://context7.com) and create an API key in the dashboard (the free tier is enough for doc lookups).
+2. **Export it** in your WSL2 shell — persist it in `~/.bashrc` (or `~/.profile`) so every session and the MCP `npx` process inherit it:
+
+   ```bash
+   echo 'export CONTEXT7_API_KEY="ctx7_..."' >> ~/.bashrc
+   source ~/.bashrc
+   ```
+
+   The MCP is launched as `npx -y @upstash/context7-mcp --api-key ${CONTEXT7_API_KEY}` (see `.mcp.json`), so the variable must be set **before** you start `claude`. Never commit the key — it goes in the environment, not in any tracked file.
+3. **Verify.** `[ -n "$CONTEXT7_API_KEY" ] && echo set` should print `set`, and `/doctor` (Claude config scope) reports it as ✅. Because the MCP runs via `npx`, **Node.js 18+ is required** when Context7 is enabled (otherwise it stays optional for this backend-only repo).
+
 ### Project settings — `.claude/settings.json`
 
 Per-project Claude Code config: tool permissions (allow `git`/`gh`/`docker`/`npm`, deny direct push to `main` and reading `.env`), `DJANGO_SETTINGS_MODULE`, auto-enabled plugins (Superpowers + `engineering@knowledge-work-plugins`), enabled MCP servers, and a `Stop` hook that runs `ruff format` + `ruff check --fix` after each turn (silently skips if the `backend` container is down). `model` defaults to `opusplan` — change to taste.
@@ -300,4 +315,4 @@ Rules:
 
 **Skills** activate **automatically**: each agent reads its tools and, based on the `description:` field of a skill in `.claude/skills/<name>/SKILL.md`, picks up the right one when its triggers match the task (e.g. `pytest-tdd` engages when `tester` writes tests; `drf-api-design` when `api-architect` defines an endpoint; `security-reviewer` when `security-scanner` runs). You don't invoke skills directly, but you can ask for one by name when relevant (`"use the postgresql-optimization skill on this query"`). To enable Anthropic standalone skills like `mcp-builder` or `web-artifacts-builder` (listed under *Recommended external skills* above), add them in Cowork; they are not vendored into the repo.
 
-Two starting rituals worth knowing: on a fresh machine run **`/doctor`** to bring the environment up to spec, then **`/preflight`** before the first feature to verify the orchestrator has the build inputs (brief,
+Two starting rituals worth knowing: on a fresh machine run **`/doctor`** to bring the environment up to spec, then **`/preflight`** before the first feature to verify the orchestrator has the build inputs (brief, declared stack, Context7 reachability, and GitHub project access) before any code is written.

@@ -153,7 +153,7 @@ Note: use `env.get('platform_supported', True)` — graceful fallback на PR #1
 ## Interactive prompts (Mode A only)
 1. AskUserQuestion: GitHub login (default = `gh api user --jq .login`).
 2. AskUserQuestion: project slug (default = `os.path.basename(os.getcwd())`).
-3. AskUserQuestion: output language (English/Українська/Русский/Polski/Other) — same logic as old kickoff Step 0.
+3. AskUserQuestion: output language (English/Українська/Polski/Other) — same logic as old kickoff Step 0.
 
 ## Mode A — fresh start
 [steps 1-8 from old kickoff Steps 1-8]

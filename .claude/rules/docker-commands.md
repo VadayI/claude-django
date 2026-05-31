@@ -25,15 +25,6 @@ docker compose exec backend python manage.py createsuperuser
 docker compose exec backend python manage.py shell
 ```
 
-## Frontend (mini-client)
-
-```bash
-cd frontend
-npm install
-npm run dev      # local Vite dev server
-npm run build    # production build
-```
-
 ## Staging (VPS <STAGING_HOST>, Debian)
 
 ```bash

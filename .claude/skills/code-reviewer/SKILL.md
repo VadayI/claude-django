@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Code-review methodology and checklist for Django/DRF + React. Activate when reviewing changes before a PR (used by the reviewer agent).
+description: Code-review methodology and checklist for Django/DRF (backend-only). Activate when reviewing changes before a PR (used by the reviewer agent).
 ---
 
 # Code Reviewer
@@ -22,13 +22,9 @@ Systematic review focused on correctness, design, and maintainability. Read the 
 - Serializers don't leak sensitive fields; owner set server-side, not from client.
 - No secrets in code; env-only config.
 
-## React mini-client checklist
-
-- API calls live in `src/api/`; no business logic in components; no bare URLs.
-
 ## Process rules
 
-- PR-per-layer respected (mini-frontend never mixed into a backend PR; full production frontend is a separate repo).
+- PR scope: one logical change per PR; the full production frontend lives in a separate repo and is never mixed into a backend PR.
 - Tests cover new behavior: success + 400/401/403/404/409 + edge cases.
 - Simplicity: flag premature abstractions.
 

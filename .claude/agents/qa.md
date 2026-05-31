@@ -21,7 +21,7 @@ You write end-to-end and browser tests. This is the layer ABOVE `tester` (which 
 
 ## What you do
 
-- Cover key user journeys end-to-end against the running stack (backend + mini-client / real frontend).
+- Cover key user journeys end-to-end against the deployed app on staging — the backend API and, where one exists, the separate production-frontend repo that consumes it.
 - Test against staging when needed (the VPS subdomain), including mobile viewport.
 - Smoke tests after deploy; visual regression where it adds value.
 - Keep tests resilient: stable selectors, no flaky waits.
@@ -33,7 +33,9 @@ Only when there is a real UI or a full user flow worth verifying. For pure API l
 ## Commands
 
 ```bash
-cd frontend && npx playwright test
+# Run from the separate production-frontend repo, or point baseURL at the staging subdomain.
+# This backend repo has no frontend/ dir.
+npx playwright test
 npx playwright test --project=mobile-chrome
 ```
 

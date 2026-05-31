@@ -66,7 +66,6 @@ IMPORTANT: `--log-failed` can be large; if truncated, note that earlier failures
 - **Lint** (`ruff check .` step failed) — usually auto-fixable with `ruff check --fix .` / `ruff format .`.
 - **Tests** (`pytest` step failed) — requires code investigation: find the failing `test_...` and the assertion.
 - **Coverage** (coverage threshold) — may indicate new code without tests.
-- **Frontend build** (`npm run build` failed) — JS/Vite error.
 
 ## Step 4: Switch to the PR branch
 
@@ -104,7 +103,6 @@ Instruct the developer to:
   docker compose exec backend pytest -k "<failing_test>"
   docker compose exec backend pytest
   ```
-- For **frontend build**: `cd frontend && npm run build`.
 - Do NOT change anything beyond what fixes the failure; do NOT refactor adjacent code.
 
 If the failure is transient/environment-related, skip the developer and offer a rerun:

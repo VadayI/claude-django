@@ -14,7 +14,7 @@ All other `/bootstrap` work (Mode B resume) and every other command (`/synthesiz
 ## Branches
 
 - Naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, `docs/<slug>`, `test/<slug>`.
-- One branch = one logical change. Backend and frontend — separate PRs.
+- One branch = one logical change.
 - The base is always fresh: `git checkout main && git pull` before creating a branch.
 
 ## Commits (Conventional Commits)

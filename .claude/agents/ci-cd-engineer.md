@@ -28,7 +28,7 @@ On `push` to `main`: SSH to the VPS → `git pull` → `docker compose -f docker
 ## Principles
 
 - CI is the gate before merge. Branch protection requires green CI + review.
-- Speed: dependency cache, parallel backend/frontend jobs.
+- Speed: dependency cache; parallelize independent jobs (lint / tests).
 
 > Skill: `github-actions-django`. Templates — `templates/.github/workflows/`.
 <!-- Last reviewed/updated: 2026-05-27 -->

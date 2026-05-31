@@ -5,8 +5,8 @@ Before agents start work on a (new) project — and before the first feature pip
 ## What to verify (all CRITICAL)
 
 1. **Project brief / description.** A clear statement of what we are building: goals, scope, domain, key requirements. Source: `docs/PROJECT.md`, a README brief, or a description the user provided. If absent or vague → STOP and ask the user for a brief — `ba` cannot write meaningful user stories without it.
-2. **Tech stack.** The stack is declared (CLAUDE.md / README: Django 6 · DRF · PostgreSQL 18 · Docker · Vite+React) and dependencies are resolvable (`backend/pyproject.toml` present; versions consistent). If undeclared or contradictory → STOP and confirm with the user.
-3. **Library docs access — Context7.** The `context7` MCP is reachable so agents can check current Django/DRF/React APIs before implementing (`resolve-library-id` works; `CONTEXT7_API_KEY` set). If down → STOP, or proceed only on explicit user override (noting that APIs will be unverified against current docs).
+2. **Tech stack.** The stack is declared (CLAUDE.md / README: Django 6 · DRF · PostgreSQL 18 · Docker) and dependencies are resolvable (`backend/pyproject.toml` present; versions consistent). If undeclared or contradictory → STOP and confirm with the user.
+3. **Library docs access — Context7.** The `context7` MCP is reachable so agents can check current Django/DRF APIs before implementing (`resolve-library-id` works; `CONTEXT7_API_KEY` set). If down → STOP, or proceed only on explicit user override (noting that APIs will be unverified against current docs).
 4. **GitHub project access.** `gh auth status` is authenticated AND the project repo is reachable (`gh repo view`), so PRs, CI, and history work. `github` MCP env (`GITHUB_PERSONAL_ACCESS_TOKEN`) set. If no access → STOP.
 
 ## Gate behavior

@@ -1,5 +1,41 @@
 # WORKLOG — claude-django
 
+## 2026-05-31 — Remove Russian everywhere + retire stale mini-frontend/React references
+
+Two cleanups after the command-hardening batch.
+
+**Language — Russian removed everywhere (owner mandate "no Russian anywhere").** Canonical option set is now **English / Українська / Polski** (+ harness "Other"), aligned across `.claude/commands/doctor.md`, `.claude/commands/bootstrap.md`, `.claude/commands/set-language.md` and `CLAUDE.md`. Also dropped the stray `Німецька`/`de` that existed only in `set-language.md` (Deutsch is still reachable via "Other"), and scrubbed the Russian mention in the historical plan `docs/plans/0001-*.md`. Zero `русский|russian|німецьк` matches remain in the repo.
+
+**Backend-only — stale in-repo frontend debt retired.** The repo has been backend-only since the mini-frontend was replaced by Swagger UI (`api-docs.md`), but leftover references implied an in-repo Vite+React mini-client. Reframed to "separate production-frontend repo / staging" (never deleted `qa`/`playwright-e2e`, which `workflow.md`/`tdd.md` keep as an optional top layer):
+- agents: `qa.md` (scope + `cd frontend` commands -> staging / separate repo), `reviewer.md` ("thin frontend" -> "separation of concerns"), `tester.md` (`frontend` agent -> `qa`), `ci-cd-engineer.md` ("backend/frontend jobs" -> "independent jobs").
+- commands: `fix-ci.md` (dropped the frontend-build failure category + `cd frontend && npm run build`).
+- rules: `docker-commands.md` (removed the whole "Frontend (mini-client)" npm/Vite section), `workflow.md` (dropped "React component in the mini-client" pipeline trigger), `preflight.md` (stack no longer lists "Vite+React"; "Django/DRF/React" -> "Django/DRF"), `mcp-stack.md` ("React/Vite" docs -> "PostgreSQL"), `git-operations.md` (dropped "Backend and frontend — separate PRs").
+- skills: `code-reviewer` (removed React mini-client checklist; desc backend-only), `github-actions-django` (desc/title drop Vite+React), `playwright-e2e` (reframed to separate repo / staging), `security-reviewer` (CORS line).
+
+Intentionally kept: `api-docs.md` / `architecture.md` statements that explicitly say there is NO in-repo mini-frontend (Swagger UI replaced it; frontend lives in a separate repo) — these are the correct policy, not debt.
+
+**Audit note:** false positives from the sweep were rejected — handoff.md `json.load` is guarded; `security-check.md` 🔴🟡🟢 markers are the repo-wide severity convention (the "no emojis" rule is GitHub-PR-comment-only); `brief-synthesizer` ТЗ/техзавдання triggers are intentional Ukrainian triggers.
+
+**Verification:** every edit applied via `assert count==1` anchor matching; post-grep confirms 0 Russian/German matches and that all remaining frontend mentions are the legitimate "separate repo / Swagger UI" ones.
+
+
+## 2026-05-31 — Harden `/doctor` + `/bootstrap` + `/preflight` against the non-CLI runtime (NO_ENV_DETECT)
+
+Real-run audit: a `/doctor` invocation on the `carlsberg-ir-data-service` test project (run without a `SessionStart` hook, so `env-detect.json` was absent) produced a partly-fabricated report — it downgraded the missing WSL2 to ⚠️ instead of a hard stop, invented a `docker compose v5.1.3` version that does not exist, and recommended `/bootstrap` despite a fine-grained PAT and no WSL2. Root cause: `env-detect.json` is the source of truth, but the SessionStart hook only writes it in Claude Code CLI; with the file missing, `/doctor` fell back to ad-hoc detection and never fired its platform gate.
+
+**Fixes (commands only — `scripts/detect-env.py` unchanged):**
+
+- `/doctor` — new **Step 0.5 runtime gate** before the audit: if `env-detect.json` is missing -> `NO_ENV_DETECT` hard stop (do not dispatch `devops`, do not guess versions, do not recommend `/bootstrap`); if present but `platform_supported == false` -> `UNSUPPORTED_PLATFORM` hard stop. Step 1 audit now forbids fabricating tool versions (read only from `env-detect.json`; otherwise `unknown`). Step 5 recommendation is gated behind active hard-STOP flags so `/bootstrap` is never suggested while one is live.
+- `/bootstrap` — mode-detection and preflight Python probes no longer traceback on a missing `env-detect.json`; they print `NO_ENV_DETECT` and exit cleanly. Added a `NO_ENV_DETECT` per-flag remediation entry (CLI-vs-Cowork causes; warns that running `detect-env.py` inside the Cowork sandbox reports the sandbox OS, not the user's machine).
+- `/preflight` — new **Step 0 runtime gate** (mirrors `/doctor`): `NO_ENV_DETECT` / `UNSUPPORTED_PLATFORM` hard-stop before any `devops`/`ba` access check; anti-fabrication in Step 1; Step 5 never reports "preflight green" / hands to the pipeline while a hard-STOP flag is active.
+- `README.md` — added a **Context7 setup (`CONTEXT7_API_KEY`)** subsection (what it is, where to get the key, `~/.bashrc` export, verify, Node.js requirement).
+
+**Verification:** marker grep passes in both command files; the guarded mode-detection probe prints `NO_ENV_DETECT` (exit 0) with the file absent. Note: `env-detect.json` is absent in the Cowork sandbox too, confirming this config is CLI-only as documented.
+
+**Note on git:** edited on the Windows D: mount from Cowork — commit on the host per `docs/HANDOFF.md` policy (container git fails on the Windows-written index).
+
+
+
 ## 2026-05-31 — PII / sensitive-data scrub of the public template (working tree)
 
 The repo is public; swept it for personal data, names, and IPs before it spreads further through the scaffolding templates. Working-tree-only cleanup (no git-history rewrite, per owner decision).

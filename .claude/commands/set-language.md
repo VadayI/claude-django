@@ -12,7 +12,7 @@ python scripts/log-cmd.py /set-language $ARGUMENTS
 
 ## Input
 
-Optional `$ARGUMENTS`: language code (`en`, `uk`, `pl`, `de`) or native name (`українська`, `Deutsch`, …). If empty, ask via `AskUserQuestion`.
+Optional `$ARGUMENTS`: language code (`en`, `uk`, `pl`) or native name (`українська`, …). If empty, ask via `AskUserQuestion`.
 
 ## Steps
 
@@ -23,7 +23,6 @@ Optional `$ARGUMENTS`: language code (`en`, `uk`, `pl`, `de`) or native name (`�
 2. **Ask the user** via `AskUserQuestion` (header `Language`):
    - **English** — clears the language override and reverts to the project default.
    - **Українська**
-   - **Німецька**
    - **Polski**
    - The harness adds "Other" automatically; the user can type any native name there (`Deutsch`, `Español`, `日本語`, …).
 

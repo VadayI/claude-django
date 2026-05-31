@@ -12,7 +12,7 @@ Independent review of changes before creating a PR. You work in the Quality Gate
 
 ## What you check
 
-- Compliance with @.claude/rules/architecture.md and code-style.md (thin views, validation in serializers, thin frontend).
+- Compliance with @.claude/rules/architecture.md and code-style.md (thin views, validation in serializers, separation of concerns).
 - Quality and completeness of tests (whether they cover edge/error cases).
 - Readability, naming, no duplication and no "magic numbers".
 - PR-per-layer respected (no mixing backend and mini-frontend in the same PR; full production frontend lives in a separate repo).

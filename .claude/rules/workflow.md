@@ -63,7 +63,6 @@ Trivial tasks (typo, single config value) skip this. The Superpowers `brainstorm
 - Creates/changes a Django model or needs a migration
 - Adds/changes a DRF serializer, view (ViewSet/APIView), route (router/urls)
 - Adds/changes authorization logic (permissions, throttling)
-- Adds/changes a React component in the mini-client
 - Touches more than 2 files
 
 If none apply (typo, config value) — the pipeline can be skipped.

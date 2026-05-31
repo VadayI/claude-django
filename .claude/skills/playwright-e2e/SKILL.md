@@ -1,6 +1,6 @@
 ---
 name: playwright-e2e
-description: End-to-end browser testing with Playwright for the Vite+React mini-client and full user flows (incl. mobile viewport via staging). Activate for E2E/browser tests (used by the qa agent).
+description: End-to-end browser testing with Playwright against the deployed app on staging and the separate production-frontend repo (incl. mobile viewport). Activate for E2E/browser tests (used by the qa agent).
 ---
 
 # Playwright E2E
@@ -10,7 +10,7 @@ Browser automation for full user journeys against the running stack. This is ABO
 ## Setup
 
 ```bash
-cd frontend
+# Run from the separate production-frontend repo (this backend repo has no frontend/ dir).
 npm install -D @playwright/test
 npx playwright install --with-deps chromium
 ```

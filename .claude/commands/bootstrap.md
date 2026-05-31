@@ -25,8 +25,10 @@ Classify the project state via this Python probe. Run it before asking the user 
 
 ```bash
 python -c "
-import json, pathlib, subprocess
-env = json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())
+import json, pathlib, subprocess, sys
+envf = pathlib.Path('.claude/memory/env-detect.json')
+if not envf.is_file():
+    print('NO_ENV_DETECT'); sys.exit(0)
 has_git = pathlib.Path('.git').is_dir()
 has_backend = pathlib.Path('backend/manage.py').is_file()
 has_remote_github = False
@@ -47,6 +49,7 @@ else:
 - `MODE_A` -> fresh start; proceed with the Mode A flow below.
 - `MODE_B` -> resume; proceed with the Mode B flow below.
 - `MODE_AMBIGUOUS` -> STOP, ask via `AskUserQuestion`. Special hard guard: if `backend/manage.py` exists but `.git/` does NOT, do NOT auto-pick Mode A — stop with `BACKEND_WITHOUT_GIT, manual intervention required`.
+- `NO_ENV_DETECT` -> **STOP immediately.** `.claude/memory/env-detect.json` is absent, so the runtime is unverified and the hard preflight below cannot be evaluated. See `NO_ENV_DETECT` under *Per-flag remediation*. Do NOT proceed, do NOT fabricate the file.
 
 ## Hard preflight (refuse to start if any blocker is true)
 
@@ -58,8 +61,11 @@ Read `.claude/memory/env-detect.json` first (the `SessionStart` hook keeps it fr
 
 ```bash
 python -c "
-import json, pathlib
-env = json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())
+import json, pathlib, sys
+envf = pathlib.Path('.claude/memory/env-detect.json')
+if not envf.is_file():
+    print('NO_ENV_DETECT'); sys.exit(0)
+env = json.loads(envf.read_text())
 flags = []
 if not env.get('platform_supported', True):
     flags.append('UNSUPPORTED_PLATFORM')
@@ -128,6 +134,7 @@ Decision:
 
 ### Per-flag remediation
 
+- `NO_ENV_DETECT` -> `.claude/memory/env-detect.json` does not exist, so the platform / PAT-kind / scope gates cannot be evaluated. **STOP — do NOT fabricate the file.** Two causes: (a) `python` is not on PATH and the `SessionStart` hook failed -> install Python 3.10+ and relaunch Claude Code CLI; (b) you are NOT in Claude Code CLI (Cowork / Claude API-SDK / a non-CLI shell) -> run `/bootstrap` from Claude Code CLI inside WSL2 (see `README.md` "Where this runs"). Running `python scripts/detect-env.py` by hand inside the Cowork sandbox reports the *sandbox* OS, not your real machine, so it cannot be trusted to clear this gate.
 - `NO_PYTHON` (only when the hook itself failed) -> Install Python 3.10+ and reopen Claude. This is the only flag that cannot be auto-diagnosed from `env-detect.json` because the file does not exist.
 - `REPO_ALREADY_EXISTS` -> A GitHub repo at `$OWNER/$SLUG` already exists, but the local working directory has no `origin` pointing at it. Step 1 refuses to overwrite or shadow it. Remedy: either link the local dir to the existing repo (`git remote add origin git@github.com:$OWNER/$SLUG.git`) and re-run `/bootstrap` so mode detection routes to Mode B, or pick a different slug (`/bootstrap <new-slug>`).
 - `FINE_GRAINED_PAT_NOT_SUPPORTED` -> The active credential is a **fine-grained PAT** (prefix `github_pat_`), detected by `scripts/detect-env.py` via `gh.pat_kind`. Fine-grained PATs do not expose OAuth scopes via the `X-OAuth-Scopes` response header and typically lack the `createRepository` and `administration:write` permissions that `/bootstrap` needs (repo creation, branch protection). `/bootstrap` cannot reliably proceed. Create a **classic** PAT instead and re-run:
@@ -182,7 +189,6 @@ Run AFTER preflight passes but BEFORE any side-effects.
 3. **Output language.** **Skip this step entirely if `.claude/rules/output-language.md` already exists** (likely set by `/doctor` Step 0 in the previous command run, or by a prior `/bootstrap`). Otherwise ask via `AskUserQuestion` (header `Language`):
    - **English** (Recommended) — default; no extra config will be written.
    - **Українська**
-   - **Русский**
    - **Polski**
    - (the harness adds "Other" automatically; the user can type any native name there, e.g. `Deutsch`, `Español`, `日本語`)
 
@@ -450,4 +456,4 @@ When `$ARGUMENTS` contains `--dry-run`:
 
 > Pairs with `/doctor` (mode detection / scenario classification) and `/synthesize-brief` (next step after Mode A if briefs are present in `docs/`).
 
-<!-- Last reviewed/updated: 2026-05-30 (PR: P0-P3 + read:org scope clarification — env-var auth path vs gh auth login path) -->
+<!-- Last reviewed/updated: 2026-05-31 (graceful NO_ENV_DETECT stop: mode-detection + preflight probes no longer traceback on a missing env-detect.json; clean per-flag remediation) -->

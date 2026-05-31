@@ -22,7 +22,6 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 0. **Output language gate (FIRST, before audit).** If `.claude/rules/output-language.md` does NOT exist, ask via `AskUserQuestion` (header `Language`):
    - `English` (Recommended) — default; no extra config will be written.
    - `Українська`
-   - `Русский`
    - `Polski`
    - (the harness adds "Other" automatically — user can type any native name)
 
@@ -36,8 +35,20 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 
    Skip Step 0 entirely if `.claude/rules/output-language.md` already exists.
 
+0.5. **Runtime gate — run BEFORE the audit (hard STOP).** Read `.claude/memory/env-detect.json`. This file is the source of truth for platform/tooling and is written ONLY by the `SessionStart` hook of Claude Code CLI.
+
+   - **If it is MISSING:** the hook has not run. `/doctor` and `/bootstrap` are supported only in **Claude Code CLI on Linux / macOS / WSL2** (see `README.md` "Where this runs"). **STOP here — do NOT dispatch `devops` to detect tools ad-hoc, do NOT guess tool versions, do NOT recommend `/bootstrap`.** Report `NO_ENV_DETECT` with the two possible causes and their fixes:
+     1. `python` is not on PATH, so the hook failed -> install Python 3.10+ and relaunch Claude Code CLI.
+     2. You are in Cowork / Claude API-SDK / a non-CLI shell -> this config is the wrong tool for that runtime; run it from Claude Code CLI inside WSL2.
+
+     You MAY suggest `python scripts/detect-env.py` as a **CLI-side diagnostic only**, with this warning: running it inside the Cowork sandbox reports the *sandbox* OS (Linux), not the user's real machine, so its `platform_supported` value cannot be trusted there. **Never hand-write or fabricate the file** to get past this gate.
+   - **If it EXISTS but `platform_supported == false`:** hard STOP with `UNSUPPORTED_PLATFORM` (no override branch -- do not offer "proceed anyway"). Recommend installing WSL2 Ubuntu (ADR `docs/decisions/0005-drop-windows-native-shell.md`) and relaunching `claude` inside WSL2. Do NOT recommend `/bootstrap`.
+
+   Only when `env-detect.json` EXISTS **and** `platform_supported == true` do you proceed to Step 1. Carry any hard-STOP flag raised here into Step 5.
+
 1. **Audit (read-only).** Dispatch the `devops` agent (`subagent_type: "devops"`) to run the read-only checks from `@.claude/rules/environment.md` for the requested scope(s). Instruct it explicitly:
    - run only read-only commands (the `Check` column of the spec);
+   - **never fabricate tool versions or statuses.** Tool presence and version strings come ONLY from `env-detect.json` (`tools` / `tool_versions`). Live read-only commands may confirm a daemon is *answering* (e.g. `docker info`), but a version string that is not in `env-detect.json` is reported as `unknown`, never invented. (This step is only reached when `env-detect.json` exists per Step 0.5.)
    - never echo the *values* of `GITHUB_PERSONAL_ACCESS_TOKEN`, `CONTEXT7_API_KEY`, or `.env` — only whether they are set;
    - in a brand-new repo with no Django project yet, mark missing skeleton/`.env`/services as "not set up yet" (info), not failures.
    - when reporting `gh`, distinguish **Linux `gh` inside this WSL2 shell** (`command -v gh` in the WSL2 shell) from a Windows `gh.exe` installed via `winget` — only the former counts; flag `gh.exe`-only as ❌ with the remedy `sudo apt install -y gh` (or the official `cli.github.com` repo on older Ubuntu/Debian).
@@ -65,7 +76,11 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 
 4. **Apply approved fixes** (after the user picks). Dispatch `devops` (or the right agent) to run only the approved *safe* commands. For "needs your input" items, print the precise command/steps for the user to run themselves. Re-run the relevant checks and report the new state.
 
-5. **Summary.** End with the residual ⚠️/❌ (if any) and recommend exactly ONE next command based on the detected scenario from step 1b:
+5. **Summary.** End with the residual ⚠️/❌ (if any) and recommend exactly ONE next command.
+
+   **Hard-STOP gate (check FIRST).** If any hard-STOP flag is active — `NO_ENV_DETECT`, `UNSUPPORTED_PLATFORM`, `NO_PYTHON_OR_HOOK`, or (on the bootstrap path) `FINE_GRAINED_PAT_NOT_SUPPORTED` — the recommended next command is the **remediation for that flag**, NEVER `/bootstrap`. Do not map the scenario to a next command until every hard-STOP flag is cleared.
+
+   Only when NO hard-STOP flag is active, recommend based on the detected scenario from step 1b:
    - `no-config` → "Run the Quick start in README to copy the config first."
    - `fresh` → "Run `/bootstrap` to scaffold the Django project."
    - `existing-incomplete` → "Run `/bootstrap` — Mode B will PR each missing piece."
@@ -80,4 +95,4 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 - Do not edit application source code here — environment/config only.
 - Honor the project rule that the `D:` drive is unreliable for git; do git operations manually on Windows when relevant.
 
-<!-- Last reviewed/updated: 2026-05-30 (P0-P3 + read:org clarification — env-var auth vs gh auth login) -->
+<!-- Last reviewed/updated: 2026-05-31 (Step 0.5 runtime gate: NO_ENV_DETECT/UNSUPPORTED_PLATFORM hard-stop before audit; anti-fabrication of tool versions; Step 5 gate so /bootstrap is never recommended while a hard-STOP flag is active) -->

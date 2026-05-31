@@ -6,59 +6,51 @@
 
 ## Current state
 
-On `main`, working tree has a staged PII-scrub change set (14 files) ready to commit directly to `main` per template-repo policy. Previous tip: `fc975bb docs(bootstrap): add read:org to PAT URLs + clarify env-var vs gh-auth-login paths`.
+On `main`. Working tree has **uncommitted** changes from one session of template-config maintenance (see `docs/WORKLOG.md` 2026-05-31 entries). Nothing committed yet this session — the commit happens on the **host (PowerShell)**, not from Cowork (container/mount git is unreliable here).
 
-Pending change: working-tree scrub of personal data from the public template — staging VPS IP `54.37.138.231` → `<STAGING_HOST>` (7 occurrences), and author identity `Vadym (@VadayI)` genericised across README, ADRs, HANDOFF, no-stubs, fix-ci, and templates. Four functional self-clone URLs intentionally retained. Full detail in `docs/WORKLOG.md` (2026-05-31 entry).
-
-History batches that previously landed in `main`:
-
-- `8cdb6a6` — P0 (preflight robustness) + P1 (scaffolding templates) merged
-- `e03c0c3` — P2 (HANDOFF template, lessons seed, branch protection 403 fallback)
-- `b565a68` — P3 (`/handoff` command, `REPO_ALREADY_EXISTS` probe, auditor reads HANDOFF)
-- `36dd18b` — session-end snapshot (docs/HANDOFF.md + docs/lessons.md)
-- `fc975bb` — `read:org` scope clarification + env-var vs `gh auth login` split
-
-`docs/WORKLOG.md` carries the full per-batch chronicle. `docs/plans/0002-0005` carry the matching plans.
+Previous tip: `d2f5bfe chore: scrub staging IP and personal author identity from public template`.
 
 ## Last finished
 
-- PII / sensitive-data scrub of the working tree (2026-05-31): IP removed (0 occurrences), author identity genericised. Personal email + IP still in git history — owner declined a history rewrite, so they remain in older commits and `origin` still shows `VadayI`. IP should be treated as already exposed.
+This session (2026-05-31), all edits applied via `python pathlib.write_text` through bash with `assert count==1` anchors (NOT the Edit/Write tools — see Environment notes):
+
+1. **Runtime hardening of `/doctor`, `/bootstrap`, `/preflight`.** Root cause from a real `/doctor` run on `carlsberg-ir-data-service` in a non-CLI runtime (no `SessionStart` hook → `env-detect.json` absent): `/doctor` fabricated a tool version and recommended `/bootstrap` despite blockers. Fixes: new early **runtime gate** (`NO_ENV_DETECT` / `UNSUPPORTED_PLATFORM` hard-stop before any audit/access work), anti-fabrication rule (tool facts only from `env-detect.json`, else `unknown`), and a hard-STOP gate so `/bootstrap` is never recommended/green while a flag is live. `/bootstrap` probes no longer traceback on a missing file (clean `NO_ENV_DETECT`).
+2. **README — Context7 setup section** (`CONTEXT7_API_KEY`: what/why, key from context7.com, `~/.bashrc` export, verify, Node.js requirement).
+3. **Russian removed everywhere** (owner mandate). Canonical language set is now **English / Українська / Polski** (+ harness "Other") across `doctor.md`, `bootstrap.md`, `set-language.md`, `CLAUDE.md`; stray `Німецька`/`de` dropped from `set-language.md`; historical `docs/plans/0001` scrubbed. Zero `русский|russian|німецьк` matches remain.
+4. **Backend-only cleanup** — retired stale in-repo mini-frontend/React/Vite references across 13 files (agents `qa`/`reviewer`/`tester`/`ci-cd-engineer`; command `fix-ci`; rules `docker-commands`/`workflow`/`preflight`/`mcp-stack`/`git-operations`; skills `code-reviewer`/`github-actions-django`/`playwright-e2e`/`security-reviewer`). Reframed to "separate production-frontend repo / staging"; `qa`/`playwright-e2e` kept (optional top layer). Left intact the `api-docs.md`/`architecture.md` lines that correctly state there is NO in-repo mini-frontend.
+5. **Repaired tail-truncation casualties** (mount-write bug): rebuilt `README.md` (lost Skills/rituals paragraphs + completed the dangling "(brief," sentence) and restored `templates/PROJECT_README.md` + `templates/STUBS.md` from HEAD.
 
 ## In progress
 
-- (nothing in flight — main is stable, no open feature branches in this repo)
+- (nothing in flight — no open feature branches)
 
 ## Next step
 
-Commit + push the PII scrub directly to `main` (template-repo policy), then smoke-test the hardened bootstrap on a fresh derived project from Claude Code CLI inside WSL2:
+**Commit on the host (PowerShell), direct to `main` per template-repo policy** (do NOT commit from Cowork — container git fails on the Windows-written index). Suggested:
 
-```bash
-cd ~/projects
-mkdir test-bootstrap-v3 && cd test-bootstrap-v3
-# Copy .claude/, CLAUDE.md, templates/ from claude-django (or use 'Use this template' on GitHub)
-claude
-> /doctor
-> /bootstrap
-> /handoff
-> /audit
+```powershell
+cd D:\My\ClaudeDjango\claude-django
+git add -A
+git status                 # confirm the ~25 changed files, no stray truncation
+git commit -m "docs+commands: harden doctor/bootstrap/preflight runtime gate; Context7 README; drop Russian; backend-only cleanup; repair truncated README/templates"
+git push origin main
 ```
 
-Expected: 0 manual interventions except the one-time PAT login (must be **classic** `ghp_...`), filling `.env` secrets, and (optionally) `createsuperuser`. If any of the 4 hard-STOP flags fires (`UNSUPPORTED_PLATFORM`, `FINE_GRAINED_PAT_NOT_SUPPORTED`, `REPO_ALREADY_EXISTS`, `NO_GH_SCOPES`) the message should be self-explanatory.
+Then optionally re-run the bootstrap smoke-test on a fresh derived project from Claude Code CLI inside WSL2 (`/doctor` → `/bootstrap` → `/handoff` → `/audit`).
 
 ## Open questions
 
-- [ ] Should `/handoff --append` be implemented as P4 (snapshot history) or is the overwrite model good enough long-term?
-- [ ] Worth front-loading a classic-PAT capability probe (`gh api /user --jq '.permissions'`) on top of `pat_kind` detection, or is `pat_kind == "classic"` already a sufficient predictor?
-- [ ] `templates/output-language.md` substitution token `{LANGUAGE_NATIVE}` is the only one outside the `{SLUG}/{DATE_ISO}/{OWNER}/{TODO}` convention — keep it for backward compat or unify?
-- [ ] Are there other `gh` subcommands (besides `auth login`) that silently require scopes beyond what `/bootstrap` operations actually use? The `read:org` discovery suggests there might be more — worth a `gh` surface audit before someone else hits one.
+- [ ] `reviewer.md:18` and `review-pr.md:51` still use the word "mini-frontend" inside a (correct) guardrail ("never mix frontend into a backend PR; frontend is a separate repo"). Reword for terminology consistency, or keep as-is?
+- [ ] Worth a standing pre-commit/CI guard that fails on a truncated file tail (e.g. last line not ending in newline where expected, or `{TODO` / dangling `<!--`), given this has now bitten three files across two sessions?
+- [ ] `/handoff --append` (snapshot history) vs the current overwrite model — still open from prior sessions.
 
 ## Environment notes
 
-- Editing claude-django from Cowork on the Windows D: mount triggers two known issues, both worked around in this session:
-  - **`Edit`/`Write` tools silently truncate on large writes.** Pattern: use bash + `python pathlib` to rewrite the whole file, verify with `wc -c` + `grep` for the new markers. Memory: `feedback_cowork_write_unreliable_on_mount.md`.
-  - **Container `git` fails on Windows-written index** (`error: index uses pS:6 extension`). All `git add`/`commit`/`push` happens in PowerShell on the host. Memory: `feedback_bind_mount_locked_files.md`.
-- Direct commits to `main` are allowed in this repo per template-repo policy (memory: `feedback_template_repo_direct_main.md`). PR flow applies only to derived projects.
+- **Cowork on the Windows D: mount: the `Edit`/`Write` MCP tools silently TRUNCATE file tails.** This session it ate the tail of `README.md` (caught at session-end via `tail -c`). Use `python pathlib.write_text()` through bash instead, and verify every write with `tail -c` + line-count-vs-HEAD, NOT just a grep for the added text. Memory: `feedback_cowork_write_unreliable_on_mount.md`; lesson logged 2026-05-31.
+- Editing files under `.claude/` is blocked for the Edit tool in Cowork ("protected location") — go through bash + python.
+- Container/mount `git` is unreliable on the Windows-written index (`error: index uses pS:6 extension`); do all `git add`/`commit`/`push` in PowerShell on the host. `git status`/`diff`/`show` read fine from the Cowork sandbox.
+- Direct commits to `main` are allowed in THIS repo per template-repo policy (memory: `feedback_template_repo_direct_main.md`). PR flow applies only to derived projects.
 
 ---
 
-> Update cadence: at session end, by hand or via `/handoff` (once the command lands in Claude Code CLI). The four-batch series in `docs/WORKLOG.md` is canonical; this file is the cursor.
+> Update cadence: at session end, by hand or via `/handoff`. `docs/WORKLOG.md` is the canonical chronicle; this file is the cursor.

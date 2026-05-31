@@ -27,7 +27,7 @@ Independent security pass over changes. Map findings to severity (Critical/Impor
 ## Abuse & transport
 
 - Throttling on login/registration/sensitive endpoints (`throttle_classes`).
-- CORS/CSRF configured correctly for the API + mini-client.
+- CORS/CSRF configured correctly for the API (consumed by the separate frontend repo).
 - File uploads validated (type/size) if present.
 
 ## OWASP quick map
