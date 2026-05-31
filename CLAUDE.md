@@ -58,7 +58,7 @@ Optional (activate only when relevant, not used in every project): `auditor` (wo
 
 ## Stack
 
-Python 3.13 · Django 6 · Django REST Framework · PostgreSQL 18 · Docker · pytest + pytest-django · ruff. Environment — WSL2 + Docker Desktop. Staging — VPS `54.37.138.231` (Debian).
+Python 3.13 · Django 6 · Django REST Framework · PostgreSQL 18 · Docker · pytest + pytest-django · ruff. Environment — WSL2 + Docker Desktop. Staging — VPS `<STAGING_HOST>` (Debian).
 
 ## Setup
 

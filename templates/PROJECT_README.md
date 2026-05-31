@@ -2,7 +2,7 @@
 
 > Backend-only Django REST Framework service. Bootstrapped from [`claude-django`](https://github.com/VadayI/claude-django) on `{DATE_ISO}`.
 >
-> **Owner:** [@{OWNER}](https://github.com/{OWNER}) · **Staging:** `54.37.138.231` (Debian VPS)
+> **Owner:** [@{OWNER}](https://github.com/{OWNER}) · **Staging:** `<STAGING_HOST>` (Debian VPS)
 
 ## Stack
 
@@ -89,7 +89,7 @@ docker-compose.yml          # local dev stack (postgres + backend)
 ## Deploy (staging)
 
 ```bash
-ssh <user>@54.37.138.231
+ssh <user>@<STAGING_HOST>
 cd ~/projects/{SLUG}
 git pull
 docker compose -f docker-compose.staging.yml up -d --build

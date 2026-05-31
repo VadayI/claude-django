@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-29
-- **Deciders:** Vadym (@VadayI)
+- **Deciders:** Project maintainer
 - **Tags:** environment, shell, simplification
 
 ## Context
@@ -15,7 +15,7 @@ The template historically tried to support two shells in parallel: bash (Linux /
 - `scripts/detect-env.py` — `is_powershell` / `is_cmd` flags, `$PSVersionTable` probes, fall-through logic for unknown shells.
 - `README.md` — Quick start had a bash block followed by a `<details><summary>PowerShell variant</summary>` block doing the same thing with `Copy-Item` / `Remove-Item`.
 
-By rough count, ~30% of the lines in those files existed solely to handle the PowerShell branch. The author of the template (`@VadayI`) and every known derived-project user runs WSL2 + Docker Desktop — there were no real users on Windows-native shell. The dual-shell support was paid-for, accidental complexity.
+By rough count, ~30% of the lines in those files existed solely to handle the PowerShell branch. The template author and every known derived-project user runs WSL2 + Docker Desktop — there were no real users on Windows-native shell. The dual-shell support was paid-for, accidental complexity.
 
 Two reinforcing reasons make WSL2 effectively mandatory on Windows anyway: (1) Docker bind-mounts from Windows-native paths (`/mnt/c|/mnt/d`) are significantly slower than from WSL2 FS (`~/projects/<slug>`), and (2) the CI gate scripts (`scripts/check_stubs.sh`, `check_openapi_drift.sh`, `check_app_readmes.sh`) are bash by design — they run on the Linux GitHub Actions runner — so any local-test parity with CI requires bash anyway.
 

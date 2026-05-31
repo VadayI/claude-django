@@ -4,7 +4,6 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 **Stack:** Python 3.13 · Django 6 · Django REST Framework · PostgreSQL 18 · Docker · pytest + pytest-django · ruff · drf-spectacular (OpenAPI)
 **Environment:** Windows + WSL2 + Docker Desktop (on Windows: WSL2 mandatory) · Staging — Debian VPS · GitHub as the source of truth
-**Author:** [@VadayI](https://github.com/VadayI)
 
 ---
 
@@ -150,7 +149,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 - **Shell:** bash in WSL2 Ubuntu (Windows), bash/zsh (Linux/macOS). PowerShell native NOT supported.
 - WSL2 (Ubuntu) — **mandatory on Windows**; keep the project under `~/projects/<slug>` inside WSL2 FS for fast Docker bind-mounts
 - Node.js 18+ (via `nvm`) — **optional** for this backend-only repo; needed only if you use `npx`-based skills (e.g., the Context7 MCP runs via `npx`)
-- A GitHub account ([@VadayI](https://github.com/VadayI))
+- A GitHub account
 
 ### Shell: bash only
 
@@ -259,7 +258,7 @@ The environment lives entirely in Git, so the second machine picks up everything
 ```bash
 # one-time on the new machine: WSL2 + Docker Desktop + Claude Code CLI (+ nvm if you use npx skills)
 cd ~/projects
-git clone https://github.com/VadayI/my-project.git
+git clone https://github.com/<your-username>/my-project.git
 cd my-project
 docker compose up -d && docker compose exec backend pytest   # make sure it's green
 # inside claude: install the plugins (Step 5), then run /doctor + /preflight to verify the environment

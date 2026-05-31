@@ -2,11 +2,15 @@
 
 > Rolling snapshot of the template-config repo. Read first when joining; update at session end.
 >
-> Owner: [@VadayI](https://github.com/VadayI) · Last touched: 2026-05-30
+> Maintainer · Last touched: 2026-05-31
 
 ## Current state
 
-On `main`, working tree clean, in sync with `origin/main`. Last commit: `fc975bb docs(bootstrap): add read:org to PAT URLs + clarify env-var vs gh-auth-login paths`. The four P0-P3 batches AND a follow-up `read:org` hotfix all landed in this session — five separate commits in `main`:
+On `main`, working tree has a staged PII-scrub change set (14 files) ready to commit directly to `main` per template-repo policy. Previous tip: `fc975bb docs(bootstrap): add read:org to PAT URLs + clarify env-var vs gh-auth-login paths`.
+
+Pending change: working-tree scrub of personal data from the public template — staging VPS IP `54.37.138.231` → `<STAGING_HOST>` (7 occurrences), and author identity `Vadym (@VadayI)` genericised across README, ADRs, HANDOFF, no-stubs, fix-ci, and templates. Four functional self-clone URLs intentionally retained. Full detail in `docs/WORKLOG.md` (2026-05-31 entry).
+
+History batches that previously landed in `main`:
 
 - `8cdb6a6` — P0 (preflight robustness) + P1 (scaffolding templates) merged
 - `e03c0c3` — P2 (HANDOFF template, lessons seed, branch protection 403 fallback)
@@ -14,11 +18,11 @@ On `main`, working tree clean, in sync with `origin/main`. Last commit: `fc975bb
 - `36dd18b` — session-end snapshot (docs/HANDOFF.md + docs/lessons.md)
 - `fc975bb` — `read:org` scope clarification + env-var vs `gh auth login` split
 
-`docs/WORKLOG.md` carries the full per-batch chronicle. `docs/plans/0002-0005` carry the matching plans (no plan for the `read:org` hotfix — it was a direct doc fix from a real-run gap).
+`docs/WORKLOG.md` carries the full per-batch chronicle. `docs/plans/0002-0005` carry the matching plans.
 
 ## Last finished
 
-- Commit `fc975bb` (read:org hotfix) — pushed to `main` on 2026-05-30. The carlsberg real-run had hit `gh auth login: missing required scope 'read:org'` after creating a classic PAT via our recommended URL; docs now distinguish the env-var auth path (no `read:org` needed) from the stored-creds path (requires `read:org`).
+- PII / sensitive-data scrub of the working tree (2026-05-31): IP removed (0 occurrences), author identity genericised. Personal email + IP still in git history — owner declined a history rewrite, so they remain in older commits and `origin` still shows `VadayI`. IP should be treated as already exposed.
 
 ## In progress
 
@@ -26,7 +30,7 @@ On `main`, working tree clean, in sync with `origin/main`. Last commit: `fc975bb
 
 ## Next step
 
-Smoke-test the hardened bootstrap on a fresh derived project from Claude Code CLI inside WSL2:
+Commit + push the PII scrub directly to `main` (template-repo policy), then smoke-test the hardened bootstrap on a fresh derived project from Claude Code CLI inside WSL2:
 
 ```bash
 cd ~/projects

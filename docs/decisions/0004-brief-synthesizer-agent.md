@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-29
-- **Deciders:** Vadym (@VadayI)
+- **Deciders:** Project maintainer
 - **Tags:** agents, documentation, ba
 
 ## Context

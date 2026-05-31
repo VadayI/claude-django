@@ -34,10 +34,10 @@ npm run dev      # local Vite dev server
 npm run build    # production build
 ```
 
-## Staging (VPS 54.37.138.231, Debian)
+## Staging (VPS <STAGING_HOST>, Debian)
 
 ```bash
-ssh <user>@54.37.138.231
+ssh <user>@<STAGING_HOST>
 cd ~/projects/<project>
 git pull
 docker compose -f docker-compose.staging.yml up -d --build

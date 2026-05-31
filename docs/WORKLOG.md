@@ -1,5 +1,27 @@
 # WORKLOG — claude-django
 
+## 2026-05-31 — PII / sensitive-data scrub of the public template (working tree)
+
+The repo is public; swept it for personal data, names, and IPs before it spreads further through the scaffolding templates. Working-tree-only cleanup (no git-history rewrite, per owner decision).
+
+**Findings:**
+
+- **Staging VPS IP `54.37.138.231`** — 7 occurrences across `CLAUDE.md`, `.claude/agents/devops.md`, `.claude/rules/docker-commands.md`, `templates/PROJECT_README.md`. The template copy was the worst: it propagated the real IP into every derived project's README. Full deploy flow (SSH → git pull → docker compose) was documented next to it.
+- **Personal author identity `Vadym (@VadayI)`** — in README, `docs/HANDOFF.md`, all 5 ADRs, `.claude/rules/no-stubs.md`, `.claude/commands/fix-ci.md`, and 4 `templates/` files.
+- No tokens/keys/passwords in files (`.env.example` holds only placeholders). `a@b.com` in skills are test fixtures, not real.
+
+**Fixes:**
+
+- IP → `<STAGING_HOST>` placeholder everywhere (0 occurrences remain).
+- Author attribution removed/genericised: ADRs → `Deciders: Project maintainer`; `no-stubs.md` + `templates/STUBS.md` → `@your-handle`; `fix-ci.md` → `your-org`; README `Author:` line dropped; `docs/HANDOFF.md` → `Maintainer`; derived-project clone example → `<your-username>`.
+- **Intentionally kept:** 4 `VadayI` references that are functional clone URLs of *this* public repo itself (`README.md` self-clone, `templates/{lessons,PROJECT_README,WORKLOG}.md` source attribution). The repo owner of a public GitHub repo is visible regardless; genericising these would break `git clone` and lose source attribution.
+
+**Out of scope (owner declined history rewrite):** personal email `vadym.melnyk@wp.pl` and the IP still live in older commits (`git log`) and the `origin` remote still shows `VadayI`. Since the IP was already public, treat it as exposed — verify the VPS hardening (SSH keys only, fail2ban, firewall) independently.
+
+**Verification:** `grep -rn '54\.37\.138\.231'` → 0 hits; `grep -rn 'Vadym\|@VadayI'` → only the 4 functional self-URLs remain. No backend code in this repo, so no ruff/pytest gate applies.
+
+---
+
 ## 2026-05-30 — read:org scope + env-var auth path clarification (hotfix)
 
 Real-run on `carlsberg-ir-data-service`: after creating a classic PAT via our recommended URL and running `gh auth login`, the CLI rejected the token with `missing required scope 'read:org'`. Two gaps in the docs:

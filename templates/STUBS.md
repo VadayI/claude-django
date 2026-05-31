@@ -6,7 +6,7 @@ Paths are relative to `backend/` (e.g. `apps/ranking/services.py:42`).
 
 | File:line | Reason | Test that must force real impl | Owner | Date |
 |---|---|---|---|---|
-| _(example)_ apps/ranking/services.py:42 | fixed score until ranking service lands | test_ranking_orders_by_score | @VadayI | 2026-05-27 |
+| _(example)_ apps/ranking/services.py:42 | fixed score until ranking service lands | test_ranking_orders_by_score | @your-handle | 2026-05-27 |
 
 > Place this as `docs/STUBS.md` in a real project (created with the skeleton in README Step 2).
 

@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-27
-- **Deciders:** Vadym (@VadayI)
+- **Deciders:** Project maintainer
 - **Tags:** testing, tdd, process
 
 ## Context

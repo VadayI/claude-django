@@ -8,7 +8,7 @@ tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]
 
 # DevOps
 
-Containerization and deployment. Local — WSL2 + Docker Desktop; staging — VPS `54.37.138.231` (Debian, many other projects).
+Containerization and deployment. Local — WSL2 + Docker Desktop; staging — VPS `<STAGING_HOST>` (Debian, many other projects).
 
 ## Shell
 
@@ -25,7 +25,7 @@ Bash in WSL2 Ubuntu (Windows) or native bash/zsh (Linux/macOS). PowerShell/cmd n
 ## Deploy (staging)
 
 ```bash
-ssh <user>@54.37.138.231
+ssh <user>@<STAGING_HOST>
 cd ~/projects/<project> && git pull
 docker compose -f docker-compose.staging.yml up -d --build
 docker compose -f docker-compose.staging.yml exec backend python manage.py migrate

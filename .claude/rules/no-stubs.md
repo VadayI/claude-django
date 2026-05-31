@@ -19,7 +19,7 @@ Every `# STUB:` / `NotImplementedError("STUB: …")` in `apps/` MUST have a matc
 ```
 | File:line | Reason | Test that must force the real impl | Owner | Date |
 |---|---|---|---|---|
-| apps/ranking/services.py:42 | fixed score until ranking lands | test_ranking_orders_by_score | @VadayI | 2026-05-27 |
+| apps/ranking/services.py:42 | fixed score until ranking lands | test_ranking_orders_by_score | @your-handle | 2026-05-27 |
 ```
 
 CI fails if a STUB exists in `apps/` whose file is not listed in `docs/STUBS.md` (see Enforcement). This is what *forces* recording it — unlogged stubs do not merge.

@@ -22,7 +22,7 @@ The user provided: `$ARGUMENTS`
 
 Detect the repo from the local checkout (do not hardcode it):
 ```bash
-gh repo view --json nameWithOwner --jq .nameWithOwner   # e.g. VadayI/<repo>
+gh repo view --json nameWithOwner --jq .nameWithOwner   # e.g. your-org/<repo>
 ```
 Parse the PR reference from `$ARGUMENTS`. Supported formats:
 - `123` or `#123` — PR in the current repo
