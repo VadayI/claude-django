@@ -37,11 +37,12 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 
 0.5. **Runtime gate — run BEFORE the audit (hard STOP).** Read `.claude/memory/env-detect.json`. This file is the source of truth for platform/tooling and is written ONLY by the `SessionStart` hook of Claude Code CLI.
 
-   - **If it is MISSING:** the hook has not run. `/doctor` and `/bootstrap` are supported only in **Claude Code CLI on Linux / macOS / WSL2** (see `README.md` "Where this runs"). **STOP here — do NOT dispatch `devops` to detect tools ad-hoc, do NOT guess tool versions, do NOT recommend `/bootstrap`.** Report `NO_ENV_DETECT` with the two possible causes and their fixes:
-     1. `python` is not on PATH, so the hook failed -> install Python 3.10+ and relaunch Claude Code CLI.
-     2. You are in Cowork / Claude API-SDK / a non-CLI shell -> this config is the wrong tool for that runtime; run it from Claude Code CLI inside WSL2.
+   - **If it is MISSING:** the hook has not run. `/doctor` and `/bootstrap` are supported only in **Claude Code CLI on Linux / macOS / WSL2** (see `README.md` "Where this runs"). **STOP here — do NOT dispatch `devops` to detect tools ad-hoc, do NOT guess tool versions, do NOT recommend `/bootstrap`.** First check whether `scripts/detect-env.py` even exists in the project (`test -f scripts/detect-env.py`), because the most common cause is that the Quick start copy step omitted the root `scripts/` directory. Report `NO_ENV_DETECT` with the three possible causes and their fixes:
+     1. **`scripts/detect-env.py` is missing** (the root `scripts/` directory was not copied during Quick start). The hook command `python scripts/detect-env.py` then has nothing to run and fails silently. Fix: copy it from the template clone — `cp -r /tmp/claude-django/scripts ./` (or re-run the corrected Quick start block in README) — then relaunch Claude Code CLI. This is the first thing to check.
+     2. `python` is not on PATH, so the hook failed -> install Python 3.10+ and relaunch Claude Code CLI.
+     3. You are in Cowork / Claude API-SDK / a non-CLI shell -> this config is the wrong tool for that runtime; run it from Claude Code CLI inside WSL2.
 
-     You MAY suggest `python scripts/detect-env.py` as a **CLI-side diagnostic only**, with this warning: running it inside the Cowork sandbox reports the *sandbox* OS (Linux), not the user's real machine, so its `platform_supported` value cannot be trusted there. **Never hand-write or fabricate the file** to get past this gate.
+     If `scripts/detect-env.py` is present, you MAY suggest `python scripts/detect-env.py` as a **CLI-side diagnostic only**, with this warning: running it inside the Cowork sandbox reports the *sandbox* OS (Linux), not the user's real machine, so its `platform_supported` value cannot be trusted there. **Never hand-write or fabricate the file** to get past this gate.
    - **If it EXISTS but `platform_supported == false`:** hard STOP with `UNSUPPORTED_PLATFORM` (no override branch -- do not offer "proceed anyway"). Recommend installing WSL2 Ubuntu (ADR `docs/decisions/0005-drop-windows-native-shell.md`) and relaunching `claude` inside WSL2. Do NOT recommend `/bootstrap`.
 
    Only when `env-detect.json` EXISTS **and** `platform_supported == true` do you proceed to Step 1. Carry any hard-STOP flag raised here into Step 5.
@@ -95,4 +96,4 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 - Do not edit application source code here — environment/config only.
 - Honor the project rule that the `D:` drive is unreliable for git; do git operations manually on Windows when relevant.
 
-<!-- Last reviewed/updated: 2026-05-31 (Step 0.5 runtime gate: NO_ENV_DETECT/UNSUPPORTED_PLATFORM hard-stop before audit; anti-fabrication of tool versions; Step 5 gate so /bootstrap is never recommended while a hard-STOP flag is active) -->
+<!-- Last reviewed/updated: 2026-05-31 (Step 0.5 runtime gate: NO_ENV_DETECT/UNSUPPORTED_PLATFORM hard-stop before audit; NO_ENV_DETECT now lists missing scripts/detect-env.py as cause #1 with the cp -r scripts ./ fix; anti-fabrication of tool versions; Step 5 gate so /bootstrap is never recommended while a hard-STOP flag is active) -->

@@ -1,5 +1,17 @@
 # WORKLOG — claude-django
 
+## 2026-05-31 — Fix root cause of NO_ENV_DETECT: Quick start never copied root `scripts/`
+
+Follow-up to the earlier NO_ENV_DETECT hardening batch. That batch made `/doctor`/`/bootstrap`/`/preflight` STOP cleanly when `env-detect.json` is absent, but it never fixed *why* the file was absent on a correctly-followed setup. Real cause found on a fresh `carlsberg-ir-data-service` clone: the README Quick start `cp` block copies `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `.gitattributes`, `templates/`, `docker-compose.yml`, `.github/workflows/` — but **never the root `scripts/` directory**. The `SessionStart` hook runs `python scripts/detect-env.py`; with `scripts/detect-env.py` missing the hook fails silently, `env-detect.json` is never written, and `/doctor` fires `NO_ENV_DETECT` with a misleading diagnosis (blamed Python/runtime, never the missing file). `detect-env.py` + `log-cmd.py` live in root `scripts/`, separate from `templates/scripts/` (which holds only the three CI `check_*.sh` gates), so a full `templates/` copy does not bring them along.
+
+**Fixes:**
+
+- `README.md` — Quick start clone block now copies `scripts/` (`cp -r /tmp/claude-django/scripts ./`) with an inline note that the SessionStart hook fails silently without it; the NEW-project prose list adds `scripts/`.
+- `.claude/commands/doctor.md` — Step 0.5 `NO_ENV_DETECT` now lists **three** causes, with "scripts/detect-env.py missing (root scripts/ not copied)" as cause #1 + the `cp -r /tmp/claude-django/scripts ./` fix; gate now checks `test -f scripts/detect-env.py` first and only suggests running the diagnostic when the file exists.
+
+**Verification:** both edits applied via `assert count==1` anchor matching through python pathlib (Windows-mount truncation guard from `docs/lessons.md`); file tails confirmed intact after write.
+
+
 ## 2026-05-31 — Remove Russian everywhere + retire stale mini-frontend/React references
 
 Two cleanups after the command-hardening batch.

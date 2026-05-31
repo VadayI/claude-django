@@ -219,6 +219,7 @@ cp /tmp/claude-django/CLAUDE.md ./
 cp /tmp/claude-django/.mcp.json ./
 cp /tmp/claude-django/.gitignore ./
 cp /tmp/claude-django/.gitattributes ./
+cp -r /tmp/claude-django/scripts ./          # detect-env.py (SessionStart hook) + log-cmd.py — REQUIRED; the hook fails SILENTLY without it and /doctor will STOP with NO_ENV_DETECT
 cp -r /tmp/claude-django/templates ./        # FULL templates/ — /bootstrap Mode A needs all of it
 cp /tmp/claude-django/templates/docker-compose.yml ./   # also at repo root (devcontainer entrypoint)
 mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/* .github/workflows/
@@ -233,7 +234,7 @@ Then install the plugins (see below) and adjust `CLAUDE.md` for the project name
 
 ## Step-by-step: a NEW project from scratch
 
-1. **Quick start** (above) — copy `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `templates/` into the new project folder under `~/projects/<slug>` in WSL2.
+1. **Quick start** (above) — copy `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `scripts/`, `templates/` into the new project folder under `~/projects/<slug>` in WSL2.
 2. `claude` → `/doctor` — verifies environment and detects scenario `fresh`; recommends `/bootstrap`.
 3. `claude` → `/bootstrap` — interactive. First runs a **hard preflight** (Python, `gh`, `docker`, templates) + **PAT scope check** — Mode A requires `repo` + `workflow` (recommended `admin:repo_hook` for auto branch protection); if scopes are missing, stops with `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org` as the quick fix. Then asks GitHub login (default = `gh api user`), slug (default = CWD basename), output language; runs the full scaffold (idempotent `gh repo create` — skipped if `origin` already set, skeleton, `django-admin startproject`, settings split, drf-spectacular config + URLs, `docker compose up`, `migrate`, generate `docs/api/openapi.yml`, prompt for `createsuperuser`, copy `templates/.env.example` to **both** `.env.example` (committed) and `.env` (gitignored), first commit + push `origin main`, `gh workflow run backend-ci.yml` to register the `backend-ci` status check, auto branch protection via `gh api` when `admin:repo_hook` is present — manual GitHub UI fallback otherwise). Each major step has a `⏸ Checkpoint — Resume` marker so a failed run can be re-invoked safely (Mode B picks up where Mode A stopped). This is the only command that direct-pushes to main (documented exception in `.claude/rules/git-operations.md`).
 4. (manual) Drop your input documents into `docs/` — briefs, ТЗ, PDFs, .docx, screenshots — keeping `docs/api/`, `docs/decisions/`, `docs/plans/` for their existing purpose.
