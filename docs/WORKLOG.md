@@ -1,5 +1,19 @@
 # WORKLOG — claude-django
 
+## 2026-05-31 — README: Desktop-not-a-runner warning + "Using Claude Code CLI" section
+
+Triggered by a real `/doctor` run from Claude Desktop (Code mode) on the test project `carlsberg-ir-data-service`: it correctly issued `HARD STOP: UNSUPPORTED_PLATFORM` because the desktop app runs the SessionStart hook with Windows-Python (`is_wsl2: false`, `platform_supported: false`) even though the files were copied from inside a WSL2 shell. Not a `/doctor` bug — the config was simply run from an unsupported runner.
+
+**Changes (README.md only, no behavior change):**
+
+- Strengthened the "Where this runs" Desktop bullet — now "Claude Desktop — including Cowork / Code mode" and spells out the three reasons it can't run the methodology: `.claude/agents/` pipeline not loaded, no access to your Docker/PostgreSQL for the TDD loop + CI gates, and the env gates can't fire honestly.
+- Added a ⚠️ symptom callout describing the exact Windows-Python → `UNSUPPORTED_PLATFORM` chain and clarifying the fix is "launch the terminal `claude` from inside WSL2", not "install WSL2 again".
+- Added a "Can I use Claude Desktop at all?" mini-FAQ (partly — as a companion, not the runner).
+- Added a new top-level section "Using Claude Code CLI (the only supported runner)": install CLI inside WSL2, keep the project in `~/projects` (not `/mnt/...`), launch from project root, the `/doctor` → `/preflight` → feature → `/wrap-up` cycle, and the classic-vs-fine-grained PAT note as the next gate.
+
+**Verification:** entry written via python pathlib (mount-truncation guard); README re-checked — 0 NUL bytes, 7 `##` headings (no dups), tail intact.
+
+
 ## 2026-05-31 — Fix root cause of NO_ENV_DETECT: Quick start never copied root `scripts/`
 
 Follow-up to the earlier NO_ENV_DETECT hardening batch. That batch made `/doctor`/`/bootstrap`/`/preflight` STOP cleanly when `env-detect.json` is absent, but it never fixed *why* the file was absent on a correctly-followed setup. Real cause found on a fresh `carlsberg-ir-data-service` clone: the README Quick start `cp` block copies `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `.gitattributes`, `templates/`, `docker-compose.yml`, `.github/workflows/` — but **never the root `scripts/` directory**. The `SessionStart` hook runs `python scripts/detect-env.py`; with `scripts/detect-env.py` missing the hook fails silently, `env-detect.json` is never written, and `/doctor` fires `NO_ENV_DETECT` with a misleading diagnosis (blamed Python/runtime, never the missing file). `detect-env.py` + `log-cmd.py` live in root `scripts/`, separate from `templates/scripts/` (which holds only the three CI `check_*.sh` gates), so a full `templates/` copy does not bring them along.
