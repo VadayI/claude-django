@@ -26,6 +26,16 @@ docker compose logs -f backend  # logs
 docker compose down             # stop
 ```
 
+## SessionStart conveniences
+
+The `SessionStart` hook runs `scripts/session-start.sh`, which (in order): writes `.claude/memory/env-detect.json` via `scripts/detect-env.py` (mandatory — the gates depend on it); seeds `.env` from `.env.example` if `.env` is missing (placeholders only — fill real secrets yourself); and brings services up **only** when you opt in:
+
+```bash
+export CLAUDE_DJANGO_AUTO_UP=1   # before launching `claude`: auto `docker compose up -d` on session start
+```
+
+Off by default (heavy/stateful) per the project's detect -> propose -> fix-on-confirm philosophy. The hook never aborts the session and never prints secrets.
+
 ## Backend (Django in the container)
 
 ```bash
