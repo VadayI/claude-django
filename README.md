@@ -58,7 +58,7 @@ claude --version                     # confirm the CLI is on PATH
 >
 > It still expects a real WSL2 Ubuntu (or native Debian) shell. After it finishes, open a new shell so `~/.bashrc` applies, then `claude` → `/doctor`.
 
-**2. Keep the project in the WSL2 filesystem.** Put the repo under `~/projects/<slug>`, not under `/mnt/c|/mnt/d`. Working from `/mnt/...` gives slow Docker bind-mounts, stale mtimes, CRLF↔LF flips, and Windows file locks that block `rm`. Verify with `pwd` — you want `/home/<user>/...`, never `/mnt/...`.
+**2. Where to put the project — your Windows drive is fine.** Working from `/mnt/c`/`/mnt/d` is **fully supported** (ADR `0009`); `/doctor` will not ask you to move it. The only `/mnt` caveats are slower Docker bind-mounts, occasional CRLF↔LF flips, and `git index.lock` on the 9p mount (run `git` from the host shell — PowerShell/Git Bash — to avoid it). If you want maximum bind-mount speed you *can* keep the repo under `~/projects/<slug>` in the WSL2 filesystem, but it is optional, not required.
 
 ```bash
 mkdir -p ~/projects && cd ~/projects
@@ -100,7 +100,7 @@ export GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_xxxxxxxx   # the fine-grained tok
 
 Minimal permissions: **Contents** RW, **Metadata** RO (auto), **Pull requests** RW, **Workflows** RW, **Administration** RW (the last enables auto branch protection — omit it and protection becomes a manual UI step). A classic PAT still works but grants whole-account access.
 
-See *Prerequisites*, *Quick start*, and *Step-by-step: a NEW project from scratch* below for the full bring-up. The short version: **install the CLI in WSL2 → clone into `~/projects` → `claude` → `/doctor` → `/bootstrap` → `/preflight` → first feature.**
+See *Prerequisites*, *Quick start*, and *Step-by-step: a NEW project from scratch* below for the full bring-up. The short version: **install the CLI in WSL2 → clone the repo (your Windows drive is fine) → `claude` → `/doctor` → `/bootstrap` → `/preflight` → first feature.**
 
 If you must work from Claude Desktop or another environment, use it as an editor / chat companion **after** running `/bootstrap`, `/doctor`, `/synthesize-brief`, and `/preflight` from Claude Code CLI.
 
@@ -121,7 +121,7 @@ If you must work from Claude Desktop or another environment, use it as an editor
 | You pasted a shell command (e.g. `npm install …`) and **nothing changed** | You typed it into Claude's `❯` chat prompt, not the terminal — Claude just replied with a note. | `/exit` (or open a second WSL2 tab), run the command in **bash**, then relaunch `claude`. |
 | PowerShell: `wsl2: The term 'wsl2' is not recognized` | The command is `wsl`, not `wsl2`. | `wsl` (or `wsl -d Ubuntu`) to enter WSL2 from PowerShell. |
 | `which claude` stays `/mnt/c/...` even after the `$(npm config get prefix)/bin` PATH fix | Your `npm` is the **Windows** npm (Linux `node` is present but Linux `npm` is missing), so `npm install -g` put `claude` in the Windows prefix — the PATH trick can't help because that prefix is itself a `C:\...` path. | Confirm with `which node npm`. Let `nvm` own node+npm in WSL2: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh \| bash` → `nvm install --lts` → `npm install -g @anthropic-ai/claude-code`; `which node npm claude` must all be `/home/…`. Or just run `bash scripts/setup-wsl.sh`. |
-| Tests are slow, `rm` fails, CRLF↔LF flips — project under `/mnt/c` or `/mnt/d` | The repo lives on a Windows drive (9p mount). **This is a ⚠️ warning, not a hard stop** — the platform gate still passes. | Optional but recommended: move the repo to `~/projects/<slug>` inside the WSL2 filesystem for fast Docker bind-mounts. |
+| Tests slow, `rm` fails, CRLF↔LF flips, `git index.lock` — project under `/mnt/c` or `/mnt/d` | The repo lives on a Windows drive (9p mount). **Fully supported (ADR `0009`)** — these are inherent `/mnt` caveats, not an error, and `/doctor` won't ask you to move. | No action required. Run `git` from the host shell (PowerShell/Git Bash) to avoid `index.lock`. Moving to `~/projects/<slug>` is optional (faster bind-mounts), never required. |
 
 After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites `env-detect.json` on each launch, so a corrected runner/PAT shows up immediately. Full rationale for the runner trap: `.claude/rules/environment.md` → *"launch the WSL2-native `claude`"*.
 
@@ -262,7 +262,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 - **Python 3.10+ on PATH as `python`** (hard requirement; the `SessionStart` hook runs `scripts/detect-env.py`). On Ubuntu install `python-is-python3` if only `python3` is present.
 - Docker Desktop with WSL2 backend
 - **Shell:** bash in WSL2 Ubuntu (Windows), bash/zsh (Linux/macOS). PowerShell native NOT supported.
-- WSL2 (Ubuntu) — **mandatory on Windows**; keep the project under `~/projects/<slug>` inside WSL2 FS for fast Docker bind-mounts
+- WSL2 (Ubuntu) — **mandatory on Windows**. The project can live on your Windows drive (`/mnt/...`, fully supported — ADR `0009`); `~/projects/<slug>` in the WSL2 FS is optional for faster Docker bind-mounts
 - **Node.js 18+ (required, via `nvm`)** — needed to install the WSL2-native Claude Code CLI (`npm install -g @anthropic-ai/claude-code`) and for `npx`-based skills (e.g. the Context7 MCP). `/doctor` reports `NO_NODE` if it is missing or below 18
 - A GitHub account
 
@@ -300,19 +300,20 @@ The CI gate scripts (`scripts/check_*.sh`) intentionally stay bash — they run 
 >
 > Verify with `cat /etc/os-release` — `ID=ubuntu`. Tested with Ubuntu 24.04+ (works on 26.04 / Resolute Raccoon as well).
 
-> **Before you start — enter WSL2 and switch to the WSL filesystem.**
+> **Before you start — enter WSL2 (the filesystem location doesn't matter).**
 >
-> If your prompt starts with `PS ` (PowerShell), launch WSL with `wsl` (not `wls`). After launch, your shell may land in `/mnt/c/...`, `/mnt/d/...`, or `/mnt/host/d/...` (the exact path depends on your distro) because PowerShell was already in `D:\Dev\...`. **Do NOT work from `/mnt/...`** — Docker bind-mounts there are slow, files appear with stale mtime, CRLF↔LF flips bite, and Windows file locks block `rm` (we've seen all three on this repo). `cd` into the native WSL filesystem first:
+> If your prompt starts with `PS ` (PowerShell), launch WSL with `wsl` (not `wls`). You may land in `/mnt/c/...`, `/mnt/d/...`, or `/mnt/host/d/...` — **that's fine.** Working from the Windows drive is fully supported (ADR `0009`); you do **not** need to move into `~/projects`. `cd` to wherever your project lives:
 >
 > ```bash
-> cd ~                                  # or `cd ~/projects/<slug>` if the folder exists
-> mkdir -p ~/projects/<slug> && cd $_   # for a brand-new project
+> cd /mnt/d/path/to/your/project        # a Windows-drive project — supported
+> # or, for faster Docker bind-mounts, keep it in the WSL2 FS instead:
+> # mkdir -p ~/projects/<slug> && cd $_
 > ```
 >
-> Verify with `pwd` — you should see `/root/...` or `/home/<user>/...`, never `/mnt/...`.
+> The one thing that matters: you launched **WSL** (not PowerShell) and `claude` is the **WSL2-native** binary (`which claude` → `/home/...`, not `/mnt/c/...`). The `/mnt` caveats (slower bind-mounts, CRLF, run git from the host shell) are minor and never block you.
 
 ```bash
-# in WSL2, from the root of your project (inside ~/projects/<slug>, NOT /mnt/...)
+# in WSL2, from the root of your project (a /mnt/d/... Windows-drive path is fine — ADR 0009)
 rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
 cp -r /tmp/claude-django/.claude ./
 cp /tmp/claude-django/CLAUDE.md ./

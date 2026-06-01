@@ -12,7 +12,7 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands. Windows nati
 |---|---|---|
 | **Python (HARD REQUIREMENT)** | 3.10+ on PATH as `python` | `python --version`. On Ubuntu, if only `python3` is installed: `sudo apt install -y python-is-python3`. Without Python the SessionStart hook (`scripts/detect-env.py`) cannot run. |
 | OS shell | WSL2 (Ubuntu) on Windows is REQUIRED — PowerShell/cmd not supported. Linux / macOS bash or zsh are fine natively. | `uname -a` should report Linux (or Darwin on macOS); if `platform_supported: false` in `.claude/memory/env-detect.json` — STOP and instruct user to switch to WSL2. |
-| Working dir | If WSL2: in WSL2 FS (`~/projects/<p>`), NOT under `/mnt/c\|/mnt/d`. | `pwd` |
+| Working dir | Any path, **including `/mnt/c`/`/mnt/d` (Windows drive) — fully supported (ADR `0009`); `/doctor` must NOT suggest moving**. Informational `/mnt` caveats only: slower Docker bind-mounts, CRLF, `git index.lock` (run git from the host shell). `~/projects/<slug>` is optional (max bind-mount speed), never required. | `pwd` |
 | Docker Desktop | running, with WSL2 integration enabled if WSL2 is used | `docker info` |
 | docker compose | v2 available | `docker compose version` |
 | Python in container | 3.13.x (separate from the host Python above) | `docker compose exec -T backend python --version` |
@@ -58,7 +58,7 @@ hash -r && which claude           # /home/...  — NOT /mnt/c/...
 
 `scripts/setup-wsl.sh` automates exactly this (nvm + node + the CLI + the PATH fix), idempotently.
 
-The project living on `/mnt/d` (or any `/mnt/...`) is **not** what triggers `UNSUPPORTED_PLATFORM`: a WSL2-native `claude` launched from `/mnt/d` reports `platform: linux, is_wsl2: true, platform_supported: true` and passes the gate. You only get a working-dir ⚠️ (slow Docker bind-mounts, CRLF/lock issues) — see the *Working dir* row above; moving to `~/projects/<slug>` removes that warning but is not required to pass the platform gate.
+The project living on `/mnt/d` (or any `/mnt/...`) is **not** what triggers `UNSUPPORTED_PLATFORM`: a WSL2-native `claude` launched from `/mnt/d` reports `platform: linux, is_wsl2: true, platform_supported: true` and passes the gate. Working from `/mnt/...` is a fully supported setup (ADR `0009`) — the only caveats are slower Docker bind-mounts and occasional CRLF/`git index.lock` quirks (run git from the host shell); none require moving, and `/doctor` must not suggest it.
 
 
 ## Scope 2 — Claude config & access
@@ -105,7 +105,7 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 | Requirement | Expected | Check |
 |---|---|---|
 | Current branch | a feature branch, **not** `main` (for active work) | `git branch --show-current` |
-| Branch protection | `main` protected on GitHub (PR + status checks) | `gh api repos/{owner}/{repo}/branches/main/protection` — 404 = not protected |
+| Branch protection | `main` protected on GitHub (PR + status checks). **Requires a public repo or GitHub Pro/Team** — on a **free plan + private repo** the protection API returns 403, so absent protection there is EXPECTED, not a failure (make the repo public or upgrade to enable it, or keep PR-only by discipline). | `gh api repos/{owner}/{repo}/branches/main/protection` — 404 = not protected (or unavailable on free + private) |
 | Working tree | clean or only intended changes | `git status -sb` |
 | Sync | up to date with `origin` | `git fetch --dry-run` then `git status -sb` |
 | No secrets tracked | `.env` ignored, not committed | `git ls-files \| grep -E '(^\|/)\.env$'` (empty = good) |

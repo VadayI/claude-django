@@ -326,11 +326,16 @@ Run AFTER preflight passes but BEFORE any side-effects.
      case "$HTTP_STATUS" in
        403)
          echo
-         echo "Cause: the fine-grained token lacks 'Administration: write' on this repo."
-         echo "       Branch protection requires that permission."
-         echo "Fix:   regenerate the token via the template URL with administration=write"
-         echo "       (Repository access -> Only select repositories -> this repo), re-run /bootstrap,"
-         echo "       OR enable protection manually via the UI (instructions below)."
+         echo "Two possible causes — check which applies:"
+         echo "  (a) PLAN LIMIT (common on solo repos): branch protection on a PRIVATE repo"
+         echo "      requires GitHub Pro/Team. On the FREE plan a private repo returns 403"
+         echo "      regardless of token. Confirm: gh repo view $OWNER/$SLUG --json visibility,isPrivate"
+         echo "      Options: make the repo public (then re-run), upgrade to Pro/Team, OR skip"
+         echo "      protection and keep it private — a documented choice (see the checkpoint below)."
+         echo "  (b) TOKEN: the fine-grained token lacks 'Administration: write' on this repo."
+         echo "      Regenerate it via the template URL with administration=write (Only select"
+         echo "      repositories -> this repo) and re-run /bootstrap."
+         echo "  OR enable protection manually via the UI (instructions below)."
          ;;
        404)
          echo
@@ -370,8 +375,10 @@ Run AFTER preflight passes but BEFORE any side-effects.
    If the auto-call succeeded — proceed to Step 6. If it failed and you enabled
    protection via UI — type `continue bootstrap` (or re-run `/bootstrap`); Mode B
    detection sees protection now exists and skips this probe. If you skip
-   protection entirely (not recommended), record the decision in
-   `docs/decisions/` so the absence is intentional, not a forgotten step.
+   protection — e.g. a **private repo on the free plan**, where the API can't
+   enable it (a legitimate choice) — record it in `docs/decisions/` so the
+   absence is intentional. PR-only then relies on team discipline, not server
+   enforcement; enable it later by making the repo public or upgrading to Pro.
 
 6. **Manual follow-ups (plugins)** — ❗ **Requires your action in the Claude UI; cannot be automated by the agent.** This does NOT block starting work — you can paste these later. Print these for the user to paste inside `claude`:
    ```

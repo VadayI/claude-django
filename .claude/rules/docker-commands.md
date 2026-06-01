@@ -1,6 +1,6 @@
 # Docker / environment commands
 
-> **Shell:** bash (Linux / macOS / WSL2 Ubuntu). PowerShell on Windows native is NOT supported — see ADR `docs/decisions/0005-drop-windows-native-shell.md`. Keep the project in the WSL2 filesystem (`~/projects/<project>`), NOT under `/mnt/c|/mnt/d`, for fast Docker bind-mounts.
+> **Shell:** bash (Linux / macOS / WSL2 Ubuntu). PowerShell on Windows native is NOT supported — see ADR `docs/decisions/0005-drop-windows-native-shell.md`. Working from a Windows drive (`/mnt/c`/`/mnt/d`) is fully supported (ADR `0009`); bind-mounts are just slower there, and git is best run from the host shell (avoids `/mnt` `index.lock`). `~/projects/<project>` is optional for faster bind-mounts, not required.
 >
 > The `SessionStart` hook writes `.claude/memory/env-detect.json` with the active shell so agents can verify their assumptions.
 
