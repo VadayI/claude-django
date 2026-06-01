@@ -289,3 +289,30 @@ Real-run audit of `/bootstrap` on `carlsberg-ir-data-service` (Windows Git Bash 
 **Verification:** `python scripts/detect-env.py` AST-parses; markers `FINE_GRAINED_PAT_NOT_SUPPORTED`, `pat_kind`, `Where this runs`, `Never hand-write` present in expected files; total batch ~76 KB across six files; no Edit-on-mount truncations after retrying critical writes via `python pathlib`.
 
 ---
+
+## 2026-06-01 — main — Quality audit of the carlsberg test project + template hardening
+
+**Context:** Audited `carlsberg-ir-data-service` (first real bring-up of the template: `/bootstrap` -> `/synthesize-brief` -> `/preflight` -> product-import feature -> `/wrap-up`) to judge how well the template + agent pipeline performed. Two passes: a broad inventory and a skeptical, evidence-based review (ran `manage.py check`, the OpenAPI drift gate, ruff, Python repros).
+
+**Findings (full report: `docs/reviews/quality-audit-carlsberg-20260601.md`):**
+- Strengths: TDD order honored (RED test commit precedes GREEN impl), Conventional Commits, OpenAPI drift gate passes, ruff clean, Google docstrings, DB-state assertions + real triangulation.
+- Delivery (RED): PR #4 never merged - feature stranded on the branch; `/wrap-up` left `HANDOFF.md` 100% `{TODO}` and the tree dirty; WORKLOG overstated merge status.
+- Feature code (RED): broad `except Exception` per row -> corruption returns HTTP 200; `format=csv` + JSON body silently creates a junk product; non-atomic 409 -> 500 under concurrency.
+- Template defect: scaffolded `pyproject.toml` lacked `[tool.setuptools.packages.find]` -> `pip install -e` fails in every new project.
+
+**Done (committed `cb33643`, pushed to origin/main):** Plan `docs/plans/0006-quality-audit-fixes.md` + 7 fixes:
+- `templates/pyproject.toml` - add `[build-system]` + `[tool.setuptools.packages.find]`.
+- `/wrap-up` - verify merge via `gh` before writing WORKLOG; mandatory HANDOFF regen (assert no `{TODO}`); enumerate touched doc files for the commit.
+- `reviewer` - flag silent-failure anti-patterns (broad except, content-vs-format, unguarded IntegrityError->409, unbounded upload).
+- `tester` - explicit 409 + file-upload edge cases (both mismatch directions, encoding, empty fields, concurrency, partial-batch).
+- `app-readme` / `no-stubs` / `bootstrap` - README<->INDEX<->OpenAPI reconciliation; initialize `docs/STUBS.md` as an empty ledger.
+- `scripts/session-start.sh` - clear stale empty `.git/index.lock` on /mnt.
+
+**Decision (TDD verdict):** the agents applied TDD correctly by process (RED-first, DB assertions, triangulation) but the RED test set was too shallow to catch the two import bugs; addressed by the expanded `tester` checklist.
+
+**Next steps / open:**
+- Local `.git/index` corrupted on the /mnt mount (`bad index file sha1 signature`) and `templates/pyproject.toml` worktree file truncated by the Cowork mount - repair from the host (see HANDOFF "Next step"). History/origin intact; nothing lost.
+- Verify the pyproject fix end-to-end: fresh `/bootstrap` on a clean project, confirm `pip install -e backend` / CI install succeeds.
+- Clean up pre-existing half-staged truncated renames under `templates/scripts/` and `templates/todo.md` (physical files intact).
+
+---
