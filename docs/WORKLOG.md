@@ -1,5 +1,17 @@
 # WORKLOG — claude-django
 
+## 2026-06-01 — GitHub access model (ADR 0008) + /mnt working-dir policy (ADR 0009)
+
+Two related policy reversals driven by the `carlsberg-ir-data-service` bring-up.
+
+**Access model — manual repo + fine-grained per-repo PAT (ADR 0008; shipped in `a9185b3`).** Replaced the classic-PAT / auto-`gh repo create` model with: the user creates the empty repo by hand, and `/bootstrap` + `/doctor` emit a per-repo **fine-grained token template URL**. Verified live (GitHub changelog 2025-08-26) that fine-grained PAT template URLs are supported — `name`/`description`/permissions prefill via query params (`contents`/`pull_requests`/`workflows`/`administration`); the specific-repo selection stays a manual UI toggle. `FINE_GRAINED_PAT_NOT_SUPPORTED` retired across `bootstrap.md`/`doctor.md`/`environment.md`/`detect-env.py`; fine-grained is now the recommended credential, capability verified by `gh repo view` + per-operation errors instead of OAuth-scope headers. Mode A links `origin` to the user-created repo (`REPO_NOT_FOUND` remediation) instead of creating it; branch protection uses `administration=write` in the token.
+
+**Working dir — `/mnt` fully supported (ADR 0009; pending commit).** Stopped recommending that users move the project off `/mnt/c`/`/mnt/d` into `~/projects`. `/doctor` now reports `/mnt` as ✅ and never proposes moving; one neutral caveats note remains (slower bind-mounts, CRLF, run git from the host shell to avoid `index.lock`). Removed all "Do NOT work from /mnt" language from `environment.md`, `doctor.md`, `docker-commands.md`, README. `~/projects` is optional, not required.
+
+**Branch protection on the free plan (pending commit).** Verified via GitHub Docs that branch protection AND rulesets are unavailable for **private** repos on the free plan (public repos get them free; private needs Pro/Team/Enterprise). `bootstrap.md` Step 5 403 handler now distinguishes (a) plan limit (free + private) from (b) missing token `Administration` permission, and makes "skip & keep private" a documented choice. `doctor.md` no longer flags absent protection on a free private repo as `existing-incomplete`; `environment.md` Scope 4 records the limitation.
+
+**Verification.** `detect-env.py` compiles; `FINE_GRAINED` as an active gate = 0 (only "retired" mentions remain); no residual "Do NOT work from /mnt" / move recommendations; template URL consistent across files; all writes via `python pathlib` + `assert` anchors + tail/line checks (Edit/Write mount-truncation guard). `a9185b3` pushed; the ADR 0009 + branch-protection batch + this WORKLOG/HANDOFF update is the pending commit.
+
 ## 2026-06-01 — Onboarding clarity + mandatory Node gate + npm-shadow trap
 
 Session driven by a live bring-up on `carlsberg-ir-data-service`: the maintainer kept hitting `UNSUPPORTED_PLATFORM` / `wrong_runner_suspected`, and the documented wrong-runner PATH fix did not take. Root cause uncovered live: a Linux `node` (`/usr/bin/node`, v22) was present but Linux `npm` was **missing**, so `npm` resolved through PATH interop to the Windows npm (`/mnt/c/Program Files/nodejs/npm`), `npm config get prefix` returned a `C:\...` path, and `npm install -g @anthropic-ai/claude-code` therefore installed `claude` into the **Windows** prefix — so `which claude` stayed `/mnt/c/...` no matter how the `$(npm config get prefix)/bin` trick was applied. Documented the whole failure chain and turned Node into a real gate.
