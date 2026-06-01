@@ -24,6 +24,8 @@ Every `# STUB:` / `NotImplementedError("STUB: …")` in `apps/` MUST have a matc
 
 CI fails if a STUB exists in `apps/` whose file is not listed in `docs/STUBS.md` (see Enforcement). This is what *forces* recording it — unlogged stubs do not merge.
 
+> **Ledger initialization.** On `/bootstrap`, `docs/STUBS.md` is initialized as an **empty ledger for this project** — the header row + the column definitions, with the example/template row removed. A project must never ship the untouched template (an example row referencing `apps/ranking/services.py` that does not exist signals the ledger was never adopted).
+
 ## Lifecycle
 
 1. **GREEN (inner loop):** a stub is allowed only to get the current test green quickly. Mark it `# STUB:` immediately and add a `docs/STUBS.md` row.

@@ -51,4 +51,4 @@ Everything else lives elsewhere: business context in `docs/PROJECT.md`, decision
 
 ---
 
-> Update cadence: at end of every session via `/wrap-up`. If you skipped `/wrap-up`, at least update **Current state** and **Next step** before pushing.
+> Update cadence: at end of every session via `/wrap-up` (which calls the `/handoff` logic to regenerate this file from live git state). You can also run `/handoff` standalone to refresh just this snapshot. If you skipped both, at least update **Current state** and **Next step** before pushing.

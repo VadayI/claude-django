@@ -18,6 +18,15 @@ Independent review of changes before creating a PR. You work in the Quality Gate
 - PR-per-layer respected (no mixing backend and mini-frontend in the same PR; full production frontend lives in a separate repo).
 - Simplicity: no premature abstractions.
 
+### Silent-failure anti-patterns (flag explicitly — these slip past green tests)
+
+These classes of bug compile, lint clean, and pass happy-path tests, yet ship broken behavior. Treat them as 🔴/🟡, not nits:
+
+- **Broad `except Exception` / bare `except:` that swallows the error and still returns a success status.** A per-row/per-item handler that appends to an `errors[]` list and returns HTTP 200 makes a corrupt batch indistinguishable from a clean one. Demand a machine-readable failure signal (partial-success status, `failed` count the client must check, or a non-2xx on hard errors). Narrow the except to the expected exception types.
+- **Writing to the DB without validating that the content matches the declared format/shape.** E.g. an import that trusts a `format=csv` flag and feeds the bytes to a CSV parser without verifying the actual columns/required fields — silently creating empty/junk rows. Require header/required-field validation and reject mismatches with 400.
+- **Unguarded `perform_create` / `save()` where a uniqueness conflict is expected.** A serializer-level `UniqueValidator` check is read-then-write, not atomic; concurrent writes raise `IntegrityError` → unhandled 500 instead of 409. Require a `try/except IntegrityError` mapping to 409 around the write.
+- **Unbounded resource use on upload/import endpoints** (whole file read into memory, no size cap, no throttle) — note as 🟡 even when the endpoint is admin-only.
+
 ## Report format
 
 Classify findings:

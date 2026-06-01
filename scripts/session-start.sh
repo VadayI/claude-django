@@ -20,6 +20,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT" || exit 0
 
+# 0. SAFE: clear a stale, EMPTY git index.lock left behind on /mnt drives by a
+#    crashed/interrupted git process. Guarded so an ACTIVE git operation is never
+#    disturbed: only a zero-byte lock older than 5 minutes is removed.
+if [ -f .git/index.lock ] && [ ! -s .git/index.lock ]; then
+  find .git/index.lock -mmin +5 -delete 2>/dev/null \
+    && echo "session-start: removed stale empty .git/index.lock" >&2 || true
+fi
+
 # 1. MANDATORY: environment detection -> .claude/memory/env-detect.json.
 if command -v python >/dev/null 2>&1; then
   python scripts/detect-env.py || true

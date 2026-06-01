@@ -225,7 +225,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/scripts/check_stubs.sh` -> `scripts/` (+ chmod +x)
      - `templates/scripts/check_openapi_drift.sh` -> `scripts/` (+ chmod +x)
      - `templates/scripts/check_app_readmes.sh` -> `scripts/` (+ chmod +x)
-     - `templates/STUBS.md` -> `docs/STUBS.md`
+     - `templates/STUBS.md` -> `docs/STUBS.md`, then **strip the example row** and retitle for this project so it ships as an empty ledger (header + column definitions only), per @.claude/rules/no-stubs.md — never leave the untouched template's example row.
      - `templates/APP_README.md` -> `docs/APP_README.md` (template that `django-developer` copies into each new app folder)
      - `templates/lessons.md` -> `docs/lessons.md` (append-only feedback log; maintained by `docs-writer` at `/wrap-up`)
      - `templates/todo.md` -> `docs/todo.md` (cross-session backlog; read by `auditor` at `/audit`)
