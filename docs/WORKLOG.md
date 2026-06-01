@@ -1,5 +1,19 @@
 # WORKLOG — claude-django
 
+## 2026-06-01 — Cross-platform onboarding automation (4 batches; ADR 0006)
+
+Follow-up to the Desktop-not-a-runner work. The maintainer asked whether claude-django could "work on both Windows and Debian with more automation". Framing: it already runs on both (Debian native, Windows via WSL2) — the lever is WSL2 *onboarding friction*, not portability. ADR 0005 (WSL2-only, no PowerShell) is explicitly **kept**; PowerShell was NOT reintroduced. Decision recorded in `docs/decisions/0006-cross-platform-onboarding-automation.md`. Shipped in four commits:
+
+**Batch 1 — the wrong-runner trap.** `scripts/detect-env.py` now emits `wrong_runner_suspected` (schema v3->v4): `true` when `platform == "windows"` AND `wsl` is present — i.e. the user launched the Windows `claude` from a WSL2 shell (PATH interop -> `claude.exe` -> Windows-Python -> `platform: windows`). It also prints a targeted stderr hint. `.claude/commands/doctor.md` (Step 0.5 + Platform audit) branches the `UNSUPPORTED_PLATFORM` remedy on the flag: `true` -> install/launch the WSL2-native `claude`; `false` -> install WSL2. Documented in `.claude/rules/environment.md` (new subsection + `~/.bashrc` PATH fix) and a second README "Symptom #2" callout. `platform_supported` logic is unchanged — the flag is advisory only.
+
+**Batch 2 — one-shot setup.** New `scripts/setup-wsl.sh`: idempotent installer for `python-is-python3`, Node (via nvm), `@anthropic-ai/claude-code`, and `gh`, plus the `~/.bashrc` PATH export so the WSL2 npm-bin beats interop. Platform-guarded (Linux/WSL2 only; clear macOS/Windows messages). README gained a one-liner.
+
+**Batch 3 — Makefile wrappers.** New `templates/Makefile` (scaffolded into derived projects like `docker-compose.yml`) with targets identical on Debian and WSL2: `up`/`dev`/`down`/`ps`/`logs`/`build`/`test`/`cov`/`lint`/`fmt`/`migrate`/`makemigrations`/`superuser`/`shell`/`schema`/`gates`/`doctor-deps`, plus `setup`. Wired into `bootstrap.md` Mode A scaffolding list, README Quick start copy block, and a `docker-commands.md` "Make wrappers" section.
+
+**Batch 4 — SessionStart automation.** New `scripts/session-start.sh` wrapper: mandatory `detect-env.py` first (writes `env-detect.json` — the gates depend on it), then a safe `.env` seed from `.env.example` when missing, then `docker compose up -d` **only** when `CLAUDE_DJANGO_AUTO_UP=1` (off by default per detect->propose->fix-on-confirm). `.claude/settings.json` SessionStart now calls the wrapper; `CLAUDE.md` and `docker-commands.md` updated.
+
+**Verification:** `detect-env.py` py_compiled and exercised in both branches (Linux -> `false`; mocked Windows+wsl -> `true` + warning). `setup-wsl.sh`/`session-start.sh` pass `bash -n`; the SessionStart wrapper was run in a temp repo mock (env-detect written, `.env` seeded once/idempotent, AUTO_UP off by default skips compose). `Makefile` parsed via `make help` + `make -n` for `test`/`dev`/`gates`; `doctor-deps` run for real. `settings.json` re-validated as JSON. All edits to `.claude/**` files applied via python pathlib with `assert count==1` anchors (Cowork mount-truncation guard from `docs/lessons.md`); every touched file re-checked for 0 NUL bytes. Note: shellcheck unavailable in the authoring sandbox — `setup-wsl.sh` should get one real `shellcheck` + end-to-end run on a clean WSL2 machine before being relied on.
+
 ## 2026-05-31 — README: Desktop-not-a-runner warning + "Using Claude Code CLI" section
 
 Triggered by a real `/doctor` run from Claude Desktop (Code mode) on the test project `carlsberg-ir-data-service`: it correctly issued `HARD STOP: UNSUPPORTED_PLATFORM` because the desktop app runs the SessionStart hook with Windows-Python (`is_wsl2: false`, `platform_supported: false`) even though the files were copied from inside a WSL2 shell. Not a `/doctor` bug — the config was simply run from an unsupported runner.
