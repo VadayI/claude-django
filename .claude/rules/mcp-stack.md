@@ -2,6 +2,8 @@
 
 Configured in `.mcp.json`, enabled in `.claude/settings.json` (`enabledMcpjsonServers`). Set the env vars before use.
 
+> **Recommended mechanism (ADR `0011`):** `github` and `context7` are provided by the **official plugins** `github@claude-plugins-official` + `context7@claude-plugins-official` (auto-enabled via `enabledPlugins`). The `.mcp.json` + `enabledMcpjsonServers` setup below is the **optional committed fallback** — do NOT enable both at once (the same MCP would be registered twice). Either way the **tool names are identical**, so everything below applies unchanged. Tokens are still required: `GITHUB_PERSONAL_ACCESS_TOKEN` (also used by the `gh` CLI) and `CONTEXT7_API_KEY`.
+
 ## GitHub MCP (`github`) — env `GITHUB_PERSONAL_ACCESS_TOKEN`
 
 PR data and review automation. Prefer these over scraping or `curl`.
@@ -30,4 +32,4 @@ Up-to-date library docs.
 - Web/CI data restrictions: do not bypass blocked fetches via `curl`/scripts.
 - Secrets (tokens/keys) only via env — never commit them.
 - Vet third-party MCP servers/skills before enabling: check what they run, where (local `npx`/Docker), and what they can access (keys, repo, filesystem). Prefer audited, well-known sources.
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-06-01 (github/context7 via official plugins; .mcp.json is fallback — ADR 0011) -->

@@ -7,6 +7,7 @@
 @.claude/rules/code-style.md
 @.claude/rules/environment.md
 @.claude/rules/preflight.md
+@.claude/rules/verification.md
 
 ## Agent Dispatch (MANDATORY)
 
@@ -45,7 +46,7 @@ You DO:
 0. **Output language — first interaction in a fresh project.** Before doing ANYTHING else (no audit, no classification, no agent dispatch), check whether `.claude/rules/output-language.md` exists. If it does NOT exist AND this is the user's first turn in the session, ask via `AskUserQuestion` (header `Language`, options: `English` (Recommended), `Українська`, `Polski`; "Other" is added by the harness). On non-English answer: copy `templates/output-language.md` → `.claude/rules/output-language.md` replacing both `{LANGUAGE_NATIVE}` tokens with the chosen native name, then append `@.claude/rules/output-language.md` to the import block at the top of this file (after `@.claude/rules/preflight.md`). Skip this step entirely if `templates/output-language.md` is missing (Quick start not done yet) — note it and proceed in English. Skip if the file already exists. This gate exists because `/doctor` is the recommended first command but the user may chat in another language before running it; nobody should get English answers when they wanted Ukrainian.
 1. **First action on any task: classify and delegate.** Do not open project files until an agent has run. If the pipeline in @.claude/rules/workflow.md matches — delegate immediately. If the request is ambiguous — do one round of clarification first.
 2. **Plan first for non-trivial work.** Stay in Plan Mode, present the plan (scope, sub-tasks, files, risks), and do not change files until the user approves. Details — @.claude/rules/workflow.md.
-3. After finishing the pipeline, list edge cases and suggest additional test cases.
+3. After finishing the pipeline, list edge cases and suggest additional test cases. The pipeline also emits a **verification handoff** automatically: `docs-writer` generates `docs/verify/<feature>.md` (Swagger + `curl` checklist derived from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`) so the user can confirm the endpoints by hand. Regenerate or run it on demand with `/verify`. Details — @.claude/rules/verification.md.
 4. If a task touches more than 3 files — break it into smaller ones, each run through the pipeline separately.
 5. If there is a bug — first write a test that reproduces it, then fix it.
 6. Interactive API testing happens via **Swagger UI / Redoc** (drf-spectacular) — there is no mini-frontend in this repo. A real production frontend (if needed) belongs in a **separate repository** that consumes `docs/api/openapi.yml` as the contract, so its release cycle and stack don't entangle with the API repo.
@@ -71,4 +72,4 @@ This config is also an **environment configurator**. The expected local environm
 ## Project bootstrap & preflight
 
 On a **new project**, the order is: `/doctor` (detects scenario, recommends `/bootstrap`) → `/bootstrap` (Mode A scaffolds from scratch, Mode B PRs missing pieces) → optionally `/synthesize-brief` (PROJECT.md from `docs/**`) → `/preflight` (build-inputs gate) → first feature via the pipeline. Spec: @.claude/rules/preflight.md.
-<!-- Last reviewed/updated: 2026-05-29 -->
+<!-- Last reviewed/updated: 2026-06-01 (added verification rule + /verify, /config, /plugins commands) -->

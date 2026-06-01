@@ -218,7 +218,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    probe are idempotent and will pick up the existing repo.
 
 2. **Skeleton** — dispatch `devops` (`subagent_type: "devops"`) to:
-   - `mkdir -p backend docs/api docs/decisions docs/plans .claude/memory scripts`
+   - `mkdir -p backend docs/api docs/verify docs/decisions docs/plans .claude/memory scripts`
    - Copy templates:
      - `templates/backend.Dockerfile` -> `backend/Dockerfile`
      - `templates/pyproject.toml` -> `backend/pyproject.toml`
@@ -229,6 +229,8 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/APP_README.md` -> `docs/APP_README.md` (template that `django-developer` copies into each new app folder)
      - `templates/lessons.md` -> `docs/lessons.md` (append-only feedback log; maintained by `docs-writer` at `/wrap-up`)
      - `templates/todo.md` -> `docs/todo.md` (cross-session backlog; read by `auditor` at `/audit`)
+     - `templates/endpoints.json` -> `.claude/memory/endpoints.json` (route registry; written by `api-architect`, feeds `/verify` — see @.claude/rules/verification.md)
+     - `templates/verify_TEMPLATE.md` -> `docs/verify/_TEMPLATE.md` (per-feature verification-guide template that `docs-writer` renders into `docs/verify/<feature>.md`)
      - `templates/.env.example` -> **TWO destinations**:
        1. `.env.example` (committed; the canonical key list for new clones)
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent)
@@ -257,7 +259,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    - Ask the user interactively whether to run `createsuperuser` now.
 
 4. **Initial commit + push + register CI** — dispatch `devops`:
-   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all 18 files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the five scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md`). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
+   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the five scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md`). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
    - `git add -A && git status` (show the user what is staged)
    - `git commit -m "chore: bootstrap project from claude-django"`
    - `git branch -M main`
@@ -385,10 +387,19 @@ Run AFTER preflight passes but BEFORE any side-effects.
    /plugin marketplace add obra/superpowers-marketplace
    /plugin install superpowers@superpowers-marketplace
    /plugin install engineering@knowledge-work-plugins
+   /plugin install playwright@claude-plugins-official
+   /plugin install github@claude-plugins-official
+   /plugin install context7@claude-plugins-official
    /plugin marketplace add jarrodwatts/claude-hud
    /plugin install claude-hud
    /claude-hud:setup
    ```
+
+   > `github@claude-plugins-official` and `context7@claude-plugins-official` provide
+   > the GitHub + Context7 MCP via plugins (recommended baseline, ADR `0011`), so the
+   > `.mcp.json` + `enabledMcpjsonServers` path is an optional fallback — don't enable
+   > both. Tokens are still needed: `GITHUB_PERSONAL_ACCESS_TOKEN` for the `gh` CLI,
+   > `CONTEXT7_API_KEY` for context7. `claude-hud` is a personal/global HUD, not committed.
 
    ### ⏸ Checkpoint — Resume from this step
 
@@ -415,6 +426,7 @@ Run each probe; if it fails, that piece is missing.
 6. **Env file (committed key list).** `test -f .env.example`. The `.env` file itself is gitignored and machine-local, so its absence here is **not** a Mode B blocker — `.env.example` is the durable, committed contract. If `.env` is missing locally, print a one-liner for the user: `cp .env.example .env && $EDITOR .env` (fill in secrets).
 7. **Per-app READMEs.** For every directory under `backend/apps/`, `test -f backend/apps/<name>/README.md`.
 8. **Docs scaffolding.** `test -f docs/STUBS.md && test -f docs/APP_README.md`.
+9. **Verification scaffolding.** `test -f .claude/memory/endpoints.json && test -f docs/verify/_TEMPLATE.md` (route registry seed + verify-guide template; see @.claude/rules/verification.md).
 
 ### Per missing piece
 

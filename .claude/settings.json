@@ -50,12 +50,11 @@
   },
   "enabledPlugins": {
     "superpowers@superpowers-marketplace": true,
-    "engineering@knowledge-work-plugins": true
+    "engineering@knowledge-work-plugins": true,
+    "playwright@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "context7@claude-plugins-official": true
   },
-  "enabledMcpjsonServers": [
-    "github",
-    "context7"
-  ],
   "hooks": {
     "Stop": [
       {

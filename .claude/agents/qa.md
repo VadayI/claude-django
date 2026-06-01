@@ -39,5 +39,5 @@ npx playwright test
 npx playwright test --project=mobile-chrome
 ```
 
-> Optional agent — not part of every feature. Skill: `playwright-e2e`.
-<!-- Last reviewed/updated: 2026-05-27 -->
+> Optional agent — not part of every feature. Skill: `playwright-e2e`; browser automation tools come from the `playwright@claude-plugins-official` plugin (committed baseline, ADR `0011`) — prefer its MCP browser tools over hand-rolled drivers.
+<!-- Last reviewed/updated: 2026-06-01 (uses playwright plugin tools) -->

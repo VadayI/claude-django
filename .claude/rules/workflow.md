@@ -85,14 +85,16 @@ ba → api-architect → tester (RED) → django-developer (GREEN) → tester (R
         → [Quality Gate: reviewer | security-scanner | dba] → docs-writer
 ```
 
+> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, per @.claude/rules/verification.md. Regenerate/run on demand with `/verify`.
+
 | Phase | Mode | Agent(s) | Output |
 |------|-------|----------|-------|
 | 1. Requirements | sequential | `ba` | User stories, scope, endpoint description |
-| 2. API contract | sequential | `api-architect` | Method/path/request-response schema/codes/permissions |
+| 2. API contract | sequential | `api-architect` | Method/path/request-response schema/codes/permissions + routes recorded in `.claude/memory/endpoints.json` |
 | 3. RED | sequential | `tester` | Failing pytest tests for the endpoint/logic |
 | 4. GREEN | sequential | `django-developer` | Code that greens the tests + ruff |
 | 5. Quality Gate | **parallel** | `reviewer`, `security-scanner`, `dba` | Independent reports |
-| 6. Documentation | sequential | `docs-writer` | docs/api, WORKLOG, PR description + `gh pr create` |
+| 6. Documentation | sequential | `docs-writer` | docs/api, `docs/verify/<feature>.md` (verification handoff), WORKLOG, PR description + `gh pr create` |
 
 **Quality Gate resolution:** all passed → phase 6. Any 🔴 Critical / 🟡 Important → back to `django-developer` → re-run the gate. Max 2 cycles, then escalate to the user.
 

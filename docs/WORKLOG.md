@@ -1,5 +1,39 @@
 # WORKLOG — claude-django
 
+## 2026-06-01 — Config baseline з реального сетапу maintainer'а (ADR 0011)
+
+Maintainer надав свій перевірений сетап (глобальні + проектні налаштування, плагіни, hooks, дозволи) як основу рекомендацій. Оновлено committed-базу плагінів і механізм MCP. Рішення зафіксовані опитуванням.
+
+**enabledPlugins (нова committed-база).** Додано `playwright`, `github`, `context7` (з `claude-plugins-official`) до `superpowers` + `engineering`. `playwright` зв'язано з агентом `qa` (browser-інструменти). `code-review` і `code-simplifier` спершу розглянуто, але **виключено** після аудиту перетинів (нижче).
+
+**Аудит перетинів MCP/плагіни/команди/агенти (Варіант A).** Перевірено, чи поверхні не дублюють роботу. Висновок: команда->агент — навмисне шарування; github/context7 не реєструються двічі (прибрано `enabledMcpjsonServers`). Реальне дублювання дали проєктно-агностичні плагіни: `code-review` (скіли `/review`, `/security-review`) конкурує з `reviewer`/`security-scanner` + `/review-pr`/`/security-check`; `code-simplifier` конкурує з `/simplify` + `django-refactoring-expert`. Обидва **прибрано з бази** — проєктні агенти знають правила (TDD, no-stubs, api-docs, app-readme, verification, IDOR/OWASP). `playwright` лишено (це шарування, не дублювання). Канонічні шляхи: `/review-pr`, `/security-check`, `/simplify`.
+
+**github + context7 -> офіційні плагіни.** Прибрано `enabledMcpjsonServers` із `.claude/settings.json`. `.mcp.json` лишено як опційний committed-fallback (`_note` + `mcp-stack.md`). Імена інструментів ідентичні — `mcp-stack.md` чинний.
+
+**Нюанс із токенами (важливо).** `GITHUB_PERSONAL_ACCESS_TOKEN` потрібен незалежно від механізму — його використовує `gh` CLI (push/PR/branch-protection), плагін міняє лише транспорт MCP. `CONTEXT7_API_KEY` потрібен плагіну context7. Перевірки env-ключів лишено.
+
+**Не в базі.** `claude-hud` — рекомендований, але персональний/глобальний (HUD UI). `frontend-design` (окремий frontend-репо, ADR 0007) і `mongodb` (проект на PostgreSQL) — не входять у backend-only базу.
+
+**Файли.** `.claude/settings.json`, `.claude/rules/environment.md` (Scope 2), `.claude/rules/mcp-stack.md`, `.mcp.json`, `.claude/commands/bootstrap.md` (Step 6), `.claude/commands/plugins.md`, `.claude/commands/config.md`, `.claude/agents/qa.md`, `README.md`, ADR 0011.
+
+## 2026-06-01 — Verification handoff + /verify, /config, /plugins (ADR 0010)
+
+Додано контракт-деривований артефакт ручної перевірки ендпоінтів і пам'ять маршрутів. Драйвер — maintainer хоче «відкрий URL / встав curl / очікуй статус» чеклист на додачу до зелених pytest.
+
+**Ask #1 (git-токен) — перевірено, вже реалізовано.** `/bootstrap` і `/doctor` уже не створюють репо й видають URL fine-grained per-repo токена (ADR 0008). «admin key» — це лише `administration=write` на один репо (опційне).
+
+**Правило `verification.md` (Варіант 1 — авто-блок).** `docs-writer` у фазі 6 генерує `docs/verify/<feature>.md` (Swagger + `curl` з тілами й кодами 401/403/400/404/409) із `.claude/memory/endpoints.json` + `docs/api/openapi.yml`. Прив'язано до `api-architect`/`docs-writer`/`reviewer`/`tester`.
+
+**Пам'ять маршрутів `endpoints.json` (ask #3).** Реєстр `{method, path, app, feature, auth, statuses[], notes}`; `api-architect` пише на фазі 2. Тристороння звірка `endpoints.json <-> openapi.yml <-> INDEX.md` (схема — джерело правди), як у `app-readme.md`.
+
+**Команда `/verify [feature] [--run]` (обидва режими).** Дефолт — регенерує файл; `--run` — ганяє curl проти dev-сервера, pass/fail, ніколи не проти staging/prod.
+
+**`/config` і `/plugins` (тонкі обгортки над /doctor `claude`-scope).** `/plugins` друкує paste-ready блок встановлення плагінів.
+
+**Шаблони + bootstrap.** `templates/endpoints.json`, `templates/verify_TEMPLATE.md`; `/bootstrap` Step 2 копіює seed + `mkdir docs/verify`, Mode B probe №9.
+
+**Дотичні правки.** `CLAUDE.md`, `workflow.md` (фази 2/6), `api-architect.md`, `docs-writer.md`, `bootstrap.md`, `README.md` (Rules 15->16, Commands 14->17, Templates, таблиця команд).
+
 ## 2026-06-01 — GitHub access model (ADR 0008) + /mnt working-dir policy (ADR 0009)
 
 Two related policy reversals driven by the `carlsberg-ir-data-service` bring-up.

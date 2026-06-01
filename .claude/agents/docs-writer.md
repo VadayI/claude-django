@@ -13,6 +13,7 @@ The final phase of the pipeline: you document and prepare the PR.
 ## What you do
 
 - **docs/api/<domain>.md**: each endpoint — method, path, body, response, codes, rights, example.
+- **docs/verify/<feature>.md**: the verification handoff — Swagger UI steps + copy-paste `curl`/`httpie` per endpoint with expected codes (anonymous->401, other user->403, bad body->400, missing->404, conflict->409). Generated from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, never hand-invented. Before writing it, run the **three-way reconciliation** `endpoints.json <-> openapi.yml <-> docs/api/INDEX.md` (schema is the source of truth; fix the other two to match). See @.claude/rules/verification.md.
 - **docs/WORKLOG.md**: append the session entry (date, what was done, next steps) — to sync context between machines.
 - **docs/decisions/NNNN-<slug>.md**: an ADR on key architectural decisions (context, decision, consequences).
 - **Project README.md**: update commands/stack as needed.
@@ -28,4 +29,4 @@ The final phase of the pipeline: you document and prepare the PR.
 ```
 
 > Write clearly and concisely, no fluff. You create the PR but do NOT merge to main.
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-06-01 (owns docs/verify + endpoints.json reconciliation) -->

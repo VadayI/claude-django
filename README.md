@@ -170,9 +170,9 @@ Not used in every project — activate only when the task calls for it:
 | `django-refactoring-expert` | Refactoring, N+1, tech-debt cleanup (behavior-preserving) | opus |
 | `domain-architect` | DDD-lite modeling for genuinely complex domains | opus |
 
-### Rules (15) — `.claude/rules/`
+### Rules (16) — `.claude/rules/`
 
-`workflow.md` (orchestration & pipeline), `tdd.md` (Red-Green-Refactor), `no-stubs.md` (no stubs/fake data in prod — marker + `docs/STUBS.md` ledger + CI gate), `api-docs.md` (mandatory OpenAPI — `docs/api/openapi.yml` + CI drift gate), `app-readme.md` (every Django app has a local `README.md` — CI gate), `preflight.md` (kickoff hard gate — brief/stack/Context7/GitHub access before any code), `architecture.md` (API-first, structure), `code-style.md` (ruff incl. Google-style docstring `D` rules), `testing.md` (test policy), `git-operations.md` (PR process, no direct commits to main), `docker-commands.md` (environment commands), `serializers-permissions.md` (DRF validation + permission classes, 401/403/IDOR), `migrations-tasks.md` (migration conventions + Celery tasks), `mcp-stack.md` (which MCP tool to use when), `environment.md` (the expected local environment — source of truth for `/doctor`).
+`workflow.md` (orchestration & pipeline), `tdd.md` (Red-Green-Refactor), `no-stubs.md` (no stubs/fake data in prod — marker + `docs/STUBS.md` ledger + CI gate), `api-docs.md` (mandatory OpenAPI — `docs/api/openapi.yml` + CI drift gate), `app-readme.md` (every Django app has a local `README.md` — CI gate), `verification.md` (endpoint verification handoff — auto-generated `docs/verify/<feature>.md` from `.claude/memory/endpoints.json` + OpenAPI, feeds `/verify`), `preflight.md` (kickoff hard gate — brief/stack/Context7/GitHub access before any code), `architecture.md` (API-first, structure), `code-style.md` (ruff incl. Google-style docstring `D` rules), `testing.md` (test policy), `git-operations.md` (PR process, no direct commits to main), `docker-commands.md` (environment commands), `serializers-permissions.md` (DRF validation + permission classes, 401/403/IDOR), `migrations-tasks.md` (migration conventions + Celery tasks), `mcp-stack.md` (which MCP tool to use when), `environment.md` (the expected local environment — source of truth for `/doctor`).
 
 ### Skills (12) — `.claude/skills/`
 
@@ -201,9 +201,11 @@ Project scaffolding (P1, new): `PROJECT_README.md` (copy to `README.md` of the d
 
 Language: `output-language.md` (copy to `.claude/rules/output-language.md` when the user picks a non-English working language; `/bootstrap` and `/set-language` substitute `{LANGUAGE_NATIVE}`).
 
+Verification: `endpoints.json` (copy to `.claude/memory/endpoints.json` — the route registry `api-architect` writes and `/verify` reads), `verify_TEMPLATE.md` (copy to `docs/verify/_TEMPLATE.md` — per-feature verification-guide template that `docs-writer` renders into `docs/verify/<feature>.md`).
+
 All scaffolding templates use `{SLUG}`, `{DATE_ISO}`, `{OWNER}` substitution tokens that `/bootstrap` Step 2 replaces inline. `{TODO}` tokens are intentionally left as visible placeholders for the user to fill later.
 
-### Commands (14) — `.claude/commands/`
+### Commands (17) — `.claude/commands/`
 
 Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands need the `github` MCP from `.mcp.json` + an authenticated `gh`). Every command appends a single line to `.claude/memory/command-log.jsonl` so the `auditor` agent can suggest what to run next.
 
@@ -221,10 +223,17 @@ Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands 
 - `/wrap-up [note]` — end-of-session: summarize, update `WORKLOG`/`lessons`, run ruff/pytest, show `git status`, propose a commit (never auto-push).
 - `/handoff [--note "..."] [--print]` — regenerate `docs/HANDOFF.md` (rolling snapshot: Current state / Last finished / In progress / Next step / Open questions / Environment notes) from current git/PR/CI state. Read-only on everything except HANDOFF.md. Pairs with `/wrap-up` and is the file `/audit`'s `auditor` reads to promote a concrete next step.
 - `/set-language` — pick the response language for this project (writes `.claude/rules/output-language.md` from `templates/output-language.md` with the chosen native name). Run once after `/bootstrap` if you want a non-English working language.
+- `/verify [feature] [--run]` — generate the human-facing endpoint verification guide `docs/verify/<feature>.md` (Swagger steps + copy-paste `curl` with expected codes) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`. With `--run`, also executes it against the live dev server and reports pass/fail. The same guide is emitted automatically by `docs-writer` at the end of every feature pipeline (see `.claude/rules/verification.md`).
+- `/config` — thin wrapper over `/doctor`'s `claude` scope: quick audit of `.claude/settings.json`, `.mcp.json`, MCP servers (github/context7), env keys (set/unset only), and hooks.
+- `/plugins` — thin wrapper over `/doctor`'s plugin checks: reports installed vs expected plugins and prints the paste-ready `/plugin install …` block (plugin install is a manual UI step the agent can't run).
 
-### MCP servers — `.mcp.json`
+### Plugins (recommended baseline)
 
-`github` (PR data; needs env `GITHUB_PERSONAL_ACCESS_TOKEN`) and `context7` (up-to-date Django/DRF docs; needs `CONTEXT7_API_KEY`). Enable them in `.claude/settings.json` (`enabledMcpjsonServers`).
+Auto-enabled per-project via `.claude/settings.json` `enabledPlugins` (ADR `0011`, derived from the maintainer's proven setup): `superpowers@superpowers-marketplace` (brainstorming/plan-writing), `engineering@knowledge-work-plugins`, `playwright@claude-plugins-official` (browser tools used by the `qa` agent / E2E), and `github@claude-plugins-official` + `context7@claude-plugins-official` (which provide the GitHub + Context7 MCP — see below). `claude-hud@claude-hud` is recommended too but stays a **personal/global** HUD install, not committed per-project. `code-review` and `code-simplifier` are intentionally **not** in the baseline — their project-agnostic skills duplicate the project-tuned `reviewer` / `security-scanner` / `django-refactoring-expert` agents, so the canonical paths stay `/review-pr`, `/security-check`, `/simplify`. Install lines are printed by `/bootstrap` Step 6 and `/plugins` (plugin install is a manual UI action).
+
+### MCP servers — official plugins (recommended) or `.mcp.json` (fallback)
+
+`github` (PR data; needs env `GITHUB_PERSONAL_ACCESS_TOKEN`) and `context7` (up-to-date Django/DRF docs; needs `CONTEXT7_API_KEY`) come from the **official plugins** `github@claude-plugins-official` + `context7@claude-plugins-official` in the recommended baseline above. The committed `.mcp.json` + `enabledMcpjsonServers` path is an **optional fallback** — don't enable both for the same MCP (it double-registers). Either way the tool names are identical. Note: `GITHUB_PERSONAL_ACCESS_TOKEN` is required regardless, because the `gh` CLI uses it for push / PR / branch-protection — the plugin only swaps the MCP transport, not gh auth.
 
 #### Context7 setup (`CONTEXT7_API_KEY`)
 
@@ -243,7 +252,7 @@ Context7 (by Upstash) serves **current** library documentation to agents, so `ap
 
 ### Project settings — `.claude/settings.json`
 
-Per-project Claude Code config: tool permissions (allow `git`/`gh`/`docker`/`npm`, deny direct push to `main` and reading `.env`), `DJANGO_SETTINGS_MODULE`, auto-enabled plugins (Superpowers + `engineering@knowledge-work-plugins`), enabled MCP servers, and a `Stop` hook that runs `ruff format` + `ruff check --fix` after each turn (silently skips if the `backend` container is down). `model` defaults to `opusplan` — change to taste.
+Per-project Claude Code config: tool permissions (allow `git`/`gh`/`docker`/`npm`, deny direct push to `main` and reading `.env`/secrets), `DJANGO_SETTINGS_MODULE`, auto-enabled plugins (Superpowers, `engineering@knowledge-work-plugins`, plus `playwright`/`github`/`context7` from `claude-plugins-official` — ADR `0011`), and a `Stop` hook that runs `ruff format` + `ruff check --fix` after each turn (silently skips if the `backend` container is down). `model` defaults to `opusplan` — change to taste. (github + context7 now come via plugins, so `enabledMcpjsonServers` is empty by default; `.mcp.json` is the fallback.)
 
 ### Development pipeline
 
@@ -367,6 +376,9 @@ For an existing project from a second machine: skip step 1 (clone instead), run 
 | `/security-check [path]` | On any change to auth, permissions, sensitive endpoints | As needed |
 | `/simplify [path]` | When a freshly-landed diff feels dense | Occasionally |
 | `/update-docs [scope]` | When `docs/api/`, ADRs, or WORKLOG need refresh; often automated via `/wrap-up` | As needed |
+| `/verify [feature] [--run]` | After a feature is green, to (re)generate or run its manual endpoint checklist | Once per feature; auto at pipeline end |
+| `/config` | Quick check that `.claude/settings.json` / `.mcp.json` / MCP keys / hooks are correct | As needed |
+| `/plugins` | Check installed vs expected plugins; get the paste-ready install block | Once per machine, as needed |
 
 The `auditor` agent (invoked by `/audit`) reads `.claude/memory/command-log.jsonl` and the live state, then suggests the right one for the moment — you don't need to memorize the table.
 

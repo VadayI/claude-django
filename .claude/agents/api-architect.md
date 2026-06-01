@@ -21,6 +21,8 @@ For each endpoint you fix:
 - **Authorization**: who has access (anonymous / authenticated / owner / admin).
 - **Pagination / filters / sorting**: where applicable.
 
+After fixing the contract, **record each route in `.claude/memory/endpoints.json`** (the machine-readable registry, per @.claude/rules/verification.md). One JSON object per endpoint: `{method, path, app, feature, auth, statuses[], notes}`. The contract is incomplete until the registry entry exists — it feeds `/verify` and the verification handoff. Append/update; never duplicate an existing `method+path`.
+
 ## Principles
 
 - RESTful resources, no verbs in paths (action = HTTP method).
@@ -33,4 +35,4 @@ For each endpoint you fix:
 A table/list of endpoints with full contracts + request/response examples. Pass it down the pipeline.
 
 > You do not write the implementation. Activate skills `drf-api-design`, `api-design-principles`.
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-06-01 (records routes in .claude/memory/endpoints.json) -->
