@@ -37,7 +37,7 @@ try:
     has_remote_github = r.returncode == 0
 except Exception:
     pass
-if not has_git and not has_backend:
+if not has_backend:
     print('MODE_A')
 elif has_git and has_remote_github:
     print('MODE_B')
@@ -46,14 +46,14 @@ else:
 "
 ```
 
-- `MODE_A` -> fresh start; proceed with the Mode A flow below.
+- `MODE_A` -> fresh scaffold (no `backend/` yet). The GitHub repo is created by **you** beforehand (ADR `0008`); Mode A links to it, it does not create it. Proceed with the Mode A flow below.
 - `MODE_B` -> resume; proceed with the Mode B flow below.
 - `MODE_AMBIGUOUS` -> STOP, ask via `AskUserQuestion`. Special hard guard: if `backend/manage.py` exists but `.git/` does NOT, do NOT auto-pick Mode A — stop with `BACKEND_WITHOUT_GIT, manual intervention required`.
 - `NO_ENV_DETECT` -> **STOP immediately.** `.claude/memory/env-detect.json` is absent, so the runtime is unverified and the hard preflight below cannot be evaluated. See `NO_ENV_DETECT` under *Per-flag remediation*. Do NOT proceed, do NOT fabricate the file.
 
 ## Hard preflight (refuse to start if any blocker is true)
 
-> **Runtime policy.** `/bootstrap` is supported only in **Claude Code CLI** running on Linux / macOS / WSL2 (see `README.md` "Where this runs"). In any other environment the `SessionStart` hook does not run and `.claude/memory/env-detect.json` does not exist. **Do NOT hand-write or "fake" `env-detect.json` to get past this section** — its fields drive three hard gates (`UNSUPPORTED_PLATFORM`, `NO_GH_SCOPES`, `FINE_GRAINED_PAT_NOT_SUPPORTED`); fabricated values silently bypass safety checks and produce a bootstrap that looks fine while having unverified PAT permissions and a mis-detected shell. If the file is missing, the only allowed action is to run `python scripts/detect-env.py` manually once and let it write the file honestly; if that itself fails, STOP with `NO_PYTHON` and ask the user to install Python 3.10+.
+> **Runtime policy.** `/bootstrap` is supported only in **Claude Code CLI** running on Linux / macOS / WSL2 (see `README.md` "Where this runs"). In any other environment the `SessionStart` hook does not run and `.claude/memory/env-detect.json` does not exist. **Do NOT hand-write or "fake" `env-detect.json` to get past this section** — its fields drive the hard gates (`UNSUPPORTED_PLATFORM`, `NO_GH_BIN`, `NO_GH_AUTH`); fabricated values silently bypass safety checks and produce a bootstrap that looks fine while having unverified PAT permissions and a mis-detected shell. If the file is missing, the only allowed action is to run `python scripts/detect-env.py` manually once and let it write the file honestly; if that itself fails, STOP with `NO_PYTHON` and ask the user to install Python 3.10+.
 
 Read `.claude/memory/env-detect.json` first (the `SessionStart` hook keeps it fresh).
 
@@ -69,8 +69,6 @@ env = json.loads(envf.read_text())
 flags = []
 if not env.get('platform_supported', True):
     flags.append('UNSUPPORTED_PLATFORM')
-if env.get('gh', {}).get('pat_kind') == 'fine-grained':
-    flags.append('FINE_GRAINED_PAT_NOT_SUPPORTED')
 if not env['tools'].get('gh'):     flags.append('NO_GH_BIN')
 if not env['tools'].get('docker'): flags.append('NO_DOCKER')
 if not (pathlib.Path('.claude').is_dir() and pathlib.Path('CLAUDE.md').is_file() and pathlib.Path('templates').is_dir()):
@@ -94,77 +92,59 @@ Then check the live system (not via Python):
 
 Note: `env.get('platform_supported', True)` — graceful fallback. In PR #1 the field does not yet exist in `env-detect.json`; defaulting to `True` preserves current behaviour. PR #2 adds the field and Windows-native will start failing this probe with `UNSUPPORTED_PLATFORM`.
 
-### Hard preflight — GitHub PAT scopes (front-loaded)
+### GitHub access — manual repo + fine-grained per-repo token (front-loaded)
 
-`/bootstrap` Mode A automates `gh repo create`, the initial `push`, the
-`backend-ci` status-check registration, and (optionally) `main` branch
-protection. All of these need specific PAT scopes. Check **before** doing
-anything destructive so the user is not asked to refresh credentials in the
-middle of a bootstrap.
+Per ADR `0008`, `/bootstrap` does **not** create the repository and does **not**
+require a broad classic PAT. You create the repo on GitHub by hand, then
+authenticate `gh` with a **fine-grained per-repo token**. Verify access
+**before** any side effects.
+
+**1. The repository must already exist (empty).** Resolve `OWNER`/`SLUG` and
+build the token template URL (the user pastes this to mint a scoped token):
 
 ```bash
-ENV_FILE=.claude/memory/env-detect.json
-SCOPES=$(python -c "import json,pathlib; print(','.join(json.loads(pathlib.Path('$ENV_FILE').read_text()).get('gh',{}).get('scopes',[])))")
-HAS_REPO=$(python -c "import json,pathlib; print(json.loads(pathlib.Path('$ENV_FILE').read_text()).get('gh',{}).get('has_repo_scope',False))")
-HAS_WORKFLOW=$(python -c "import json,pathlib; print(json.loads(pathlib.Path('$ENV_FILE').read_text()).get('gh',{}).get('has_workflow_scope',False))")
-HAS_ADMIN=$(python -c "import json,pathlib; print(json.loads(pathlib.Path('$ENV_FILE').read_text()).get('gh',{}).get('has_admin_scope',False))")
-echo "scopes=$SCOPES repo=$HAS_REPO workflow=$HAS_WORKFLOW admin=$HAS_ADMIN"
+OWNER=$(gh api user --jq .login 2>/dev/null || echo "<your-login>")
+# SLUG comes from the interactive prompt (default = CWD basename).
+TOKEN_URL="https://github.com/settings/personal-access-tokens/new?name=claude-django+$SLUG&description=Scaffold+and+maintain+$OWNER/$SLUG+via+claude-django&contents=write&pull_requests=write&workflows=write&administration=write"
+echo "Create the EMPTY repo (no README/.gitignore/license):  https://github.com/new"
+echo "Mint a fine-grained token scoped to it:                $TOKEN_URL"
+echo "In the token page: Resource owner=$OWNER · Repository access -> Only select repositories -> $OWNER/$SLUG · set an expiration · Generate."
+```
+
+Permissions encoded in the URL (minimal): **Contents** RW (push), **Metadata**
+RO (mandatory, auto), **Pull requests** RW (PR flow), **Workflows** RW (commit
+`backend-ci.yml`), **Administration** RW (branch protection in Step 5). GitHub
+cannot pre-select the specific repository via URL — that one toggle is manual.
+
+**2. Verify the credential reaches the repo (capability probe, not a scope gate).**
+Fine-grained tokens do not expose OAuth scopes via headers, so do NOT gate on
+`has_repo_scope` — probe the actual repo instead:
+
+```bash
+if gh repo view "$OWNER/$SLUG" >/dev/null 2>&1; then
+  echo "✓ token can see $OWNER/$SLUG"
+else
+  echo "✗ REPO_NOT_FOUND: cannot see $OWNER/$SLUG — create the empty repo and/or mint the scoped token (URLs above), then re-run /bootstrap"
+fi
 ```
 
 Decision:
 
-- If `HAS_REPO != True` OR `HAS_WORKFLOW != True` -> **STOP** with `NO_GH_SCOPES`. Print:
-  ```
-  PAT is missing required scopes. Current: <SCOPES>.
-  Required: repo, workflow. Recommended: admin:repo_hook (auto branch protection).
-
-  Two ways forward:
-   A) Refresh the active PAT (recommended, fastest):
-        gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org
-      Then re-run /bootstrap.
-
-   B) Create a new PAT with the right scopes:
-        https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo,read:org&description=claude-django-bootstrap
-      Then export GITHUB_PERSONAL_ACCESS_TOKEN=<token> and re-run /bootstrap.
-  ```
-- If `HAS_ADMIN != True` -> **WARN** (not a blocker): branch protection will fall back to manual GitHub UI steps in Step 5. To automate it on the next run, add `admin:repo_hook`:
-  ```
-  gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org
-  ```
+- `pat_kind == "fine-grained"` (recommended) -> no scope-header check; rely on the
+  probe above + per-operation errors (push / branch-protection) with the
+  remediation in *Per-flag remediation*.
+- `pat_kind == "classic"` -> also works (broad account access); not recommended,
+  not blocked. The repo must still be created by hand — Mode A never calls
+  `gh repo create`.
+- Missing `Administration` on the token only costs **auto** branch protection
+  (Step 5 falls back to the manual UI); it is not a blocker.
 
 ### Per-flag remediation
 
 - `NO_ENV_DETECT` -> `.claude/memory/env-detect.json` does not exist, so the platform / PAT-kind / scope gates cannot be evaluated. **STOP — do NOT fabricate the file.** Two causes: (a) `python` is not on PATH and the `SessionStart` hook failed -> install Python 3.10+ and relaunch Claude Code CLI; (b) you are NOT in Claude Code CLI (Cowork / Claude API-SDK / a non-CLI shell) -> run `/bootstrap` from Claude Code CLI inside WSL2 (see `README.md` "Where this runs"). Running `python scripts/detect-env.py` by hand inside the Cowork sandbox reports the *sandbox* OS, not your real machine, so it cannot be trusted to clear this gate.
 - `NO_PYTHON` (only when the hook itself failed) -> Install Python 3.10+ and reopen Claude. This is the only flag that cannot be auto-diagnosed from `env-detect.json` because the file does not exist.
-- `REPO_ALREADY_EXISTS` -> A GitHub repo at `$OWNER/$SLUG` already exists, but the local working directory has no `origin` pointing at it. Step 1 refuses to overwrite or shadow it. Remedy: either link the local dir to the existing repo (`git remote add origin git@github.com:$OWNER/$SLUG.git`) and re-run `/bootstrap` so mode detection routes to Mode B, or pick a different slug (`/bootstrap <new-slug>`).
-- `FINE_GRAINED_PAT_NOT_SUPPORTED` -> The active credential is a **fine-grained PAT** (prefix `github_pat_`), detected by `scripts/detect-env.py` via `gh.pat_kind`. Fine-grained PATs do not expose OAuth scopes via the `X-OAuth-Scopes` response header and typically lack the `createRepository` and `administration:write` permissions that `/bootstrap` needs (repo creation, branch protection). `/bootstrap` cannot reliably proceed. Create a **classic** PAT instead and re-run:
-  ```
-  # 1) Create classic PAT with the right scopes
-  #    Scopes explained:
-  #      repo            - create/push to private repos
-  #      workflow        - register backend-ci as a status check
-  #      admin:repo_hook - enable branch protection automatically (Step 5)
-  #      delete_repo     - lets you remove a botched test repo without leaving the CLI
-  #      read:org        - NOT used by /bootstrap operations, but `gh auth login`
-  #                        validates that you have it. Skip if you only use env-var auth.
-  open: https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo,read:org&description=claude-django-bootstrap
-
-  # 2) Make gh use the token. EITHER ONE of these is sufficient:
-  #
-  #    A) Env-var path (recommended — no read:org needed):
-  export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx   # classic PAT, NOT github_pat_xxx
-  gh auth status   # verify: "Logged in to github.com as <user> (GITHUB_PERSONAL_ACCESS_TOKEN)"
-  #       Do NOT run `gh auth login` after this — gh uses the env var directly.
-  #       `gh auth login` would refuse to overwrite it and that is expected.
-  #
-  #    B) Stored creds path (interactive — requires read:org on the token):
-  unset GITHUB_PERSONAL_ACCESS_TOKEN   # remove the export first (and from ~/.bashrc)
-  gh auth login   # HTTPS -> paste the token; only works when the token has read:org
-
-  # 3) Re-run /bootstrap (SessionStart hook will re-detect pat_kind=classic)
-  ```
-  Do NOT attempt to satisfy the gate by re-authenticating fine-grained again — `pat_kind` is determined from the token prefix and will keep blocking.
-- `NO_GH_SCOPES` -> Refresh the active PAT with `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org` (or create a new PAT with those scopes), then re-run `/bootstrap`. The session hook will re-detect scopes on the next start. (If `pat_kind == "fine-grained"`, the earlier `FINE_GRAINED_PAT_NOT_SUPPORTED` gate fires first.)
+- `REPO_NOT_FOUND` -> `/bootstrap` (Mode A) links to a repo **you** created by hand; the active token cannot see `$OWNER/$SLUG`. Two causes: the empty repo was never created, or the fine-grained token is not scoped to it. Remedy: (1) create the EMPTY repo at https://github.com/new (no README/.gitignore/license); (2) mint a fine-grained token via the template URL in the GitHub-access preflight (Resource owner = your login; Repository access -> Only select repositories -> `$OWNER/$SLUG`; permissions Contents / Pull requests / Workflows / Administration = Read and write); (3) `export GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_...` and re-run `/bootstrap`.
+- `NO_GH_SCOPES` -> **Only applies to a classic PAT.** Fine-grained tokens (recommended, per ADR `0008`) don't expose OAuth scopes and are NOT gated here — use the GitHub-access preflight + the `gh repo view` capability probe instead. For a classic PAT missing scopes: `gh auth refresh -s repo,workflow` (add `admin:repo_hook` for auto branch protection), then re-run `/bootstrap`.
 - `UNSUPPORTED_PLATFORM` -> **Hard STOP — no override.** Windows native shells (PowerShell, cmd, Git Bash / MINGW64) are NOT supported. Install WSL2 Ubuntu and run every command (including `gh`, `git`, `python`, `docker compose`, and `claude` itself) from inside WSL2. See ADR `docs/decisions/0005-drop-windows-native-shell.md`. Do NOT offer the user an `AskUserQuestion` "Proceed anyway" branch — there is no documented Windows-native happy path; bind-mount semantics, bash idioms, and Docker behavior all diverge silently.
 - `NO_GH_BIN` -> `gh` is not on PATH in this shell. Install:
   - WSL2 / Linux: `sudo apt update && sudo apt install -y gh` (fallback to the official repo at https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
@@ -186,7 +166,8 @@ Run AFTER preflight passes but BEFORE any side-effects.
    ```bash
    python -c "import os; print(os.path.basename(os.getcwd()))"
    ```
-3. **Output language.** **Skip this step entirely if `.claude/rules/output-language.md` already exists** (likely set by `/doctor` Step 0 in the previous command run, or by a prior `/bootstrap`). Otherwise ask via `AskUserQuestion` (header `Language`):
+3. **GitHub repository (you created it).** Confirm the repo URL / `owner/slug` of the EMPTY GitHub repo you created by hand (per ADR `0008`, `/bootstrap` does NOT create it). Default = `<login>/<slug>` from steps 1–2. Used to link `origin` (Mode A Step 1) and to build the fine-grained token template URL.
+4. **Output language.** **Skip this step entirely if `.claude/rules/output-language.md` already exists** (likely set by `/doctor` Step 0 in the previous command run, or by a prior `/bootstrap`). Otherwise ask via `AskUserQuestion` (header `Language`):
    - **English** (Recommended) — default; no extra config will be written.
    - **Українська**
    - **Polski**
@@ -200,41 +181,41 @@ Run AFTER preflight passes but BEFORE any side-effects.
 
 ## Mode A — fresh start (delegate; never edit application source code yourself)
 
-1. **GitHub repo** — confirm or create. Two idempotent guards (local remote already added → reuse; GitHub-side repo already exists with the same slug under this owner → STOP):
+1. **GitHub repo — link to the one you created (Mode A never creates it).** Per ADR `0008` the repo is created by hand (empty) before bootstrap. Ensure `origin` points at it and the token can reach it:
    ```bash
    OWNER=$(gh api user --jq .login)
 
-   # Guard A — local: an earlier aborted attempt already added origin.
    if git remote get-url origin >/dev/null 2>&1; then
-     echo "i origin already exists locally, will push to existing remote at Step 4"
+     echo "i origin already set: $(git remote get-url origin)"
    else
-     # Guard B — remote: probe GitHub side BEFORE create.
-     if gh repo view "$OWNER/$SLUG" >/dev/null 2>&1; then
-       echo "✗ REPO_ALREADY_EXISTS: $OWNER/$SLUG exists on GitHub but has no local origin"
-       echo
-       echo "Two ways forward:"
-       echo "  A) Use the existing repo (recommended if it's yours and intentional):"
-       echo "       git init                                        # if not already a git dir"
-       echo "       git remote add origin git@github.com:$OWNER/$SLUG.git"
-       echo "       /bootstrap                                      # re-run; mode detection routes to Mode B"
-       echo
-       echo "  B) Pick a different slug:"
-       echo "       /bootstrap <new-slug>"
-       exit 2
-     fi
-     gh repo create "$SLUG" --private --source=. --remote=origin
+     git init -q 2>/dev/null || true
+     git remote add origin "https://github.com/$OWNER/$SLUG.git"
+     echo "i linked origin -> https://github.com/$OWNER/$SLUG.git"
+   fi
+
+   # Capability probe — the repo must exist and the token must see it.
+   if ! gh repo view "$OWNER/$SLUG" >/dev/null 2>&1; then
+     echo "✗ REPO_NOT_FOUND: $OWNER/$SLUG is not reachable by the active token."
+     echo "  1) Create the EMPTY repo (no README/.gitignore/license): https://github.com/new"
+     echo "  2) Mint a fine-grained token scoped to it (see the GitHub-access preflight for the template URL)."
+     echo "  3) export GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_... and re-run /bootstrap."
+     exit 2
+   fi
+
+   # Guard — refuse to scaffold over a repo that already has commits (not empty).
+   # An empty repo returns non-zero here (409 "Git Repository is empty"), so no warning fires.
+   if gh api "repos/$OWNER/$SLUG/commits" >/dev/null 2>&1; then
+     echo "⚠ $OWNER/$SLUG already has commits — if this is a resume, re-run /bootstrap (Mode B). Do NOT overwrite."
    fi
    ```
-   Do NOT pass `--push` here — the first push happens in Step 4 after the
-   skeleton is in place. Pushing an empty repo confuses Step 5 (branch
-   protection has no commits to protect).
-
-   > The remote probe (Guard B) catches the case where the user manually created the repo on GitHub mid-bootstrap (e.g. when their PAT lacked `createRepository` and they were instructed to create it by hand). Without this probe, the second `/bootstrap` run would call `gh repo create` again and fail with a confusing GitHub error message buried in the agent output.
+   Mode A does NOT call `gh repo create` and does NOT pass `--push`; the first
+   push happens in Step 4 after the skeleton is in place (pushing an empty repo
+   confuses Step 5 — branch protection has no commits to protect).
 
    ### ⏸ Checkpoint — Resume from this step
 
-   If you stop here, re-run `/bootstrap` — the guard above is idempotent and
-   will pick up the existing `origin` without recreating the repo.
+   If you stop here, re-run `/bootstrap` — linking `origin` and the capability
+   probe are idempotent and will pick up the existing repo.
 
 2. **Skeleton** — dispatch `devops` (`subagent_type: "devops"`) to:
    - `mkdir -p backend docs/api docs/decisions docs/plans .claude/memory scripts`
@@ -345,10 +326,11 @@ Run AFTER preflight passes but BEFORE any side-effects.
      case "$HTTP_STATUS" in
        403)
          echo
-         echo "Cause: the active PAT lacks 'admin:repo_hook' (or is a fine-grained PAT without"
-         echo "       'administration: write' on this repo). Branch protection requires admin scope."
-         echo "Fix:   create a classic PAT with admin:repo_hook and re-run, OR enable protection"
-         echo "       manually via the UI (instructions below)."
+         echo "Cause: the fine-grained token lacks 'Administration: write' on this repo."
+         echo "       Branch protection requires that permission."
+         echo "Fix:   regenerate the token via the template URL with administration=write"
+         echo "       (Repository access -> Only select repositories -> this repo), re-run /bootstrap,"
+         echo "       OR enable protection manually via the UI (instructions below)."
          ;;
        404)
          echo

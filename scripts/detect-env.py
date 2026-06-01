@@ -34,10 +34,12 @@ Output schema (``.claude/memory/env-detect.json``)::
 The ``pat_kind`` field is derived from the **prefix** of the token returned by
 ``gh auth token`` -- never the value itself. Fine-grained PATs (prefix
 ``github_pat_``) do not expose OAuth scopes via response headers, so the
-existing ``has_*_scope`` probes always report ``false`` for them; consumers
-(``/bootstrap``, ``/doctor``) must treat ``pat_kind == "fine-grained"`` as a
-hard blocker and ask the user for a classic PAT (``ghp_...``) with ``repo`` +
-``workflow`` scopes.
+existing ``has_*_scope`` probes always report ``false`` for them. Per ADR 0008
+(manual repo creation + fine-grained per-repo PAT) a fine-grained token is the
+**recommended** credential, so consumers (``/bootstrap``, ``/doctor``) do NOT
+gate on OAuth scopes for fine-grained tokens and must NOT treat
+``pat_kind == "fine-grained"`` as a blocker; capability is verified by probing
+the target repo (``gh repo view``) and by per-operation errors, not by headers.
 
 ``platform_supported`` is ``true`` on Linux / macOS / WSL2 and ``false`` on
 Windows-native shells (PowerShell / cmd). Windows-native shells are NOT
@@ -142,11 +144,11 @@ def _gh_pat_kind() -> str:
 
     Determined from the prefix of ``gh auth token`` (per GitHub token-format
     conventions). The token value itself is NEVER logged or returned -- only
-    the prefix is matched and discarded. Used by ``/bootstrap`` and
-    ``/doctor`` to hard-block fine-grained PATs, which don't expose OAuth
-    scopes via response headers and lack ``createRepository`` /
-    ``administration:write`` permissions for the operations the bootstrap
-    automation needs.
+    the prefix is matched and discarded. Used by ``/bootstrap`` and ``/doctor``
+    for diagnostics. Per ADR 0008 fine-grained PATs are the recommended
+    credential and are NOT blocked; because they don't expose OAuth scopes via
+    response headers, consumers skip the scope-header gate for them and verify
+    capability by probing the target repo and via per-operation errors.
 
     Prefix table (GitHub docs):
         - ``ghp_``         -> classic PAT
