@@ -50,6 +50,14 @@ claude --version                     # confirm the CLI is on PATH
 
 > Installing `@anthropic-ai/claude-code` on the Windows side (PowerShell) does **not** give you a WSL2 `claude`. The CLI must be installed and launched from within the Ubuntu distro that has your bash toolchain.
 
+> **Faster — one-shot toolchain install.** Once you have the repo files in WSL2 (cloned, or copied via the Quick start below), you can install Python / Node / the WSL2-native `claude` / `gh` **and** apply the PATH fix in a single idempotent command, instead of doing steps 1 and 5 by hand:
+>
+> ```bash
+> bash scripts/setup-wsl.sh   # re-runnable; never touches secrets or git
+> ```
+>
+> It still expects a real WSL2 Ubuntu (or native Debian) shell. After it finishes, open a new shell so `~/.bashrc` applies, then `claude` → `/doctor`.
+
 **2. Keep the project in the WSL2 filesystem.** Put the repo under `~/projects/<slug>`, not under `/mnt/c|/mnt/d`. Working from `/mnt/...` gives slow Docker bind-mounts, stale mtimes, CRLF↔LF flips, and Windows file locks that block `rm`. Verify with `pwd` — you want `/home/<user>/...`, never `/mnt/...`.
 
 ```bash
