@@ -12,12 +12,13 @@ itself fails and the user is told to install Python 3.10+.
 Output schema (``.claude/memory/env-detect.json``)::
 
     {
-      "schema_version": 4,
+      "schema_version": 5,
       "detected_at": "<ISO 8601 UTC>",
       "platform": "windows" | "linux" | "darwin",
       "platform_release": "<uname -r equivalent>",
       "platform_supported": true | false,
       "wrong_runner_suspected": true | false,
+      "node_supported": true | false,
       "is_wsl2": true | false,
       "shell": "bash" | "zsh" | "unknown",
       "python": {"version": "...", "executable": "..."},
@@ -52,6 +53,15 @@ the hook ran Windows-Python and recorded ``platform: windows``. ``/doctor`` uses
 this flag to give a targeted fix (install / launch the WSL2-native ``claude``)
 instead of the generic "install WSL2" message — reinstalling WSL2 would not
 help here.
+
+``node_supported`` is ``true`` when Node.js is on PATH and its major version is
+>= 18. Node is a HARD REQUIREMENT, not optional: the supported runner -- the
+WSL2-native Claude Code CLI -- is installed via ``npm install -g
+@anthropic-ai/claude-code``, so without Node 18+ the correct ``claude`` cannot
+exist. ``/doctor`` reads this derived boolean (the same pattern as the ``gh``
+``has_*_scope`` flags) instead of re-parsing the version string, and reports
+``NO_NODE`` when it is ``false``. A present-but-unparseable version is treated as
+supported so a parse quirk never falsely blocks the user.
 
 Commands and agents consult this file at the start of every session and pick
 bash-appropriate syntax (Linux / macOS / WSL2).
@@ -101,6 +111,30 @@ def _tool_version(cmd: list[str]) -> str | None:
         return out.splitlines()[0] if out else None
     except Exception:
         return None
+
+
+def _node_supported() -> bool:
+    """Return whether Node.js >= 18 is on PATH.
+
+    Node is a hard requirement: the WSL2-native Claude Code CLI is installed via
+    ``npm install -g @anthropic-ai/claude-code``, so the supported runner cannot
+    exist without Node 18+. Consumers (``/doctor``) gate on this flag and report
+    ``NO_NODE`` when it is ``False``.
+
+    Defensive by design -- a missing ``node`` returns ``False``, but a present
+    binary whose ``--version`` string cannot be parsed returns ``True`` so a
+    parse quirk never produces a false hard block. Never raises.
+    """
+    if not shutil.which("node"):
+        return False
+    ver = _tool_version(["node", "--version"])  # e.g. 'v20.11.0'
+    if not ver:
+        return True  # present but version unreadable -- do not falsely block
+    try:
+        major = int(ver.strip().lstrip("vV").split(".")[0])
+        return major >= 18
+    except (ValueError, IndexError):
+        return True  # unparseable -- treat as supported
 
 
 def _gh_pat_kind() -> str:
@@ -185,13 +219,15 @@ def main() -> int:
     )
     scopes = _gh_scopes()
     pat_kind = _gh_pat_kind()
+    node_supported = _node_supported()
     info = {
-        "schema_version": 4,
+        "schema_version": 5,
         "detected_at": datetime.now(timezone.utc).isoformat(),
         "platform": platform.system().lower(),  # 'windows' | 'linux' | 'darwin'
         "platform_release": platform.release(),
         "platform_supported": platform_supported,
         "wrong_runner_suspected": wrong_runner_suspected,
+        "node_supported": node_supported,
         "is_wsl2": is_wsl2(),
         "shell": detect_shell(),
         "python": {
@@ -247,6 +283,15 @@ def main() -> int:
             "Fix: in a WSL2 Ubuntu shell run `npm install -g @anthropic-ai/claude-code`, "
             "then `hash -r` and relaunch `claude` from there "
             "(see README -> 'Where this runs').",
+            file=sys.stderr,
+        )
+    if not node_supported:
+        node_ver = info["tool_versions"]["node"]
+        detail = f"found {node_ver}" if node_ver else "node not on PATH"
+        print(
+            f"NO_NODE: Node.js 18+ is required ({detail}). It is needed to install "
+            "the WSL2-native Claude Code CLI. Install Node 18+ (nvm recommended), "
+            "then `npm install -g @anthropic-ai/claude-code`.",
             file=sys.stderr,
         )
     return 0

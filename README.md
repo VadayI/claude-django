@@ -66,14 +66,19 @@ git clone git@github.com:<your-username>/<slug>.git
 cd <slug>
 ```
 
-**3. Launch the CLI from the project root.** Always start `claude` from the folder that contains `CLAUDE.md` / `.claude/` so the config, hooks, and agents load:
+**3. Launch the CLI from the project root — but verify the runner first.** Before typing `claude`, confirm that `claude` resolves to the **WSL2-native** binary, not the Windows `claude.exe` that PATH interop may shadow it with. This one check prevents the single most common setup failure:
 
 ```bash
 cd ~/projects/<slug>
+which claude         # MUST be /home/... or /usr/...  — NOT /mnt/c/...
 claude
 ```
 
+If `which claude` shows a `/mnt/c/...` path, you have not installed the Linux CLI (do step 1) or the Windows bin precedes it on PATH (do step 5's PATH fix). After launch, sanity-check the **startup banner**: a correct WSL2 launch shows forward-slash paths and `(from .claude/settings.json)`; **backslashes** (`D:\Dev\...`, `.claude\settings.json`) mean you are still on `claude.exe` — `/exit` and fix the runner.
+
 On start, the `SessionStart` hook runs `scripts/detect-env.py` and writes `.claude/memory/env-detect.json`. From a correct WSL2 launch it records `platform_supported: true`, `is_wsl2: true`, `shell: bash` — which is exactly what `/doctor` needs to proceed past the platform gate.
+
+> **Type fixes in the bash shell, not into Claude's `❯` prompt.** When `/doctor` tells you to run `npm install -g @anthropic-ai/claude-code`, that goes in the **terminal**, not the `claude` chat. The `❯` prompt is Claude's input — pasting shell commands there just sends a message. `/exit` first (or use a second WSL2 tab), run the command in bash, then relaunch `claude`.
 
 **4. Drive the work with slash-commands and plain prompts.** Inside the `claude` session you type commands like `/doctor`, `/bootstrap`, `/preflight`, then describe features in natural language and let the orchestrator route them through the pipeline. The two rituals to remember:
 
@@ -96,6 +101,26 @@ gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org
 See *Prerequisites*, *Quick start*, and *Step-by-step: a NEW project from scratch* below for the full bring-up. The short version: **install the CLI in WSL2 → clone into `~/projects` → `claude` → `/doctor` → `/bootstrap` → `/preflight` → first feature.**
 
 If you must work from Claude Desktop or another environment, use it as an editor / chat companion **after** running `/bootstrap`, `/doctor`, `/synthesize-brief`, and `/preflight` from Claude Code CLI.
+
+---
+
+## Troubleshooting startup & /doctor hard-stops
+
+**The golden path (memorize this):** *install the CLI inside WSL2 → `which claude` shows `/home/...` (not `/mnt/c/...`) → launch `claude` from the project → `/doctor` → `/bootstrap`.* Almost every "it doesn't work" is one of the runner / PAT issues below. `/doctor` is doing its job when it HARD-STOPs — the message tells you exactly which gate failed; match the symptom here.
+
+| Symptom (what you see) | What it actually means | Fix (run in a **bash shell**, not the `❯` prompt) |
+|---|---|---|
+| `🔴 UNSUPPORTED_PLATFORM` with **`wrong_runner_suspected: true`**, banner shows **backslash** paths (`D:\Dev\...`, `.claude\settings.json`), `python.executable` is `C:\…\python.exe` | You typed `claude` inside WSL2 but PATH interop launched the **Windows `claude.exe`** — the Linux CLI was never installed (or is shadowed on PATH). **WSL2 is present; this is not a "WSL2 missing" error.** | `npm install -g @anthropic-ai/claude-code` → `hash -r` → `which claude` (must be `/home/…` or `/usr/…`). If still `/mnt/c/…`: `echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc`. Relaunch `claude`. Project staying on `/mnt/d` is fine — not the cause. |
+| `🔴 UNSUPPORTED_PLATFORM` with `wrong_runner_suspected: false`, `is_wsl2: false`, and a PowerShell/cmd/Git-Bash prompt (or Claude Desktop) | You are genuinely on a **Windows-native shell** with no WSL2 — bash idioms and Docker bind-mounts won't behave. | `wsl --install -d Ubuntu` (PowerShell) → `wsl --set-default Ubuntu` → inside Ubuntu install the toolchain (`sudo apt install -y git curl gh python-is-python3 python3-pip`) and the CLI (step 1), then launch `claude` from Ubuntu. |
+| `🔴 NO_ENV_DETECT` — `.claude/memory/env-detect.json` is missing | The `SessionStart` hook didn't run — usually `scripts/` wasn't copied during Quick start, or Python isn't on PATH. The hook **fails silently** without `scripts/detect-env.py`. | Confirm `scripts/detect-env.py` exists in the project; run `python scripts/detect-env.py` once by hand. If it errors, fix the cause (install Python 3.10+). **Never hand-write this file** — fabricated values bypass the safety gates. |
+| `🔴 NO_PYTHON_OR_HOOK` — only `python3` exists, no `python` | The hook calls `python`; Ubuntu ships it as `python3`. | `sudo apt install -y python-is-python3`, then reopen `claude`. |
+| `🔴 FINE_GRAINED_PAT_NOT_SUPPORTED` — `pat_kind: "fine-grained"` | Your GitHub token is a fine-grained PAT (`github_pat_…`); it can't create repos and doesn't expose OAuth scopes, so `/bootstrap` can't run. | Create a **classic** PAT (`ghp_…`) at `https://github.com/settings/tokens/new?scopes=repo,workflow,admin:repo_hook,delete_repo,read:org`, then `export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_…` in WSL2 and relaunch. |
+| `🔴 NO_GH_SCOPES` — classic PAT missing scopes | The token is classic but lacks `repo`/`workflow` (and `admin:repo_hook` for auto branch protection). | `gh auth refresh -s repo,workflow,admin:repo_hook,delete_repo,read:org` (or recreate the PAT with those scopes). |
+| You pasted a shell command (e.g. `npm install …`) and **nothing changed** | You typed it into Claude's `❯` chat prompt, not the terminal — Claude just replied with a note. | `/exit` (or open a second WSL2 tab), run the command in **bash**, then relaunch `claude`. |
+| PowerShell: `wsl2: The term 'wsl2' is not recognized` | The command is `wsl`, not `wsl2`. | `wsl` (or `wsl -d Ubuntu`) to enter WSL2 from PowerShell. |
+| Tests are slow, `rm` fails, CRLF↔LF flips — project under `/mnt/c` or `/mnt/d` | The repo lives on a Windows drive (9p mount). **This is a ⚠️ warning, not a hard stop** — the platform gate still passes. | Optional but recommended: move the repo to `~/projects/<slug>` inside the WSL2 filesystem for fast Docker bind-mounts. |
+
+After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites `env-detect.json` on each launch, so a corrected runner/PAT shows up immediately. Full rationale for the runner trap: `.claude/rules/environment.md` → *"launch the WSL2-native `claude`"*.
 
 ---
 
@@ -211,7 +236,7 @@ Context7 (by Upstash) serves **current** library documentation to agents, so `ap
    ```
 
    The MCP is launched as `npx -y @upstash/context7-mcp --api-key ${CONTEXT7_API_KEY}` (see `.mcp.json`), so the variable must be set **before** you start `claude`. Never commit the key — it goes in the environment, not in any tracked file.
-3. **Verify.** `[ -n "$CONTEXT7_API_KEY" ] && echo set` should print `set`, and `/doctor` (Claude config scope) reports it as ✅. Because the MCP runs via `npx`, **Node.js 18+ is required** when Context7 is enabled (otherwise it stays optional for this backend-only repo).
+3. **Verify.** `[ -n "$CONTEXT7_API_KEY" ] && echo set` should print `set`, and `/doctor` (Claude config scope) reports it as ✅. Because the MCP runs via `npx`, **Node.js 18+ is required** — it already is project-wide (see *Prerequisites*) to install the WSL2-native Claude Code CLI, and Context7 simply reuses the same Node.
 
 ### Project settings — `.claude/settings.json`
 
@@ -235,7 +260,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 - Docker Desktop with WSL2 backend
 - **Shell:** bash in WSL2 Ubuntu (Windows), bash/zsh (Linux/macOS). PowerShell native NOT supported.
 - WSL2 (Ubuntu) — **mandatory on Windows**; keep the project under `~/projects/<slug>` inside WSL2 FS for fast Docker bind-mounts
-- Node.js 18+ (via `nvm`) — **optional** for this backend-only repo; needed only if you use `npx`-based skills (e.g., the Context7 MCP runs via `npx`)
+- **Node.js 18+ (required, via `nvm`)** — needed to install the WSL2-native Claude Code CLI (`npm install -g @anthropic-ai/claude-code`) and for `npx`-based skills (e.g. the Context7 MCP). `/doctor` reports `NO_NODE` if it is missing or below 18
 - A GitHub account
 
 ### Shell: bash only
@@ -299,9 +324,12 @@ mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/
 
 # Wipe transient state from the template clone (these are regenerated by the SessionStart hook):
 rm -f .claude/memory/env-detect.json .claude/memory/command-log.jsonl
+
+# Before launching `claude`: confirm it is the WSL2-native CLI, not Windows `claude.exe`.
+which claude    # expect /home/... or /usr/...  — if it prints /mnt/c/..., see step 1 / step 5 above
 ```
 
-Then install the plugins (see below) and adjust `CLAUDE.md` for the project name. Then run **`/doctor`** inside `claude` — it detects the scenario and recommends the next command.
+Then install the plugins (see below) and adjust `CLAUDE.md` for the project name. Then run **`/doctor`** inside `claude` — it detects the scenario and recommends the next command. If `/doctor` HARD-STOPs, jump to **[Troubleshooting startup](#troubleshooting-startup--doctor-hard-stops)** below.
 
 ---
 

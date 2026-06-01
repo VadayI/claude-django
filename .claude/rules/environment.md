@@ -16,13 +16,16 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands. Windows nati
 | Docker Desktop | running, with WSL2 integration enabled if WSL2 is used | `docker info` |
 | docker compose | v2 available | `docker compose version` |
 | Python in container | 3.13.x (separate from the host Python above) | `docker compose exec -T backend python --version` |
-| Node.js | 18+ — optional for backend-only repos, needed only for `npx`-based skills (e.g. Context7 MCP runs via `npx`) | `node --version` |
+| **Node.js (HARD REQUIREMENT)** | 18+ on PATH | `node --version`. Required to install the WSL2-native Claude Code CLI (`npm install -g @anthropic-ai/claude-code`). `detect-env.py` records the derived `node_supported` flag; `/doctor` reports `NO_NODE` if node is absent or < 18. Install via `nvm` if missing. |
 | git | present | `git --version` |
 | GitHub CLI | present in WSL2 (a Windows `gh.exe` from `winget` is NOT visible inside WSL2; install via `apt` or the GitHub CLI Linux instructions) | `gh --version` |
+| **Claude Code CLI (WSL2-native)** | `claude` installed via npm, resolving to a Linux path | `which claude` -> `/home/...` or `/usr/...`, NEVER `/mnt/c/...`. Install: `npm install -g @anthropic-ai/claude-code` (needs Node 18+). If `which claude` shows `/mnt/c/...`, the Windows `claude.exe` shadows it -- prepend the npm bin to PATH (see the runner-trap section below). |
 
 ### Windows: launch the WSL2-native `claude`, not the Windows one (the common trap)
 
 The single most common Windows failure is typing `claude` inside a WSL2 shell while only the **Windows** CLI is installed. PATH interop resolves `claude` to `claude.exe`, the `SessionStart` hook then runs Windows-Python, and `env-detect.json` records `platform: windows`, `platform_supported: false`, **`wrong_runner_suspected: true`**. Telltale signs in the file: `python.executable` is a `C:\...` path and `cwd` uses backslashes. `/doctor` will HARD STOP with `UNSUPPORTED_PLATFORM` — correctly: the config is running on the wrong runner.
+
+**Spot it before `/doctor` even runs — read the startup banner.** A WSL2-native launch prints a Linux-style path (`/home/...`, or `/mnt/d/...` with forward slashes) and `Using ... (from .claude/settings.json)`. The Windows binary prints the project path with **backslashes** (`D:\Dev\...`) and `(from .claude\settings.json)`. Backslashes in the banner = you launched `claude.exe`; stop and fix the runner before doing anything else.
 
 The fix is NOT to reinstall WSL2. It is to install and launch the **Linux-native** CLI from inside WSL2:
 
@@ -39,6 +42,8 @@ If `which claude` still resolves to `/mnt/c/...`, the Windows interop path prece
 ```bash
 echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 ```
+
+> **Run these commands in the bash shell — NOT inside the `claude` session.** The `❯` prompt is Claude's chat input, not a terminal; pasting `npm install ...` there just sends a message to Claude. `/exit` first (or open a second WSL2 tab), run the fix in bash, then relaunch `claude`. (And it is `wsl`, not `wsl2`, to enter WSL from PowerShell.)
 
 The project living on `/mnt/d` (or any `/mnt/...`) is **not** what triggers `UNSUPPORTED_PLATFORM`: a WSL2-native `claude` launched from `/mnt/d` reports `platform: linux, is_wsl2: true, platform_supported: true` and passes the gate. You only get a working-dir ⚠️ (slow Docker bind-mounts, CRLF/lock issues) — see the *Working dir* row above; moving to `~/projects/<slug>` removes that warning but is not required to pass the platform gate.
 
