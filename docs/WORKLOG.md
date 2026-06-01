@@ -1,5 +1,16 @@
 # WORKLOG — claude-django
 
+## 2026-06-01 — Secrets deny hardening + lesson_youtube_2 audit
+
+Звірка шаблону з особистим конспектом `LOCAL/lesson_youtube_2.txt`. Проект відповідає майже всім практикам конспекту; знайдено один предметний пробіл — покриття секретів.
+
+**Зміна.** Розширено `permissions.deny` у `.claude/settings.json`: додано блокування читання вкладених `.env` (`**/.env`, `**/.env.*`), приватних ключів/сховищ (`*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.kdbx`), SSH-ключів (`id_rsa`, `id_ed25519`), `credentials*`, теки `secrets/**` і локальних дампів `*.sqlite3`. Раніше deny покривав лише кореневі `.env`/`.env.*` і `settings.local.json`. Уточнення: `.claudeignore` у Claude Code не існує як фіча — правильний механізм це `permissions.deny`, тому файл не створювався. `_last_reviewed` оновлено на 2026-06-01.
+
+**Документ.** `docs/reviews/lesson-youtube-2-audit.md` — повна таблиця відповідності, закритий пробіл, свідомі розбіжності (Playwright MCP / output-language / QA-модель), відкрите питання про React+MUI (monorepo vs окремий стек-шаблон) як кандидат на ADR.
+
+**Verification:** `settings.json` ревалідовано як JSON (17 deny-записів); зміни в `.claude/**` застосовано через python pathlib з anchor-assert (Cowork mount-truncation guard з `docs/lessons.md`). Push + PR — за межами пісочниці (gh/PAT недоступні), виконує maintainer зі свого терміналу.
+
+
 ## 2026-06-01 — Cross-platform onboarding automation (4 batches; ADR 0006)
 
 Follow-up to the Desktop-not-a-runner work. The maintainer asked whether claude-django could "work on both Windows and Debian with more automation". Framing: it already runs on both (Debian native, Windows via WSL2) — the lever is WSL2 *onboarding friction*, not portability. ADR 0005 (WSL2-only, no PowerShell) is explicitly **kept**; PowerShell was NOT reintroduced. Decision recorded in `docs/decisions/0006-cross-platform-onboarding-automation.md`. Shipped in four commits:

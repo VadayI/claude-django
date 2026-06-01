@@ -30,7 +30,19 @@
       "Bash(git push --force:*)",
       "Read(.env)",
       "Read(.env.*)",
-      "Read(.claude/settings.local.json)"
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(.claude/settings.local.json)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/*.kdbx)",
+      "Read(**/id_rsa)",
+      "Read(**/id_ed25519)",
+      "Read(**/credentials*)",
+      "Read(secrets/**)",
+      "Read(**/*.sqlite3)"
     ]
   },
   "env": {
@@ -73,5 +85,5 @@
       }
     ]
   },
-  "_last_reviewed": "2026-05-27"
+  "_last_reviewed": "2026-06-01"
 }
