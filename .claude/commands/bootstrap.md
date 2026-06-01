@@ -253,6 +253,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent)
      - `templates/.github/workflows/backend-ci.yml` -> `.github/workflows/backend-ci.yml`
      - `templates/docker-compose.yml` -> `docker-compose.yml`
+     - `templates/Makefile` -> `Makefile` (dev-loop command shortcuts; see `.claude/rules/docker-commands.md`)
      - `templates/PROJECT_README.md` -> `README.md` (project root README — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}` with real values; leave `{TODO}` markers for the user to fill, especially `## License`)
      - `templates/PROJECT.md` -> `docs/PROJECT.md` (brief skeleton — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}`; leave `{TODO}` markers for `/synthesize-brief` or the user to fill)
      - `templates/api_INDEX.md` -> `docs/api/INDEX.md` (endpoint index — replace `{SLUG}`)

@@ -4,6 +4,19 @@
 >
 > The `SessionStart` hook writes `.claude/memory/env-detect.json` with the active shell so agents can verify their assumptions.
 
+## Make wrappers (optional shortcuts)
+
+A root `Makefile` wraps the most common commands below so they are identical on native Debian and WSL2. It is a convenience layer only — the canonical commands are still those in this file, and `make` is never required by the pipeline.
+
+```bash
+make help          # list targets
+make up            # docker compose up -d
+make test ARGS="-k auth"   # docker compose exec backend pytest -k auth
+make lint          # ruff check
+make gates         # run the CI gate scripts locally before pushing
+make doctor-deps   # quick host tool presence check (not the /doctor command)
+```
+
 ## Environment
 
 ```bash
