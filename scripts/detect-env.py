@@ -12,11 +12,12 @@ itself fails and the user is told to install Python 3.10+.
 Output schema (``.claude/memory/env-detect.json``)::
 
     {
-      "schema_version": 3,
+      "schema_version": 4,
       "detected_at": "<ISO 8601 UTC>",
       "platform": "windows" | "linux" | "darwin",
       "platform_release": "<uname -r equivalent>",
       "platform_supported": true | false,
+      "wrong_runner_suspected": true | false,
       "is_wsl2": true | false,
       "shell": "bash" | "zsh" | "unknown",
       "python": {"version": "...", "executable": "..."},
@@ -42,6 +43,15 @@ Windows-native shells (PowerShell / cmd). Windows-native shells are NOT
 supported — see ADR ``docs/decisions/0005-drop-windows-native-shell.md``. On
 Windows the user must install WSL2 Ubuntu and run every command (including
 ``gh``, ``git``, ``python``, ``docker compose``) from inside WSL2.
+
+``wrong_runner_suspected`` is ``true`` when ``platform == "windows"`` AND the
+``wsl`` executable is present. That combination almost always means the user
+typed ``claude`` inside a WSL2 shell but PATH interop resolved it to the
+Windows ``claude.exe`` (the Linux-native CLI was never installed in Ubuntu), so
+the hook ran Windows-Python and recorded ``platform: windows``. ``/doctor`` uses
+this flag to give a targeted fix (install / launch the WSL2-native ``claude``)
+instead of the generic "install WSL2" message — reinstalling WSL2 would not
+help here.
 
 Commands and agents consult this file at the start of every session and pick
 bash-appropriate syntax (Linux / macOS / WSL2).
@@ -166,14 +176,22 @@ def main() -> int:
         platform.system() in ("Linux", "Darwin")
         or is_wsl2()
     )
+    # A Windows-native run while WSL2 exists almost always means the user typed
+    # `claude` in a WSL2 shell but PATH interop resolved it to the Windows binary
+    # (no Linux-native CLI installed in Ubuntu). Flag it so /doctor can give a
+    # targeted fix instead of the generic "install WSL2" message.
+    wrong_runner_suspected = (
+        platform.system() == "Windows" and shutil.which("wsl") is not None
+    )
     scopes = _gh_scopes()
     pat_kind = _gh_pat_kind()
     info = {
-        "schema_version": 3,
+        "schema_version": 4,
         "detected_at": datetime.now(timezone.utc).isoformat(),
         "platform": platform.system().lower(),  # 'windows' | 'linux' | 'darwin'
         "platform_release": platform.release(),
         "platform_supported": platform_supported,
+        "wrong_runner_suspected": wrong_runner_suspected,
         "is_wsl2": is_wsl2(),
         "shell": detect_shell(),
         "python": {
@@ -219,6 +237,18 @@ def main() -> int:
         f"env: {info['platform']} | shell: {shell_label} "
         f"| python {info['python']['version']}"
     )
+    if wrong_runner_suspected:
+        print(
+            "WRONG RUNNER: platform=windows but WSL2 is installed -- you launched "
+            "the Windows `claude`, not the WSL2-native one.",
+            file=sys.stderr,
+        )
+        print(
+            "Fix: in a WSL2 Ubuntu shell run `npm install -g @anthropic-ai/claude-code`, "
+            "then `hash -r` and relaunch `claude` from there "
+            "(see README -> 'Where this runs').",
+            file=sys.stderr,
+        )
     return 0
 
 

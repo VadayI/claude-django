@@ -20,6 +20,29 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands. Windows nati
 | git | present | `git --version` |
 | GitHub CLI | present in WSL2 (a Windows `gh.exe` from `winget` is NOT visible inside WSL2; install via `apt` or the GitHub CLI Linux instructions) | `gh --version` |
 
+### Windows: launch the WSL2-native `claude`, not the Windows one (the common trap)
+
+The single most common Windows failure is typing `claude` inside a WSL2 shell while only the **Windows** CLI is installed. PATH interop resolves `claude` to `claude.exe`, the `SessionStart` hook then runs Windows-Python, and `env-detect.json` records `platform: windows`, `platform_supported: false`, **`wrong_runner_suspected: true`**. Telltale signs in the file: `python.executable` is a `C:\...` path and `cwd` uses backslashes. `/doctor` will HARD STOP with `UNSUPPORTED_PLATFORM` — correctly: the config is running on the wrong runner.
+
+The fix is NOT to reinstall WSL2. It is to install and launch the **Linux-native** CLI from inside WSL2:
+
+```bash
+# inside a real WSL2 Ubuntu shell (prompt like vadym@HOST, not a Windows path)
+node --version                              # need Node 18+ (install via nvm if missing)
+npm install -g @anthropic-ai/claude-code
+hash -r                                     # forget the cached Windows `claude`
+which claude                                # must be /home/... or /usr/..., NOT /mnt/c/...
+```
+
+If `which claude` still resolves to `/mnt/c/...`, the Windows interop path precedes your npm-global bin. Make the WSL2 CLI win by prepending the npm bin in `~/.bashrc`:
+
+```bash
+echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+```
+
+The project living on `/mnt/d` (or any `/mnt/...`) is **not** what triggers `UNSUPPORTED_PLATFORM`: a WSL2-native `claude` launched from `/mnt/d` reports `platform: linux, is_wsl2: true, platform_supported: true` and passes the gate. You only get a working-dir ⚠️ (slow Docker bind-mounts, CRLF/lock issues) — see the *Working dir* row above; moving to `~/projects/<slug>` removes that warning but is not required to pass the platform gate.
+
+
 ## Scope 2 — Claude config & access
 
 | Requirement | Expected | Check |
@@ -75,4 +98,4 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 - **Ask explicitly, never silently:** anything that writes secrets, force operations, deleting files, enabling branch protection (account-level), pushing. For unsetting a leaked token: `unset GITHUB_TOKEN` for the current shell, plus removing the export line from `~/.bashrc` / `~/.profile` (or `~/.zshrc`).
 - **Forbidden in `/doctor`:** committing, `git push`, pushing to `main`, printing secret values, editing application source code.
 
-<!-- Last reviewed/updated: 2026-05-30 (P0-P3 + read:org clarification on PAT scopes row) -->
+<!-- Last reviewed/updated: 2026-06-01 (Scope 1: added 'launch the WSL2-native claude' subsection for the wrong_runner_suspected trap + bashrc PATH fix; /mnt/d is not the platform-gate cause) -->
