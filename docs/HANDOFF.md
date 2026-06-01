@@ -2,21 +2,32 @@
 
 > Rolling snapshot of the template-config repo. Read first when joining; update at session end.
 >
-> Maintainer · Last touched: 2026-05-31
+> Maintainer · Last touched: 2026-06-01
 
 ## Current state
 
-On `main`, **clean and fully pushed** (`origin/main` == `main`, ahead/behind 0/0). Tip: `dfdfa2f fix: copy root scripts/ in Quick start so SessionStart hook can run`. The two prior-batch commits (`513072f` runtime-gate/Context7/Russian/backend-only cleanup, `d2f5bfe` PII scrub) are also pushed. Nothing in the working tree except this session-end `HANDOFF.md` + `lessons.md` snapshot update (commit it next).
+On `main`, synced with `origin/main` through tip `3d57d16 docs(onboarding): clarify WSL2-native launch & enforce Node 18 (NO_NODE)` (the node-gate + onboarding-clarity batch — already committed and pushed earlier this session). **Working tree has a second, uncommitted batch — commit it next (see Next step):** six files — `README.md`, `.claude/rules/environment.md`, `.claude/commands/doctor.md`, and the session-end trio `docs/WORKLOG.md` / `docs/lessons.md` / `docs/HANDOFF.md`. (`scripts/detect-env.py` already shipped in `3d57d16` — do NOT re-add it.)
 
 ## Last finished
 
-This session (2026-05-31): **fixed the root cause of NO_ENV_DETECT on fresh clones.** The earlier batch hardened the gate but never fixed *why* `env-detect.json` was absent — the README Quick start `cp` block copied `.claude/` + full `templates/` but never the root `scripts/` dir, so `scripts/detect-env.py` was missing and the SessionStart hook failed silently (`detect-env.py`/`log-cmd.py` live in root `scripts/`, separate from `templates/scripts/` which holds only CI gates).
+This session (2026-06-01): **made the WSL2 onboarding + wrong-runner story self-service, turned Node into a real gate, then documented the deeper npm-shadow trap.** Driven by a live bring-up on `carlsberg-ir-data-service` that kept hitting `UNSUPPORTED_PLATFORM` even after the documented PATH fix.
 
-- `README.md` — Quick start clone block now copies `scripts/` (`cp -r /tmp/claude-django/scripts ./`) with a "hook fails silently without it" note; NEW-project prose list adds `scripts/`.
-- `.claude/commands/doctor.md` — Step 0.5 `NO_ENV_DETECT` now lists **three** causes with "missing `scripts/detect-env.py` (root `scripts/` not copied)" as cause #1 + the `cp -r scripts ./` fix; checks `test -f scripts/detect-env.py` first.
-- `docs/WORKLOG.md` — entry recorded. Committed as `dfdfa2f`, pushed.
+Shipped in `3d57d16` (pushed):
 
-All edits applied via `python pathlib.write_text` through bash with `assert count==1` anchors + tail verification (mount-truncation guard).
+- `scripts/detect-env.py` — derived `node_supported` (node on PATH AND major >= 18), schema v4->v5, defensive parser, `NO_NODE` hint.
+- `.claude/commands/doctor.md` — Node audit bullet (`NO_NODE`, blocks `/bootstrap`); `NO_NODE` in hard-STOP flags.
+- `.claude/rules/environment.md` — Node -> HARD REQUIREMENT (18+) + WSL2-native CLI row; runner-trap hardening (banner tell, "fixes go in bash not the prompt").
+- `README.md` — startup happy-path, `which claude` check, "Troubleshooting startup & /doctor hard-stops" table, Node required prerequisite.
+
+Pending (uncommitted) batch — the **npm-shadow** layer + session docs:
+
+- Root cause found live: a Linux `node` (`/usr/bin/node`, v22) present but **no Linux `npm`** -> `npm` resolves to the Windows npm via interop -> `npm install -g @anthropic-ai/claude-code` installs `claude` into the Windows prefix -> `which claude` stays `/mnt/c/...`. The `$(npm config get prefix)/bin` trick can't help (that prefix is a `C:\...` path).
+- `.claude/rules/environment.md` — new npm-shadow sub-case with the `nvm install --lts` fix + `setup-wsl.sh` pointer.
+- `README.md` — dedicated npm-shadow row in the Troubleshooting table.
+- `.claude/commands/doctor.md` — npm-shadow sentence in the `wrong_runner_suspected` remedy.
+- `docs/WORKLOG.md` / `docs/lessons.md` / `docs/HANDOFF.md` — session chronicle, the npm-shadow lesson, and this snapshot.
+
+All writes via `python pathlib` + `assert count==1` + tail/line verification (Edit/Write truncated README & detect-env.py again this session; rebuilt from `git show HEAD`).
 
 ## In progress
 
@@ -24,30 +35,32 @@ All edits applied via `python pathlib.write_text` through bash with `assert coun
 
 ## Next step
 
-Commit the session-end snapshot on the **host (PowerShell)**, direct to `main` per template-repo policy:
+Commit the pending batch on the **host (PowerShell)**, direct to `main` per template-repo policy. Clear the stale lock first:
 
 ```powershell
-cd D:\My\ClaudeDjango\claude-django
-git add docs/HANDOFF.md docs/lessons.md
-git commit -m "docs: session-end snapshot — HANDOFF + lessons after scripts/ copy fix"
+cd D:\Dev\My\claude-django
+Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
+git add README.md .claude/rules/environment.md .claude/commands/doctor.md docs/WORKLOG.md docs/lessons.md docs/HANDOFF.md
+git commit -m "docs(troubleshooting): add Windows-npm-shadow runner case + session WORKLOG/lessons/HANDOFF"
 git push origin main
 ```
 
-Then optionally re-run the full smoke-test from Claude Code CLI inside WSL2 on a fresh derived project, starting from the **corrected** Quick start copy block, to confirm `scripts/` now lands and `/doctor` no longer hits `NO_ENV_DETECT`.
+(WSL2 bash equivalent: `rm -f .git/index.lock`, same `git add` on one line, then commit/push.)
 
 ## Open questions
 
-- [ ] Worth a standing pre-commit/CI guard for the setup itself — e.g. assert every path referenced by a hook command in `.claude/settings.json` is in the README Quick start copy list — so a future copy-list omission fails loudly instead of silently?
-- [ ] `reviewer.md:18` and `review-pr.md:51` still use the word "mini-frontend" inside a (correct) guardrail. Reword for terminology consistency, or keep as-is?
-- [ ] Pre-commit/CI guard that fails on a truncated file tail (this has bitten files across multiple sessions)?
+- [ ] Should `detect-env.py` also record resolved tool paths (`node`/`npm`/`claude`) so `/doctor` can flag a Windows-npm shadow automatically? Caveat: in the wrong-runner state the hook runs under Windows-Python and can't see the WSL2 side, so the value is limited to the already-Linux case.
+- [ ] Pre-commit/CI guard that fails on a truncated file tail (has bitten files across multiple sessions)?
+- [ ] Standing guard asserting every path referenced by a `.claude/settings.json` hook command is in the README Quick start copy list?
 - [ ] `/handoff --append` (snapshot history) vs the current overwrite model — still open.
 
 ## Environment notes
 
-- **Cowork on the Windows D: mount: the `Edit`/`Write` MCP tools silently TRUNCATE file tails.** Use `python pathlib.write_text()` through bash instead, and verify every write with `tail -c` + line-count-vs-HEAD, not just a grep for the added text. Memory: `feedback_cowork_write_unreliable_on_mount.md`.
-- Editing files under `.claude/` is blocked for the Edit tool in Cowork ("protected location") — go through bash + python.
-- Container/mount `git` is unreliable on the Windows-written index (`index.lock` "Operation not permitted"; `error: index uses pS:6 extension`); do all `git add`/`commit`/`push` in PowerShell on the host. `git status`/`diff`/`log`/`show` read fine from the Cowork sandbox.
-- Direct commits to `main` are allowed in THIS repo per template-repo policy (memory: `feedback_template_repo_direct_main.md`). PR flow applies only to derived projects.
+- **Node 18+ is now a hard requirement** (`node_supported` in `env-detect.json`, schema v5). The flag appears only after the next WSL2-native `claude` launch rewrites the file.
+- **A Linux `node` does not guarantee a Linux `npm`.** Check `which node npm` together; a Windows-npm shadow silently installs global packages to the Windows prefix. Fix: `nvm install --lts` (matching pair) or `bash scripts/setup-wsl.sh`.
+- **Cowork on the Windows D: mount: the `Edit`/`Write` MCP tools silently TRUNCATE file tails.** Use `python pathlib.write_text()` through bash and verify with `tail -c` + line-count-vs-HEAD. Editing under `.claude/` is also blocked for the Edit tool ("protected location") — go through bash + python.
+- Container/mount `git` is unreliable on the Windows-written index (`index.lock` "Operation not permitted"); do all `git add`/`commit`/`push` in PowerShell on the host. `git status`/`diff`/`log`/`show` read fine from the Cowork sandbox.
+- Direct commits to `main` are allowed in THIS repo per template-repo policy. PR flow applies only to derived projects.
 
 ---
 

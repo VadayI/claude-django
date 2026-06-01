@@ -1,5 +1,18 @@
 # WORKLOG — claude-django
 
+## 2026-06-01 — Onboarding clarity + mandatory Node gate + npm-shadow trap
+
+Session driven by a live bring-up on `carlsberg-ir-data-service`: the maintainer kept hitting `UNSUPPORTED_PLATFORM` / `wrong_runner_suspected`, and the documented wrong-runner PATH fix did not take. Root cause uncovered live: a Linux `node` (`/usr/bin/node`, v22) was present but Linux `npm` was **missing**, so `npm` resolved through PATH interop to the Windows npm (`/mnt/c/Program Files/nodejs/npm`), `npm config get prefix` returned a `C:\...` path, and `npm install -g @anthropic-ai/claude-code` therefore installed `claude` into the **Windows** prefix — so `which claude` stayed `/mnt/c/...` no matter how the `$(npm config get prefix)/bin` trick was applied. Documented the whole failure chain and turned Node into a real gate.
+
+**Docs clarity (README).** New prominent startup happy-path in the launch step (`which claude` must be a `/home` path, not `/mnt/c`, before launching; a backslash banner = `claude.exe`), a "type fixes in the bash shell, not the `❯` prompt" note, a `which claude` check inside the Quick-start clone snippet, and a new **"Troubleshooting startup & /doctor hard-stops"** section: a symptom/code → cause → fix table covering `UNSUPPORTED_PLATFORM` (wrong-runner vs genuine Windows), `NO_ENV_DETECT`, `NO_PYTHON_OR_HOOK`, `FINE_GRAINED_PAT_NOT_SUPPORTED`, `NO_GH_SCOPES`, REPL-vs-shell, `wsl2`-vs-`wsl`, slow `/mnt` mounts, and the npm-shadow case.
+
+**Mandatory Node gate.** `scripts/detect-env.py` now derives `node_supported` (node on PATH AND major >= 18), schema bumped v4->v5, with a defensive parser (missing node -> false; present-but-unparseable -> true so a quirk never falsely blocks) and a `NO_NODE` stderr hint. `.claude/commands/doctor.md` gained a **Node audit** bullet (reports `NO_NODE`, blocks `/bootstrap`) and added `NO_NODE` to the hard-STOP flag list. `.claude/rules/environment.md` Scope 1: Node.js promoted from optional to **HARD REQUIREMENT (18+)** with rationale, plus a new **Claude Code CLI (WSL2-native)** row. README Prerequisites updated to match; the Context7 Node note de-conflicted.
+
+**npm-shadow trap.** Added the "Linux node present but Linux npm missing -> Windows npm installs claude to the Windows prefix" sub-case to `.claude/rules/environment.md` (with the `nvm install --lts` fix + `setup-wsl.sh` pointer), a dedicated row in the README Troubleshooting table, and a sentence in the `doctor.md` `wrong_runner_suspected` remedy.
+
+**Verification.** `detect-env.py` AST-compiles; `_node_supported()` unit-checked across v14/v16 (false) and v18/v20/v22/`V18`/garbage/empty (true) plus node-absent (false) — all pass. Every `.claude/**`, README, and `scripts/` write applied via `python pathlib` with `assert count==1` anchors + tail/line-count verification, because the Edit/Write MCP tools truncated README and detect-env.py mid-session again (rebuilt from `git show HEAD:<path>` + re-apply). Commit + push to `main` performed by the maintainer from the host shell.
+
+
 ## 2026-06-01 — Secrets deny hardening + lesson_youtube_2 audit
 
 Звірка шаблону з особистим конспектом `LOCAL/lesson_youtube_2.txt`. Проект відповідає майже всім практикам конспекту; знайдено один предметний пробіл — покриття секретів.

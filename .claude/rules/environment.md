@@ -45,6 +45,19 @@ echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.bashrc && source ~
 
 > **Run these commands in the bash shell — NOT inside the `claude` session.** The `❯` prompt is Claude's chat input, not a terminal; pasting `npm install ...` there just sends a message to Claude. `/exit` first (or open a second WSL2 tab), run the fix in bash, then relaunch `claude`. (And it is `wsl`, not `wsl2`, to enter WSL from PowerShell.)
 
+**Still `/mnt/c/...` after the PATH fix? Your `npm` is the Windows one.** A common WSL2 state is a Linux `node` (`/usr/bin/node`) but **no Linux `npm`** — so `npm` falls through PATH interop to `/mnt/c/Program Files/nodejs/npm`, `npm config get prefix` returns a `C:\...` path, and `npm install -g @anthropic-ai/claude-code` therefore installs `claude` into the **Windows** npm prefix (the `/mnt/c/...` binary you keep seeing). The `$(npm config get prefix)/bin` trick can't fix this — that prefix is a Windows path. Confirm with `which node npm`, then let `nvm` own a matching node+npm pair inside WSL2:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+nvm install --lts                 # node + npm both under ~/.nvm, first on PATH
+hash -r && which node npm         # both must be /home/...  — NOT /mnt/c/...
+npm install -g @anthropic-ai/claude-code
+hash -r && which claude           # /home/...  — NOT /mnt/c/...
+```
+
+`scripts/setup-wsl.sh` automates exactly this (nvm + node + the CLI + the PATH fix), idempotently.
+
 The project living on `/mnt/d` (or any `/mnt/...`) is **not** what triggers `UNSUPPORTED_PLATFORM`: a WSL2-native `claude` launched from `/mnt/d` reports `platform: linux, is_wsl2: true, platform_supported: true` and passes the gate. You only get a working-dir ⚠️ (slow Docker bind-mounts, CRLF/lock issues) — see the *Working dir* row above; moving to `~/projects/<slug>` removes that warning but is not required to pass the platform gate.
 
 
