@@ -143,5 +143,6 @@ Activate only when the task calls for it; they are not part of the default pipel
 | Refactoring / N+1 / tech debt | `django-refactoring-expert` | standalone, under green tests |
 | User-facing guides (admin + API consumer) | `guide-writer` | Documentation phase when surface changed; on demand via `/guides` |
 | File-size audit (>800 lines) + folder-split plan | `code-structure-auditor` | standalone, read-only; on demand via `/structure-audit` |
+| Sync a derived project's config to a newer template version | `template-sync` | standalone; on demand via `/update-from-template` (PR-only) |
 | Complex domain modeling (DDD-lite) | `domain-architect` | after `ba`, before `api-architect` |
 <!-- Last reviewed/updated: 2026-05-27 -->

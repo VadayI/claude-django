@@ -63,6 +63,7 @@ Useful commands:
 /review-pr <PR#>    # full review with inline comments
 /guides             # refresh the admin + API-consumer onboarding guides
 /structure-audit    # find files over the 800-line limit and propose folder-splits
+/update-from-template  # pull newer agents/rules/commands/gates from claude-django (opens a PR)
 /wrap-up            # end-of-session: WORKLOG + lessons + lint/tests + commit suggestion
 ```
 

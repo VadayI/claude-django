@@ -155,7 +155,7 @@ After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites
 | `ci-cd-engineer` | GitHub Actions CI on every PR | sonnet |
 | `docs-writer` | `docs/api`, OpenAPI sync, ADR, WORKLOG, PR description | sonnet |
 
-### Optional agents (10) — opt-in
+### Optional agents (11) — opt-in
 
 Not used in every project — activate only when the task calls for it:
 
@@ -171,6 +171,7 @@ Not used in every project — activate only when the task calls for it:
 | `domain-architect` | DDD-lite modeling for genuinely complex domains | opus |
 | `guide-writer` | User-facing onboarding guides — `docs/guides/admin.md` + `docs/guides/api-consumer.md` (run via `/guides`) | sonnet |
 | `code-structure-auditor` | File-size audit (800-line limit) + folder-split proposals (run via `/structure-audit`) | sonnet |
+| `template-sync` | Sync a derived project's config to a newer `claude-django` version, preserving local customizations (run via `/update-from-template`) | sonnet |
 
 ### Rules (17) — `.claude/rules/`
 
@@ -209,7 +210,7 @@ Guides: `guides_admin.md` (copy to `docs/guides/admin.md` — operator onboardin
 
 All scaffolding templates use `{SLUG}`, `{DATE_ISO}`, `{OWNER}` substitution tokens that `/bootstrap` Step 2 replaces inline. `{TODO}` tokens are intentionally left as visible placeholders for the user to fill later.
 
-### Commands (19) — `.claude/commands/`
+### Commands (20) — `.claude/commands/`
 
 Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands need the `github` MCP from `.mcp.json` + an authenticated `gh`). Every command appends a single line to `.claude/memory/command-log.jsonl` so the `auditor` agent can suggest what to run next.
 
@@ -230,6 +231,7 @@ Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands 
 - `/verify [feature] [--run]` — generate the human-facing endpoint verification guide `docs/verify/<feature>.md` (Swagger steps + copy-paste `curl` with expected codes) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`. With `--run`, also executes it against the live dev server and reports pass/fail. The same guide is emitted automatically by `docs-writer` at the end of every feature pipeline (see `.claude/rules/verification.md`).
 - `/guides [admin|api]` — generate/refresh the user-facing onboarding guides `docs/guides/admin.md` (operator) and `docs/guides/api-consumer.md` (integrator) via `guide-writer`, reconciling every command/endpoint they name against the code + `docs/api/openapi.yml`. Auto-refreshed in the pipeline's Documentation phase when the surface changes (see `.claude/rules/user-guides.md`).
 - `/structure-audit [path]` — file-size & structure audit via `code-structure-auditor`: runs `scripts/check_file_size.sh`, lists files over/approaching the 800-line limit, and proposes concrete folder-splits (package + `__init__.py` re-exports). Read-only; hand 🔴 splits to `django-refactoring-expert`.
+- `/update-from-template [url|ref] [--dry-run]` — update a project bootstrapped from `claude-django` to a newer template version via `template-sync`: overwrites only template-owned files (agents, commands, skills, rules, gate scripts), preserves project-owned ones (`CLAUDE.md` edits, `settings.json`, `.claude/memory/`, `output-language.md`, `docs/`, `backend/`), surfaces merge-by-hand files as diffs, and opens a **PR** (never pushes to `main`). See ADR `0014`.
 - `/config` — thin wrapper over `/doctor`'s `claude` scope: quick audit of `.claude/settings.json`, `.mcp.json`, MCP servers (github/context7), env keys (set/unset only), and hooks.
 - `/plugins` — thin wrapper over `/doctor`'s plugin checks: reports installed vs expected plugins and prints the paste-ready `/plugin install …` block (plugin install is a manual UI step the agent can't run).
 
@@ -363,6 +365,31 @@ Then install the plugins (see below) and adjust `CLAUDE.md` for the project name
 7. First feature through the standard pipeline (`ba → api-architect → ...`).
 
 For an existing project from a second machine: skip step 1 (clone instead), run `/doctor` — it will detect `active` or `existing-incomplete` and tell you whether to run `/bootstrap` in resume mode.
+
+---
+
+## Updating an existing project from the template
+
+A project bootstrapped from `claude-django` carries a **pinned copy** of the config from the moment it was forked (ADR `0002`) — there is no automatic upgrade channel. When the template gains new agents, rules, commands, skills, or CI gates, pull them in deliberately with **`/update-from-template`**:
+
+```bash
+# in WSL2, from the root of the DERIVED project
+claude
+> /update-from-template --dry-run     # preview: what would change, what stays
+> /update-from-template                # branch chore/sync-template-<date>, sync, open a PR
+```
+
+What it does (via the `template-sync` agent):
+
+- **Overwrites template-owned files** — `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/rules/*.md` (except your local `output-language.md`), and the `scripts/detect-env.py`/`log-cmd.py` helpers.
+- **Preserves project-owned files** — `CLAUDE.md` edits, `.claude/settings.json`, `.mcp.json`, `.claude/memory/`, `.claude/rules/output-language.md`, all of `docs/` and `backend/`, `.env`. These are never blindly overwritten.
+- **Merge-by-hand items** — `CLAUDE.md`, `settings.json`, `.mcp.json`, and the live `.github/workflows/backend-ci.yml` are shown as diffs; only additive changes (a new rule-import line, a new agent row, a new CI gate step) are proposed, and genuine conflicts are left for you.
+- **New gate scripts** — because derived projects delete `templates/` after bootstrap, a new gate (e.g. `check_file_size.sh`) is copied from the upstream clone into the live `scripts/` and its step + path-trigger are wired into the live `backend-ci.yml`.
+- **Records the synced commit** in `.claude/memory/template-sync.json`, so the next run reports only what changed since.
+
+It lands as a **PR** (the PR-only rule applies to derived projects); review the merge-by-hand diffs, merge, then run `/doctor` to re-verify the environment against the refreshed spec. If you maintain your own fork of the template, pass its URL: `/update-from-template https://github.com/<you>/claude-django.git`.
+
+> Manual fallback (if you prefer not to use the command): clone the template to `/tmp`, copy the template-owned folders over your project's `.claude/`, and `diff` `CLAUDE.md` / `settings.json` / the CI workflow by hand. The command just automates this with the ownership rules baked in.
 
 ---
 

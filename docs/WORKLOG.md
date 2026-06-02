@@ -1,5 +1,18 @@
 # WORKLOG — claude-django
 
+## 2026-06-02 — Оновлення похідних проєктів із шаблону: /update-from-template (ADR 0014)
+
+Закрито прогалину: похідні проєкти мали pinned-копію конфігу (ADR 0002) без каналу оновлення. Тепер є першокласний апгрейд.
+
+**Агент `template-sync`.** Категоризує файли за власністю: *template-owned* (перезаписати: `.claude/agents`/`commands`/`skills`, `rules/*.md` крім `output-language.md`, `scripts/detect-env.py`/`log-cmd.py` тощо), *merge-by-hand* (адитивний дифф: `CLAUDE.md`, `settings.json`, `.mcp.json`, живий `backend-ci.yml`), *project-owned* (не чіпати: `memory/*`, `output-language.md`, `docs/**`, `backend/**`, `.env`). Окремо обробляє нові гейт-скрипти: derived-проєкти видаляють `templates/` після бутстрапу, тож скрипт береться з апстрім-клону в живий `scripts/` + крок дописується в живий `backend-ci.yml`. Пише маркер `.claude/memory/template-sync.json` (synced_sha/previous_sha).
+
+**Команда `/update-from-template [url|ref] [--dry-run]`.** Клонує апстрім (default `VadayI/claude-django`, або власний форк), feature-гілка, диспетч `template-sync`, відкриває **PR** (PR-only — не bootstrap-виняток). `--dry-run` — лише звіт.
+
+**README.** Нова секція «Updating an existing project from the template» (dry-run → PR-флоу, що перезаписується/зберігається/мерджиться вручну, ручний fallback) + пункт команди + рядок агента + лічильники (агенти 11, команди 20). Вказівник додано і в `templates/PROJECT_README.md`.
+
+**Файли.** Нові: `.claude/agents/template-sync.md`, `.claude/commands/update-from-template.md`, ADR 0014. Змінені: `CLAUDE.md`, `.claude/rules/workflow.md`, `README.md`, `templates/PROJECT_README.md`.
+
+
 ## 2026-06-02 — User-facing гайди + ліміт 800 рядків/файл (ADR 0012, 0013)
 
 Два покращення шаблону на прохання maintainer'а; ключові рішення зафіксовані опитуванням (AskUserQuestion).
