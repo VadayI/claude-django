@@ -1,5 +1,20 @@
 # WORKLOG — claude-django
 
+## 2026-06-02 — User-facing гайди + ліміт 800 рядків/файл (ADR 0012, 0013)
+
+Два покращення шаблону на прохання maintainer'а; ключові рішення зафіксовані опитуванням (AskUserQuestion).
+
+**Живі user-facing гайди (ADR 0012).** Нове правило `.claude/rules/user-guides.md` (підключене в `CLAUDE.md`): два наративні onboarding-документи під `docs/guides/` — `admin.md` (оператор: перший старт, `.env`, `createsuperuser`, завантаження даних, Django admin, day-2) і `api-consumer.md` (інтегратор: base URL, auth, перший запит, конвенції). Не дублюють контракт — це шар «як почати» над OpenAPI/Swagger і `docs/verify/`. Антидрифт-реконсиляція: кожен ендпоінт/команда мусять існувати в `openapi.yml` + `endpoints.json` або в `management/commands/`; вигадане заборонено. Новий **окремий агент** `guide-writer` (власник), команда `/guides [admin|api]`, оновлення у фазі 6 пайплайну. Енфорсмент — Quality Gate (`reviewer` блокує зміну поверхні без оновлення гайда), **без окремого shell-гейту** (наративну свіжість скрипт не міряє).
+
+**Ліміт 800 рядків на файл (ADR 0013).** Нова секція «File size limit» у `code-style.md`: max 800 рядків (рахуються **всі** рядки `wc -l`), виняток **лише** автогенеровані міграції (тести під лімітом). CI-гейт `scripts/check_file_size.sh` (path-тригери + крок у `backend-ci.yml`). Розбиття — у пакет (папку) з реекспортом публічних імен у `__init__.py`, по доменних швах (стабільний import-шлях). Новий **окремий агент** `code-structure-auditor` (read-only): міряє, класифікує 🔴/🟡/🟢, пропонує конкретний розклад; виконує розбиття `django-refactoring-expert` під зеленими тестами. Команда `/structure-audit [path]`. `reviewer` позначає файли 600–800.
+
+**Рішення опитуванням.** Ліміт: гейт + агент (не лише агент). Підрахунок: усі рядки, виняток лише міграції. Гайди: `docs/guides/` + новий агент + reviewer-гейт (без CI-скрипта).
+
+**Перевірка.** `bash -n` для скрипта + сценарний тест (малий файл OK / велика міграція звільнена / великий `models.py` падає з exit 1). Реєстрацію нових артефактів зведено в `CLAUDE.md`, `workflow.md`, `README.md`, `templates/PROJECT_README.md`, `bootstrap.md`.
+
+**Файли.** Нові: `.claude/rules/user-guides.md`, `.claude/agents/guide-writer.md`, `.claude/agents/code-structure-auditor.md`, `.claude/commands/guides.md`, `.claude/commands/structure-audit.md`, `templates/guides_admin.md`, `templates/guides_api_consumer.md`, `templates/scripts/check_file_size.sh`, ADR 0012/0013. Змінені: `CLAUDE.md`, `.claude/rules/code-style.md`, `.claude/rules/workflow.md`, `.claude/agents/reviewer.md`, `.claude/agents/docs-writer.md`, `.claude/commands/bootstrap.md`, `templates/.github/workflows/backend-ci.yml`, `README.md`, `templates/PROJECT_README.md`.
+
+
 ## 2026-06-01 — Config baseline з реального сетапу maintainer'а (ADR 0011)
 
 Maintainer надав свій перевірений сетап (глобальні + проектні налаштування, плагіни, hooks, дозволи) як основу рекомендацій. Оновлено committed-базу плагінів і механізм MCP. Рішення зафіксовані опитуванням.

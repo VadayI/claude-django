@@ -8,6 +8,7 @@
 @.claude/rules/environment.md
 @.claude/rules/preflight.md
 @.claude/rules/verification.md
+@.claude/rules/user-guides.md
 
 ## Agent Dispatch (MANDATORY)
 
@@ -55,7 +56,7 @@ You DO:
 
 Core (default pipeline): `ba`, `api-architect`, `django-developer`, `tester`, `dba`, `reviewer`, `security-scanner`, `debugger`, `devops`, `ci-cd-engineer`, `docs-writer`
 
-Optional (activate only when relevant, not used in every project): `auditor` (workflow audit via `/audit` — reads `.claude/memory/command-log.jsonl` + live state, suggests next command), `brief-synthesizer` (PROJECT.md synthesis via `/synthesize-brief`), `qa` (E2E/Playwright), `celery-specialist` (async/Celery), `integration-architect` (OAuth/webhooks/payments), `devil` (challenge the plan), `django-refactoring-expert` (refactoring/N+1/tech debt), `domain-architect` (DDD-lite for complex domains)
+Optional (activate only when relevant, not used in every project): `auditor` (workflow audit via `/audit` — reads `.claude/memory/command-log.jsonl` + live state, suggests next command), `brief-synthesizer` (PROJECT.md synthesis via `/synthesize-brief`), `qa` (E2E/Playwright), `celery-specialist` (async/Celery), `integration-architect` (OAuth/webhooks/payments), `devil` (challenge the plan), `django-refactoring-expert` (refactoring/N+1/tech debt), `domain-architect` (DDD-lite for complex domains), `guide-writer` (user-facing admin + API-consumer guides via `/guides`), `code-structure-auditor` (800-line file-size audit + folder-split proposals via `/structure-audit`)
 
 ## Stack
 
@@ -72,4 +73,4 @@ This config is also an **environment configurator**. The expected local environm
 ## Project bootstrap & preflight
 
 On a **new project**, the order is: `/doctor` (detects scenario, recommends `/bootstrap`) → `/bootstrap` (Mode A scaffolds from scratch, Mode B PRs missing pieces) → optionally `/synthesize-brief` (PROJECT.md from `docs/**`) → `/preflight` (build-inputs gate) → first feature via the pipeline. Spec: @.claude/rules/preflight.md.
-<!-- Last reviewed/updated: 2026-06-01 (added verification rule + /verify, /config, /plugins commands) -->
+<!-- Last reviewed/updated: 2026-06-02 (added user-guides rule + guide-writer/code-structure-auditor agents, /guides + /structure-audit commands, file-size gate) -->

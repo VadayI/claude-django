@@ -16,6 +16,7 @@ The final phase of the pipeline: you document and prepare the PR.
 - **docs/verify/<feature>.md**: the verification handoff — Swagger UI steps + copy-paste `curl`/`httpie` per endpoint with expected codes (anonymous->401, other user->403, bad body->400, missing->404, conflict->409). Generated from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, never hand-invented. Before writing it, run the **three-way reconciliation** `endpoints.json <-> openapi.yml <-> docs/api/INDEX.md` (schema is the source of truth; fix the other two to match). See @.claude/rules/verification.md.
 - **docs/WORKLOG.md**: append the session entry (date, what was done, next steps) — to sync context between machines.
 - **docs/decisions/NNNN-<slug>.md**: an ADR on key architectural decisions (context, decision, consequences).
+- **docs/guides/**: coordinate with `guide-writer` (owner) — when a feature changes first-start, data-loading, an auth flow, or a top-level resource, ensure `docs/guides/{admin,api-consumer}.md` is refreshed in the same PR (see @.claude/rules/user-guides.md).
 - **Project README.md**: update commands/stack as needed.
 - **PR**: form the description per the template (@.claude/rules/git-operations.md) and `gh pr create`.
 
@@ -29,4 +30,4 @@ The final phase of the pipeline: you document and prepare the PR.
 ```
 
 > Write clearly and concisely, no fluff. You create the PR but do NOT merge to main.
-<!-- Last reviewed/updated: 2026-06-01 (owns docs/verify + endpoints.json reconciliation) -->
+<!-- Last reviewed/updated: 2026-06-02 (coordinates docs/guides with guide-writer) -->

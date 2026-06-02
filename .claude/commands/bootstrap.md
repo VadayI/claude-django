@@ -218,19 +218,22 @@ Run AFTER preflight passes but BEFORE any side-effects.
    probe are idempotent and will pick up the existing repo.
 
 2. **Skeleton** — dispatch `devops` (`subagent_type: "devops"`) to:
-   - `mkdir -p backend docs/api docs/verify docs/decisions docs/plans .claude/memory scripts`
+   - `mkdir -p backend docs/api docs/verify docs/guides docs/decisions docs/plans .claude/memory scripts`
    - Copy templates:
      - `templates/backend.Dockerfile` -> `backend/Dockerfile`
      - `templates/pyproject.toml` -> `backend/pyproject.toml`
      - `templates/scripts/check_stubs.sh` -> `scripts/` (+ chmod +x)
      - `templates/scripts/check_openapi_drift.sh` -> `scripts/` (+ chmod +x)
      - `templates/scripts/check_app_readmes.sh` -> `scripts/` (+ chmod +x)
+     - `templates/scripts/check_file_size.sh` -> `scripts/` (+ chmod +x)
      - `templates/STUBS.md` -> `docs/STUBS.md`, then **strip the example row** and retitle for this project so it ships as an empty ledger (header + column definitions only), per @.claude/rules/no-stubs.md — never leave the untouched template's example row.
      - `templates/APP_README.md` -> `docs/APP_README.md` (template that `django-developer` copies into each new app folder)
      - `templates/lessons.md` -> `docs/lessons.md` (append-only feedback log; maintained by `docs-writer` at `/wrap-up`)
      - `templates/todo.md` -> `docs/todo.md` (cross-session backlog; read by `auditor` at `/audit`)
      - `templates/endpoints.json` -> `.claude/memory/endpoints.json` (route registry; written by `api-architect`, feeds `/verify` — see @.claude/rules/verification.md)
      - `templates/verify_TEMPLATE.md` -> `docs/verify/_TEMPLATE.md` (per-feature verification-guide template that `docs-writer` renders into `docs/verify/<feature>.md`)
+     - `templates/guides_admin.md` -> `docs/guides/admin.md` (operator onboarding guide; replace `{SLUG}`, keep `{TODO}` markers — owned by `guide-writer`, see @.claude/rules/user-guides.md)
+     - `templates/guides_api_consumer.md` -> `docs/guides/api-consumer.md` (REST API consumer onboarding guide; replace `{SLUG}`, keep `{TODO}` markers)
      - `templates/.env.example` -> **TWO destinations**:
        1. `.env.example` (committed; the canonical key list for new clones)
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent)
@@ -421,11 +424,11 @@ Run each probe; if it fails, that piece is missing.
 1. **drf-spectacular in settings.** `grep -q "drf_spectacular" backend/config/settings/base.py` (or wherever settings live).
 2. **OpenAPI schema.** `test -f docs/api/openapi.yml`.
 3. **Backend CI workflow.** `test -f .github/workflows/backend-ci.yml`.
-4. **Gate scripts.** `test -f scripts/check_stubs.sh && test -f scripts/check_openapi_drift.sh && test -f scripts/check_app_readmes.sh`.
+4. **Gate scripts.** `test -f scripts/check_stubs.sh && test -f scripts/check_openapi_drift.sh && test -f scripts/check_app_readmes.sh && test -f scripts/check_file_size.sh`.
 5. **Branch protection.** `gh api repos/{owner}/{repo}/branches/main/protection` returns 200.
 6. **Env file (committed key list).** `test -f .env.example`. The `.env` file itself is gitignored and machine-local, so its absence here is **not** a Mode B blocker — `.env.example` is the durable, committed contract. If `.env` is missing locally, print a one-liner for the user: `cp .env.example .env && $EDITOR .env` (fill in secrets).
 7. **Per-app READMEs.** For every directory under `backend/apps/`, `test -f backend/apps/<name>/README.md`.
-8. **Docs scaffolding.** `test -f docs/STUBS.md && test -f docs/APP_README.md`.
+8. **Docs scaffolding.** `test -f docs/STUBS.md && test -f docs/APP_README.md && test -f docs/guides/admin.md && test -f docs/guides/api-consumer.md`.
 9. **Verification scaffolding.** `test -f .claude/memory/endpoints.json && test -f docs/verify/_TEMPLATE.md` (route registry seed + verify-guide template; see @.claude/rules/verification.md).
 
 ### Per missing piece

@@ -8,6 +8,7 @@ on:
       - "scripts/check_stubs.sh"
       - "scripts/check_openapi_drift.sh"
       - "scripts/check_app_readmes.sh"
+      - "scripts/check_file_size.sh"
       - ".github/workflows/backend-ci.yml"
   # Run on push to main so GitHub registers `backend-ci` as a known status
   # check on the very first push. Without this, branch protection that
@@ -21,6 +22,7 @@ on:
       - "scripts/check_stubs.sh"
       - "scripts/check_openapi_drift.sh"
       - "scripts/check_app_readmes.sh"
+      - "scripts/check_file_size.sh"
       - ".github/workflows/backend-ci.yml"
   # Manual trigger so /bootstrap can register the status check before the
   # first PR exists, via `gh workflow run backend-ci.yml --ref main`.
@@ -63,5 +65,8 @@ jobs:
       - name: Per-app README gate
         working-directory: ${{ github.workspace }}
         run: bash scripts/check_app_readmes.sh
+      - name: File-size gate (no file over 800 lines)
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/check_file_size.sh
       - run: pytest --cov=apps --cov-report=term-missing
-# Last reviewed/updated: 2026-05-27
+# Last reviewed/updated: 2026-06-02 (added file-size gate)

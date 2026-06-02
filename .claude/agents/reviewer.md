@@ -17,6 +17,8 @@ Independent review of changes before creating a PR. You work in the Quality Gate
 - Readability, naming, no duplication and no "magic numbers".
 - PR-per-layer respected (no mixing backend and mini-frontend in the same PR; full production frontend lives in a separate repo).
 - Simplicity: no premature abstractions.
+- **File size** (@.claude/rules/code-style.md): no source file over **800 lines** (migrations exempt) — `scripts/check_file_size.sh` is the hard gate; flag files in the 600-800 range as 🟡 with a suggested split seam.
+- **User guides** (@.claude/rules/user-guides.md): a PR that changes user-visible surface — a new/changed **auth flow**, **data-loading command**, **first-start step**, or a new **top-level API resource** — must update the relevant `docs/guides/{admin,api-consumer}.md` section. A stale *First start* / *Authentication* / *Loading initial data* section is 🟡.
 
 ### Silent-failure anti-patterns (flag explicitly — these slip past green tests)
 
@@ -38,4 +40,4 @@ Classify findings:
 Any 🔴/🟡 → back to `django-developer`. Skill: `code-reviewer`.
 
 > You do not edit code — you only read and report.
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-06-02 (gates file-size 800-line limit + user-guides freshness) -->

@@ -85,7 +85,7 @@ ba → api-architect → tester (RED) → django-developer (GREEN) → tester (R
         → [Quality Gate: reviewer | security-scanner | dba] → docs-writer
 ```
 
-> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, per @.claude/rules/verification.md. Regenerate/run on demand with `/verify`.
+> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, per @.claude/rules/verification.md. Regenerate/run on demand with `/verify`. When a feature changes first-start, data-loading, an auth flow, or a top-level resource, `guide-writer` also refreshes `docs/guides/{admin,api-consumer}.md` per @.claude/rules/user-guides.md (regenerate on demand with `/guides`).
 
 | Phase | Mode | Agent(s) | Output |
 |------|-------|----------|-------|
@@ -94,7 +94,7 @@ ba → api-architect → tester (RED) → django-developer (GREEN) → tester (R
 | 3. RED | sequential | `tester` | Failing pytest tests for the endpoint/logic |
 | 4. GREEN | sequential | `django-developer` | Code that greens the tests + ruff |
 | 5. Quality Gate | **parallel** | `reviewer`, `security-scanner`, `dba` | Independent reports |
-| 6. Documentation | sequential | `docs-writer` | docs/api, `docs/verify/<feature>.md` (verification handoff), WORKLOG, PR description + `gh pr create` |
+| 6. Documentation | sequential | `docs-writer`, `guide-writer` | docs/api, `docs/verify/<feature>.md` (verification handoff), `docs/guides/{admin,api-consumer}.md` (when surface changed), WORKLOG, PR description + `gh pr create` |
 
 **Quality Gate resolution:** all passed → phase 6. Any 🔴 Critical / 🟡 Important → back to `django-developer` → re-run the gate. Max 2 cycles, then escalate to the user.
 
@@ -141,5 +141,7 @@ Activate only when the task calls for it; they are not part of the default pipel
 | OAuth / webhooks / payments / 3rd-party | `integration-architect` | between `api-architect` and `django-developer` |
 | Challenge the plan / assumptions | `devil` | planning phase, challenges `ba`/`api-architect`/`domain-architect` |
 | Refactoring / N+1 / tech debt | `django-refactoring-expert` | standalone, under green tests |
+| User-facing guides (admin + API consumer) | `guide-writer` | Documentation phase when surface changed; on demand via `/guides` |
+| File-size audit (>800 lines) + folder-split plan | `code-structure-auditor` | standalone, read-only; on demand via `/structure-audit` |
 | Complex domain modeling (DDD-lite) | `domain-architect` | after `ba`, before `api-architect` |
 <!-- Last reviewed/updated: 2026-05-27 -->

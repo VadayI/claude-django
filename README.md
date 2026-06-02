@@ -155,7 +155,7 @@ After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites
 | `ci-cd-engineer` | GitHub Actions CI on every PR | sonnet |
 | `docs-writer` | `docs/api`, OpenAPI sync, ADR, WORKLOG, PR description | sonnet |
 
-### Optional agents (8) — opt-in
+### Optional agents (10) — opt-in
 
 Not used in every project — activate only when the task calls for it:
 
@@ -169,10 +169,12 @@ Not used in every project — activate only when the task calls for it:
 | `devil` | Devil's advocate — challenges the plan during planning | opus |
 | `django-refactoring-expert` | Refactoring, N+1, tech-debt cleanup (behavior-preserving) | opus |
 | `domain-architect` | DDD-lite modeling for genuinely complex domains | opus |
+| `guide-writer` | User-facing onboarding guides — `docs/guides/admin.md` + `docs/guides/api-consumer.md` (run via `/guides`) | sonnet |
+| `code-structure-auditor` | File-size audit (800-line limit) + folder-split proposals (run via `/structure-audit`) | sonnet |
 
-### Rules (16) — `.claude/rules/`
+### Rules (17) — `.claude/rules/`
 
-`workflow.md` (orchestration & pipeline), `tdd.md` (Red-Green-Refactor), `no-stubs.md` (no stubs/fake data in prod — marker + `docs/STUBS.md` ledger + CI gate), `api-docs.md` (mandatory OpenAPI — `docs/api/openapi.yml` + CI drift gate), `app-readme.md` (every Django app has a local `README.md` — CI gate), `verification.md` (endpoint verification handoff — auto-generated `docs/verify/<feature>.md` from `.claude/memory/endpoints.json` + OpenAPI, feeds `/verify`), `preflight.md` (kickoff hard gate — brief/stack/Context7/GitHub access before any code), `architecture.md` (API-first, structure), `code-style.md` (ruff incl. Google-style docstring `D` rules), `testing.md` (test policy), `git-operations.md` (PR process, no direct commits to main), `docker-commands.md` (environment commands), `serializers-permissions.md` (DRF validation + permission classes, 401/403/IDOR), `migrations-tasks.md` (migration conventions + Celery tasks), `mcp-stack.md` (which MCP tool to use when), `environment.md` (the expected local environment — source of truth for `/doctor`).
+`workflow.md` (orchestration & pipeline), `tdd.md` (Red-Green-Refactor), `no-stubs.md` (no stubs/fake data in prod — marker + `docs/STUBS.md` ledger + CI gate), `api-docs.md` (mandatory OpenAPI — `docs/api/openapi.yml` + CI drift gate), `app-readme.md` (every Django app has a local `README.md` — CI gate), `verification.md` (endpoint verification handoff — auto-generated `docs/verify/<feature>.md` from `.claude/memory/endpoints.json` + OpenAPI, feeds `/verify`), `user-guides.md` (living user-facing guides — `docs/guides/admin.md` + `docs/guides/api-consumer.md`, owned by `guide-writer`, gated by `reviewer`), `preflight.md` (kickoff hard gate — brief/stack/Context7/GitHub access before any code), `architecture.md` (API-first, structure), `code-style.md` (ruff incl. Google-style docstring `D` rules + 800-line file-size limit, CI gate `scripts/check_file_size.sh`), `testing.md` (test policy), `git-operations.md` (PR process, no direct commits to main), `docker-commands.md` (environment commands), `serializers-permissions.md` (DRF validation + permission classes, 401/403/IDOR), `migrations-tasks.md` (migration conventions + Celery tasks), `mcp-stack.md` (which MCP tool to use when), `environment.md` (the expected local environment — source of truth for `/doctor`).
 
 ### Skills (12) — `.claude/skills/`
 
@@ -193,7 +195,7 @@ These are standalone skills, not vendored into the repo — enable them in your 
 
 ### Templates — `templates/`
 
-Infrastructure: `docker-compose.yml`, `backend.Dockerfile`, `pyproject.toml` (includes `drf-spectacular` + ruff `FIX`, `D` for Google-style docstrings), `.env.example`, `.github/workflows/backend-ci.yml` (runs ruff + stub gate + OpenAPI drift gate + per-app README gate + pytest), `scripts/check_stubs.sh` (stub gate — fails on unlogged `# STUB:`/`NotImplementedError`), `scripts/check_openapi_drift.sh` (OpenAPI gate — fails if `docs/api/openapi.yml` doesn't match the schema regenerated from code), `scripts/check_app_readmes.sh` (per-app README gate — fails if any `backend/apps/<app>/` lacks `README.md`).
+Infrastructure: `docker-compose.yml`, `backend.Dockerfile`, `pyproject.toml` (includes `drf-spectacular` + ruff `FIX`, `D` for Google-style docstrings), `.env.example`, `.github/workflows/backend-ci.yml` (runs ruff + stub gate + OpenAPI drift gate + per-app README gate + file-size gate + pytest), `scripts/check_stubs.sh` (stub gate — fails on unlogged `# STUB:`/`NotImplementedError`), `scripts/check_openapi_drift.sh` (OpenAPI gate — fails if `docs/api/openapi.yml` doesn't match the schema regenerated from code), `scripts/check_app_readmes.sh` (per-app README gate — fails if any `backend/apps/<app>/` lacks `README.md`), `scripts/check_file_size.sh` (file-size gate — fails on any non-migration `*.py` over 800 lines).
 
 Docs seeds: `STUBS.md` (copy to `docs/STUBS.md` — the stub ledger), `APP_README.md` (copy to `docs/APP_README.md` — template that `django-developer` copies into each new app), `lessons.md` (copy to `docs/lessons.md` — append-only feedback log, seeded with a first entry), `todo.md` (copy to `docs/todo.md` — cross-session backlog), `HANDOFF.md` (copy to `docs/HANDOFF.md` — multi-session handoff snapshot: current state / last finished / next step / open questions, updated by `/wrap-up`).
 
@@ -203,9 +205,11 @@ Language: `output-language.md` (copy to `.claude/rules/output-language.md` when 
 
 Verification: `endpoints.json` (copy to `.claude/memory/endpoints.json` — the route registry `api-architect` writes and `/verify` reads), `verify_TEMPLATE.md` (copy to `docs/verify/_TEMPLATE.md` — per-feature verification-guide template that `docs-writer` renders into `docs/verify/<feature>.md`).
 
+Guides: `guides_admin.md` (copy to `docs/guides/admin.md` — operator onboarding: first start, data loading, admin, day-2 ops) and `guides_api_consumer.md` (copy to `docs/guides/api-consumer.md` — integrator onboarding: base URL, auth, first request, conventions); both owned by `guide-writer` per `.claude/rules/user-guides.md`.
+
 All scaffolding templates use `{SLUG}`, `{DATE_ISO}`, `{OWNER}` substitution tokens that `/bootstrap` Step 2 replaces inline. `{TODO}` tokens are intentionally left as visible placeholders for the user to fill later.
 
-### Commands (17) — `.claude/commands/`
+### Commands (19) — `.claude/commands/`
 
 Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands need the `github` MCP from `.mcp.json` + an authenticated `gh`). Every command appends a single line to `.claude/memory/command-log.jsonl` so the `auditor` agent can suggest what to run next.
 
@@ -224,6 +228,8 @@ Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands 
 - `/handoff [--note "..."] [--print]` — regenerate `docs/HANDOFF.md` (rolling snapshot: Current state / Last finished / In progress / Next step / Open questions / Environment notes) from current git/PR/CI state. Read-only on everything except HANDOFF.md. Pairs with `/wrap-up` and is the file `/audit`'s `auditor` reads to promote a concrete next step.
 - `/set-language` — pick the response language for this project (writes `.claude/rules/output-language.md` from `templates/output-language.md` with the chosen native name). Run once after `/bootstrap` if you want a non-English working language.
 - `/verify [feature] [--run]` — generate the human-facing endpoint verification guide `docs/verify/<feature>.md` (Swagger steps + copy-paste `curl` with expected codes) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`. With `--run`, also executes it against the live dev server and reports pass/fail. The same guide is emitted automatically by `docs-writer` at the end of every feature pipeline (see `.claude/rules/verification.md`).
+- `/guides [admin|api]` — generate/refresh the user-facing onboarding guides `docs/guides/admin.md` (operator) and `docs/guides/api-consumer.md` (integrator) via `guide-writer`, reconciling every command/endpoint they name against the code + `docs/api/openapi.yml`. Auto-refreshed in the pipeline's Documentation phase when the surface changes (see `.claude/rules/user-guides.md`).
+- `/structure-audit [path]` — file-size & structure audit via `code-structure-auditor`: runs `scripts/check_file_size.sh`, lists files over/approaching the 800-line limit, and proposes concrete folder-splits (package + `__init__.py` re-exports). Read-only; hand 🔴 splits to `django-refactoring-expert`.
 - `/config` — thin wrapper over `/doctor`'s `claude` scope: quick audit of `.claude/settings.json`, `.mcp.json`, MCP servers (github/context7), env keys (set/unset only), and hooks.
 - `/plugins` — thin wrapper over `/doctor`'s plugin checks: reports installed vs expected plugins and prints the paste-ready `/plugin install …` block (plugin install is a manual UI step the agent can't run).
 

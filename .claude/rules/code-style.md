@@ -50,10 +50,35 @@ Rules of thumb:
 - For Django models: docstring on the class describes the domain entity, not column types (those are in `verbose_name` / `help_text`).
 - For DRF views and serializers: docstring states the contract (resource, allowed methods, who can call) — the schema is in OpenAPI (`@.claude/rules/api-docs.md`), not the docstring.
 
+## File size limit (max 800 lines, enforced)
+
+No source file may exceed **800 lines**. A file that grows past the limit is a signal it carries more than one responsibility — split it into smaller, cohesively-named modules and **group them in a package (folder)** instead of letting one file sprawl.
+
+- The limit counts **all lines** of the file (code, comments, and blank lines), measured as `wc -l`.
+- **Only auto-generated migrations are exempt** (`backend/apps/**/migrations/`). Everything else under `backend/` — models, serializers, views, services, permissions, tests, settings — is in scope. Tests are NOT exempt: a 800+ line test file splits by scenario/resource just like production code.
+- Enforced by the CI gate **`scripts/check_file_size.sh`** (run in `backend-ci.yml` and locally before pushing) — any non-migration `*.py` over 800 lines fails the PR. `reviewer` also flags files approaching the limit at the Quality Gate.
+
+### How to split (group into folders)
+
+When a module gets large, convert it into a package and split by cohesion — never by arbitrary line cuts:
+
+```
+apps/billing/views.py            ->  apps/billing/views/
+                                       __init__.py        # re-export the public names
+                                       invoices.py
+                                       payments.py
+                                       refunds.py
+```
+
+- Turn `models.py` -> `models/` (one module per aggregate), `serializers.py` -> `serializers/`, `services.py` -> `services/`, `tests.py` / `tests/test_x.py` -> more focused `tests/test_<topic>.py`.
+- Keep the **public import path stable** via `__init__.py` re-exports (`from .invoices import InvoiceViewSet`) so callers and routers do not change.
+- Split along domain seams (one resource / one concern per file), not by counting lines. Each resulting file keeps a single responsibility.
+- `code-structure-auditor` performs this audit on demand (`/structure-audit`) and proposes the concrete split; `django-refactoring-expert` executes large splits under green tests.
+
 ## General
 
 - Comments inside the body explain *why*, not *what* (let names and the docstring carry *what*).
 - Small functions with a single responsibility.
 - Conventional commits (see @.claude/rules/git-operations.md).
 
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-06-02 (added File size limit: max 800 lines, check_file_size.sh gate) -->
