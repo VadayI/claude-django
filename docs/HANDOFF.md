@@ -6,9 +6,9 @@
 
 ## Current state
 
-On `main`, tip `230fa35 feat: user-facing guides (/guides) + 800-line file-size limit (ADR 0012, 0013)` — **pushed** (`origin/main` == `230fa35`, 0 ahead / 0 behind, verified).
+On `main`, tip `e4daf9b feat: /update-from-template + template-sync agent — upgrade derived projects (ADR 0014)` — **pushed** (`origin/main` == `e4daf9b`, 0 ahead / 0 behind, verified).
 
-**One batch awaits commit** (worktree, 8 files) — the `/update-from-template` work (ADR 0014). All files integrity-checked clean (valid frontmatter, balanced code fences, trailing newline, no merge/heredoc artifacts). The earlier index-corruption/truncation problems from the previous session are gone — git ops succeed normally now.
+**One small tweak awaits commit** (worktree, 3 files): `/update-from-template` now defaults to the explicit canonical upstream `https://github.com/VadayI/claude-django.git` (no `template-sync.json` indirection). Files: `.claude/commands/update-from-template.md`, `.claude/agents/template-sync.md`, `README.md` (+ this WORKLOG/HANDOFF). All integrity-checked clean.
 
 ## Last finished
 
@@ -16,25 +16,26 @@ Three template enhancements this session, in order:
 
 - **ADR 0012 — living user-facing guides.** Rule `user-guides.md`, agent `guide-writer`, command `/guides`, templates `guides_{admin,api_consumer}.md`, reviewer gate. (in `230fa35`, pushed)
 - **ADR 0013 — 800-line file-size limit.** `code-style.md` section, CI gate `templates/scripts/check_file_size.sh` (sed-tested: small OK / migration exempt / >800 fails), agent `code-structure-auditor`, command `/structure-audit`. (in `230fa35`, pushed)
-- **ADR 0014 — update a derived project from the template.** Agent `template-sync` (template-owned overwrite · merge-by-hand diff · project-owned untouched · wires new gate scripts into live CI), command `/update-from-template [url|ref] [--dry-run]` (PR-only), README section + PROJECT_README pointer. (worktree, **pending commit**)
+- **ADR 0014 — update a derived project from the template.** Agent `template-sync`, command `/update-from-template [url|ref] [--dry-run]` (PR-only), README section + PROJECT_README pointer. (in `e4daf9b`, pushed)
+- **Follow-up — canonical upstream.** `/update-from-template` defaults to the explicit `VadayI/claude-django` repo. (worktree, **pending commit**)
 
 ## In progress
 
-- Commit + push the ADR 0014 batch to `main` (template-repo policy allows direct-to-main here). Files: `.claude/agents/template-sync.md`, `.claude/commands/update-from-template.md`, `docs/decisions/0014-*.md`, and edits to `CLAUDE.md`, `.claude/rules/workflow.md`, `README.md`, `templates/PROJECT_README.md`, `docs/WORKLOG.md`.
+- Commit + push the canonical-upstream tweak (3 files + docs). Template-repo policy allows direct-to-main here.
 
 ## Next step
 
-Commit and push the pending batch (run git writes on the host shell if the mount is flaky):
+Commit and push the pending tweak:
 
 ```bash
 cd /d/Dev/My/claude-django      # or PowerShell: cd D:\Dev\My\claude-django
 git add -A
 git status -sb
-git commit -m "feat: /update-from-template + template-sync agent — upgrade derived projects (ADR 0014)"
+git commit -m "docs: /update-from-template defaults to canonical VadayI/claude-django upstream"
 git push origin main
 ```
 
-After push, optionally smoke-test `/update-from-template --dry-run` from a real derived project (e.g. `carlsberg-ir-data-service`) to confirm the ownership classification and new-gate wiring behave on a project that already deleted `templates/`.
+Also: `carlsberg-ir-data-service` was synced manually this session (commit `052ae15` on its `main`) — finish its merge-by-hand items (CLAUDE.md registration of new agents + `@.claude/rules/user-guides.md` import, the file-size gate step in its live `backend-ci.yml`), run `/guides` there to create `docs/guides/`, and confirm `bash scripts/check_file_size.sh` passes before its next PR.
 
 ## Open questions
 

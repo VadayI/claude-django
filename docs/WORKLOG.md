@@ -1,5 +1,10 @@
 # WORKLOG — claude-django
 
+## 2026-06-02 — Уточнення: канонічний upstream для /update-from-template
+
+Follow-up до ADR 0014. `/update-from-template` без аргументів тепер синкає з **явного канонічного** `https://github.com/VadayI/claude-django.git` (`UPSTREAM_URL="${ARG_URL:-...}"`), без індирекції через `template-sync.json` (той лише фіксує останній синк для звіту). URL-аргумент лишається для форку/тега. Узгоджено в `update-from-template.md`, `template-sync.md`, README-секції.
+
+
 ## 2026-06-02 — Оновлення похідних проєктів із шаблону: /update-from-template (ADR 0014)
 
 Закрито прогалину: похідні проєкти мали pinned-копію конфігу (ADR 0002) без каналу оновлення. Тепер є першокласний апгрейд.

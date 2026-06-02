@@ -13,7 +13,7 @@ python scripts/log-cmd.py /update-from-template $ARGUMENTS
 ## Input
 
 `$ARGUMENTS` (all optional):
-- an **upstream repo URL or git ref** — defaults to the URL recorded in `.claude/memory/template-sync.json`, else `https://github.com/VadayI/claude-django.git` at its default branch HEAD.
+- an **upstream repo URL or git ref** — optional. The **canonical upstream is `https://github.com/VadayI/claude-django.git`** (its default branch HEAD), and that is what runs with no argument. Pass a URL/ref ONLY to sync from a different source (e.g. your own fork or a pinned tag). The last-used URL is recorded in `.claude/memory/template-sync.json` for the change report, but the default source is always the canonical repo above.
 - **`--dry-run`** — report what WOULD change without writing any files.
 
 ## Preconditions
@@ -27,7 +27,8 @@ python scripts/log-cmd.py /update-from-template $ARGUMENTS
 1. **Log** the invocation (above).
 2. **Clone upstream** (read-only) to a temp dir:
    ```bash
-   rm -rf /tmp/claude-django && git clone --depth 1 <upstream-url> /tmp/claude-django
+   UPSTREAM_URL="${ARG_URL:-https://github.com/VadayI/claude-django.git}"
+   rm -rf /tmp/claude-django && git clone --depth 1 "$UPSTREAM_URL" /tmp/claude-django
    git -C /tmp/claude-django rev-parse HEAD   # the SHA being synced to
    ```
 3. **Feature branch** (skip on `--dry-run`): off fresh `main` —

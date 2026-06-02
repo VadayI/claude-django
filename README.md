@@ -370,7 +370,7 @@ For an existing project from a second machine: skip step 1 (clone instead), run 
 
 ## Updating an existing project from the template
 
-A project bootstrapped from `claude-django` carries a **pinned copy** of the config from the moment it was forked (ADR `0002`) — there is no automatic upgrade channel. When the template gains new agents, rules, commands, skills, or CI gates, pull them in deliberately with **`/update-from-template`**:
+A project bootstrapped from `claude-django` carries a **pinned copy** of the config from the moment it was forked (ADR `0002`) — there is no automatic upgrade channel. When the template gains new agents, rules, commands, skills, or CI gates, pull them in deliberately with **`/update-from-template`** — by default it syncs from the canonical upstream **`https://github.com/VadayI/claude-django`**:
 
 ```bash
 # in WSL2, from the root of the DERIVED project

@@ -12,7 +12,7 @@ You bring a **derived project** (one bootstrapped from `claude-django`) up to a 
 
 ## Inputs
 
-- A clone of the upstream template, provided by `/update-from-template` at `$UPSTREAM` (default `/tmp/claude-django`).
+- A clone of the upstream template, provided by `/update-from-template` at `$UPSTREAM` (default `/tmp/claude-django`). The canonical source is `https://github.com/VadayI/claude-django.git`; a fork URL is used only when the user passes one.
 - The live project (the repo root you run in).
 - `.claude/memory/template-sync.json` if it exists — records the last-synced upstream commit SHA.
 
