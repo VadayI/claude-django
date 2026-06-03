@@ -6,48 +6,52 @@
 
 ## Current state
 
-Template-repo `main`. **Крок 2 of plan 0007 (production-ready staging) is complete and integrity-verified, uncommitted in the worktree.** ADR `0015`. All 18 touched files: no NUL, proper tails, edits present; `ruff`/`py_compile`/YAML/TOML clean. Plan 0007 is closed (Крок 1 was already shipped by `/bootstrap`; Крок 2 done as the agreed minimum).
+Крок 2 of plan 0007 (production-ready staging, ADR `0015`) is **complete and integrity-verified**, **uncommitted** in the worktree. All 19 touched files clean (no NUL, proper tails, `ruff`/`py_compile`/YAML/TOML OK). Plan 0007 closed.
+
+**Git reality (important):** the checkout is on branch **`feat/drf-conventions-scaffold`** (leftover from the prior DRF session), tracking `origin/feat/drf-conventions-scaffold`. Local `main` is **behind** `origin/main`, so a direct `git push origin main` is rejected until main is integrated. The 19 changes sit on the feature branch — land them via PR (clean) or fold the branch into main (see below).
 
 ## Last finished
 
-**Кошик B Крок 2 — staging (gunicorn-in-compose) + `/health` (ADR 0015).** New: `templates/docker-compose.staging.yml`, `apps_common/views.py` (`HealthView`), `apps_common/urls.py`, `tests/test_health.py`, ADR 0015. Edited: `pyproject.toml` (prod extra=gunicorn), `backend.Dockerfile` (`ARG INSTALL_EXTRA`), `.env.example`, `Makefile` (`check-deploy`), `apps_common/README.md`, `guides_admin.md`, `bootstrap.md` (Step 2 staging-compose copy; Step 3 `staging.py` prod code + `/health` wiring + `check --deploy`; Step 4 cleanup list), `docker-commands.md`, `README.md`, `PROJECT_README.md`. WORKLOG + lessons + plan 0007 updated.
+**Кошик B Крок 2 — staging (gunicorn-in-compose) + `/health` (ADR 0015).** New: `templates/docker-compose.staging.yml`, `apps_common/views.py` (`HealthView`), `apps_common/urls.py`, `tests/test_health.py`, ADR 0015. Edited: `pyproject.toml` (prod extra=gunicorn), `backend.Dockerfile` (`ARG INSTALL_EXTRA`), `.env.example`, `Makefile` (`check-deploy`), `apps_common/README.md`, `guides_admin.md`, `bootstrap.md` (Step 2 staging-compose copy; Step 3 `staging.py` prod code + `/health` wiring + `check --deploy`; Step 4 cleanup list), `docker-commands.md`, `README.md`, `PROJECT_README.md`. WORKLOG + lessons + plan 0007 updated. Session ran from Cowork; commits happen from the host.
 
 ## In progress
 
-- Nothing code-wise. Pending: commit + push from the host (sandbox git on /mnt is unreliable). Template-repo policy allows direct-to-`main`.
+- Commit + land on `main` from the **host shell**. Sandbox git on /mnt is unreliable; never commit from the sandbox.
 
 ## Next step
 
-Commit + push from the **host shell** (PowerShell or Git Bash), two logical commits:
+Run on the **host in PowerShell** (already in `D:\Dev\My\claude-django`; PowerShell does NOT use `\` line-continuation — keep each `git add` on one line). All 19 changes are intended, so `git add -A` is safe.
 
-```bash
-cd /d/Dev/My/claude-django        # PowerShell: cd D:\Dev\My\claude-django
+**Recommended — land on `main` via PR (clean given stale local main + feature branch):**
 
-# A — staging infrastructure
-git add templates/docker-compose.staging.yml templates/pyproject.toml \
-        templates/backend.Dockerfile templates/.env.example templates/Makefile \
-        .claude/rules/docker-commands.md docs/decisions/0015-production-ready-staging.md
-git commit -m "feat(staging): production-ready staging compose + gunicorn + check --deploy (ADR 0015)"
+```powershell
+git add -A
+git status
+git commit -m "feat(staging): production-ready staging + /health + staging.py hardening (ADR 0015)"
+git push origin feat/drf-conventions-scaffold
+gh pr create --base main --fill
+# after checks pass:
+gh pr merge --squash --delete-branch
+```
 
-# B — /health route + bootstrap staging.py + guides + docs
-git add templates/apps_common/views.py templates/apps_common/urls.py \
-        templates/apps_common/tests/test_health.py templates/apps_common/README.md \
-        templates/guides_admin.md .claude/commands/bootstrap.md \
-        README.md templates/PROJECT_README.md \
-        docs/WORKLOG.md docs/HANDOFF.md docs/lessons.md \
-        docs/plans/0007-report-bucket-b-drf-staging.md
-git commit -m "feat(scaffold): /health endpoint + staging.py hardening + admin guide (ADR 0015)"
+**Alternative — fold the feature branch directly into `main`** (template-repo policy allows direct main; do this only if the prior DRF work on `feat/drf-conventions-scaffold` is also meant to land now):
 
+```powershell
+git add -A
+git commit -m "feat(staging): production-ready staging + /health + staging.py hardening (ADR 0015)"
+git switch main
+git pull origin main                     # fast-forward local main to origin
+git merge feat/drf-conventions-scaffold  # review the merge diff before pushing
 git push origin main
 ```
 
-(Or one combined commit if preferred — the repo allows direct-to-`main`.) Ignore the untracked `.pyc`/`.ruff_cache` under `templates/` — `.gitignore` already excludes them.
+Ignore untracked `.pyc`/`.ruff_cache` under `templates/` — `.gitignore` excludes them.
 
 ### Plan for next session
 
-1. **End-to-end staging check on a fresh `/bootstrap`** (the real validation — ADR 0015 was authored from static review, like the report's own caveat): scaffold a throwaway project, then `docker compose -f docker-compose.staging.yml up -d --build`, `python manage.py check --deploy` (expect **no critical warnings**), `curl http://127.0.0.1:8000/health/` → `200 {"status":"ok"}`, confirm `pip install -e ".[prod]"` pulls gunicorn. Fix any drift in `staging.py`/compose found there.
-2. **Optional (deferred by the "minimum" decision):** ship systemd unit + nginx reverse-proxy templates if a real deploy needs them — currently only documented in `guides_admin.md`, not scaffolded.
-3. **Standing /mnt guard idea (open question below):** a pre-commit/CI check that fails on a truncated file tail, since this session lost a WORKLOG tail to a large `pathlib` write.
+1. **End-to-end staging check on a fresh `/bootstrap`** (real validation — ADR 0015 was authored from static review): scaffold a throwaway project, `docker compose -f docker-compose.staging.yml up -d --build`, `python manage.py check --deploy` (expect **no critical warnings**), `curl http://127.0.0.1:8000/health/` → `200 {"status":"ok"}`, confirm `pip install -e ".[prod]"` pulls gunicorn. Fix any drift found.
+2. **Optional (deferred by the "minimum" decision):** systemd unit + nginx reverse-proxy templates — currently only documented in `guides_admin.md`, not scaffolded.
+3. **/mnt write guard:** a pre-commit/CI check that fails on a truncated file tail — this session lost a WORKLOG tail to a large `pathlib` write (recovered). Reliable write pattern now: write to `/tmp`, `cp` to /mnt, re-read + byte-compare.
 
 ## Open questions
 
