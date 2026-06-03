@@ -228,6 +228,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/scripts/check_file_size.sh` -> `scripts/` (+ chmod +x)
      - `templates/STUBS.md` -> `docs/STUBS.md`, then **strip the example row** and retitle for this project so it ships as an empty ledger (header + column definitions only), per @.claude/rules/no-stubs.md — never leave the untouched template's example row.
      - `templates/APP_README.md` -> `docs/APP_README.md` (template that `django-developer` copies into each new app folder)
+     - `templates/apps_common/` -> `backend/apps/common/` (**recursive**, including `tests/` — the cross-cutting `common` app: error envelope, `Conflict`, OpenAPI envelope hook, plus the test-only convention suite). Copy with `cp -r templates/apps_common backend/apps/common`. See @.claude/rules/serializers-permissions.md and @.claude/rules/architecture.md. This makes the DRF conventions part of every new project's scaffold, not just a written rule.
      - `templates/lessons.md` -> `docs/lessons.md` (append-only feedback log; maintained by `docs-writer` at `/wrap-up`)
      - `templates/todo.md` -> `docs/todo.md` (cross-session backlog; read by `auditor` at `/audit`)
      - `templates/endpoints.json` -> `.claude/memory/endpoints.json` (route registry; written by `api-architect`, feeds `/verify` — see @.claude/rules/verification.md)
@@ -252,17 +253,77 @@ Run AFTER preflight passes but BEFORE any side-effects.
    - `docker compose up -d`
    - `docker compose run --rm backend django-admin startproject config .`
    - Split `config/settings/` into `base.py` / `dev.py` / `staging.py`; configure `DATABASES` via `DATABASE_URL` env (django-environ).
+   - Register the cross-cutting **`apps.common`** app and `drf_spectacular` in `INSTALLED_APPS` (in `base.py`):
+     ```python
+     INSTALLED_APPS = [
+         # ... Django + third-party ...
+         "rest_framework",
+         "drf_spectacular",
+         "apps.common",        # cross-cutting infra (error envelope) — no domain models
+         # ... domain apps ...
+     ]
+     ```
+   - Configure the project-wide **`REST_FRAMEWORK`** conventions in `base.py` (see `@.claude/rules/serializers-permissions.md`). All five keys below are part of the scaffold contract; **keep** `DEFAULT_SCHEMA_CLASS` for drf-spectacular:
+     ```python
+     REST_FRAMEWORK = {
+         # OpenAPI schema generator (drf-spectacular) — keep this.
+         "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+         # Authenticated-by-default; views opt OUT explicitly (AllowAny) where public.
+         "DEFAULT_PERMISSION_CLASSES": [
+             "rest_framework.permissions.IsAuthenticated",
+         ],
+         # Page every list endpoint; PAGE_SIZE caps results per page.
+         "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+         "PAGE_SIZE": 20,
+         # Baseline throttles; "login" is a named scope for sensitive auth endpoints.
+         "DEFAULT_THROTTLE_CLASSES": [
+             "rest_framework.throttling.AnonRateThrottle",
+             "rest_framework.throttling.UserRateThrottle",
+         ],
+         "DEFAULT_THROTTLE_RATES": {
+             "anon": "100/hour",
+             "user": "1000/hour",
+             "login": "5/min",
+         },
+         # Single error envelope: {"error": {"code", "message", "details"}}.
+         "EXCEPTION_HANDLER": "apps.common.exceptions.exception_handler",
+     }
+     ```
    - Configure **`drf-spectacular`** (see `@.claude/rules/api-docs.md`):
-     - add `drf_spectacular` to `INSTALLED_APPS`
-     - set `REST_FRAMEWORK["DEFAULT_SCHEMA_CLASS"] = "drf_spectacular.openapi.AutoSchema"`
-     - add `SPECTACULAR_SETTINGS = {"TITLE": "<slug>", "VERSION": "1.0.0"}`
+     - `DEFAULT_SCHEMA_CLASS` is already set in `REST_FRAMEWORK` above — do not duplicate it.
+     - add `SPECTACULAR_SETTINGS` with the title/version **and** the error-envelope postprocessing hook so the documented contract matches the runtime envelope:
+       ```python
+       SPECTACULAR_SETTINGS = {
+           "TITLE": "<slug>",
+           "VERSION": "1.0.0",
+           "POSTPROCESSING_HOOKS": [
+               "drf_spectacular.hooks.postprocess_schema_enums",
+               "apps.common.schema.add_error_envelope_responses",
+           ],
+       }
+       ```
+       > If the hook causes any schema-generation error on the live run, drop the
+       > `apps.common.schema.add_error_envelope_responses` line — the runtime envelope
+       > (the `EXCEPTION_HANDLER` above) is the source of truth; the hook only
+       > *documents* it and is non-essential. Verify the exact hook signature against
+       > current `drf-spectacular` docs (Context7) before relying on it.
      - mount `SpectacularAPIView`, `SpectacularSwaggerView`, `SpectacularRedocView` at `/api/schema/...`
+   - In **`dev.py`** (which pytest uses as `DJANGO_SETTINGS_MODULE`, see `backend/pyproject.toml`), redirect the test-only `common` migrations so `SampleItem` gets a table without polluting the production `common` app:
+     ```python
+     # Test-only: SampleItem (apps/common/tests/models.py) exercises the DRF
+     # conventions. Its migration lives under tests/ and is applied ONLY here,
+     # never shipped as a production `common` migration.
+     MIGRATION_MODULES = {"common": "apps.common.tests.migrations"}
+     ```
+     > Do NOT add this to `staging.py` — production `common` ships no models. Mirror
+     > the line into a dedicated `test.py` settings module instead if the project
+     > later splits dev/test settings.
    - `docker compose exec -T backend python manage.py migrate`
    - `docker compose exec -T backend python manage.py spectacular --file ../docs/api/openapi.yml --format openapi-yaml`
    - Ask the user interactively whether to run `createsuperuser` now.
 
 4. **Initial commit + push + register CI** — dispatch `devops`:
-   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the five scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md`). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
+   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the five scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md`; and the recursively-copied `backend/apps/common/` app — confirm `backend/apps/common/exceptions.py`, `backend/apps/common/README.md`, and `backend/apps/common/tests/test_error_envelope.py` all exist, i.e. the whole tree came across, not just the top level). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
    - `git add -A && git status` (show the user what is staged)
    - `git commit -m "chore: bootstrap project from claude-django"`
    - `git branch -M main`

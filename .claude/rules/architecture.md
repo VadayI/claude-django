@@ -42,6 +42,7 @@ backend/
 | Permissions | authorization | separate classes, tested separately |
 | Services (when needed) | complex cross-model logic | `apps/<domain>/services.py` |
 | Signals/tasks | async work | separate, with tests |
+| Cross-cutting infra | error envelope, shared base classes | `apps/common/` — no domain models; wired via project `REST_FRAMEWORK` (see `@.claude/rules/serializers-permissions.md`) |
 
 ## API versioning
 
