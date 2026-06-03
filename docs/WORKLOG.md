@@ -1,5 +1,22 @@
 # WORKLOG — claude-django
 
+## 2026-06-03 — Аналіз зовнішнього рапорту + кошик A покращень (pytest DX, CI, Dependabot, governance)
+
+Драйвер — maintainer надав зовнішній deep-research рапорт (`deep-research-report3.md`) і попросив оцінити, чи варто впроваджувати його рекомендації в backend-only шаблон.
+
+**Висновок аналізу.** Рапорт не суперечить філософії проєкту — ~60% рекомендацій уже впроваджено (backend-only, API-first, TDD-first, PR-only, OpenAPI drift gate, CI-гейти stub/openapi/app-readme/file-size, `factory_boy`/`drf-spectacular`/`django-environ`/`django-filter`, відокремлення фронтенду з OpenAPI як контрактом — ADR 0007). Net-нове розбито на **кошик A** (дешеве, низькоризикове) і **кошик B** (суттєвіше). `openapi-typescript` відхилено (належить окремому frontend-репо), `NamespaceVersioning` — теж (свідомий `/api/v1/` префікс).
+
+**Кошик A впроваджено (4 зміни).** `templates/pyproject.toml`: `--reuse-db` у pytest `addopts` + `[tool.coverage.run] branch = true` (branch coverage). `templates/.github/workflows/backend-ci.yml`: `concurrency` (скасування застарілих ран-ів лише для PR, не для main) + job summary через `$GITHUB_STEP_SUMMARY` з id-кроками на кожен гейт. Новий `templates/.github/dependabot.yml` (pip `/backend` + github-actions, weekly). `.claude/rules/environment.md` Scope 4: рядки secret scanning/push protection і Dependabot.
+
+**Доставка.** Гілка → PR (4 окремі PR), змерджено в `main`, feature-гілки видалено. Усі 4 файли звірено на `origin/main` через raw GitHub — збігаються.
+
+**Інцидент інфраструктури (урок).** Git, запущений із Linux-sandbox по `/mnt`-диску, лишив зламаний `multi-pack-index` + 21 сміттєвий `tmp_obj_*` (`improper chunk offset`, `fetch`/`prune` падали на `.lock`). Полікувано з PowerShell-хоста: видалення кеш-індексів + `git gc --prune=now`; `git fsck --full` чистий, дані не постраждали (кеші — не об'єкти). Підтверджує правило `docker-commands.md`: **git ганяти лише з хост-шела/WSL2, не з `/mnt`-sandbox**.
+
+**Наступна сесія.** Кошик B винесено в `docs/plans/0007-report-bucket-b-drf-staging.md`.
+
+**Файли.** Змінені: `templates/pyproject.toml`, `templates/.github/workflows/backend-ci.yml`, `.claude/rules/environment.md`. Нові: `templates/.github/dependabot.yml`, `docs/plans/0007-report-bucket-b-drf-staging.md`.
+
+
 ## 2026-06-02 — Уточнення: канонічний upstream для /update-from-template
 
 Follow-up до ADR 0014. `/update-from-template` без аргументів тепер синкає з **явного канонічного** `https://github.com/VadayI/claude-django.git` (`UPSTREAM_URL="${ARG_URL:-...}"`), без індирекції через `template-sync.json` (той лише фіксує останній синк для звіту). URL-аргумент лишається для форку/тега. Узгоджено в `update-from-template.md`, `template-sync.md`, README-секції.
