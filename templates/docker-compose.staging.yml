@@ -1,0 +1,59 @@
+# Staging environment (VPS, Debian). Production-shaped: gunicorn (NOT runserver),
+# DEBUG off, env-driven. A reverse proxy (nginx/Traefik) terminates TLS on the
+# host and forwards to the published gunicorn port below — the proxy itself is
+# NOT templated here (documented in docs/guides/admin.md). A host systemd unit is
+# an alternative to this compose file; see the ADR docs/decisions/0015-*.md.
+#
+# Bring up:  docker compose -f docker-compose.staging.yml up -d --build
+# Pre-deploy: docker compose -f docker-compose.staging.yml run --rm backend \
+#               python manage.py check --deploy
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata_staging:/var/lib/postgresql/data
+    # No host port published on staging — only the backend service reaches the DB
+    # over the compose network. Expose explicitly only if you need external access.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        # Install the production extra (gunicorn) instead of the dev toolchain.
+        INSTALL_EXTRA: prod
+    # Override the dev runserver CMD with a production WSGI server.
+    command: >
+      gunicorn config.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers ${GUNICORN_WORKERS:-3}
+      --timeout ${GUNICORN_TIMEOUT:-30}
+      --access-logfile -
+      --error-logfile -
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.staging
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}
+      DJANGO_ALLOWED_HOSTS: ${STAGING_HOST:?set STAGING_HOST in .env}
+      DATABASE_URL: postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-app}
+      SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-1}
+    # Publish only on loopback; the host reverse proxy forwards to it. Change to
+    # "8000:8000" only if you intentionally expose gunicorn directly (discouraged).
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata_staging:
+# Last reviewed/updated: 2026-06-03

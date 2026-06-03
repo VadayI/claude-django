@@ -13,7 +13,7 @@ BACKEND ?= $(DC) exec backend
 ARGS ?=
 
 .DEFAULT_GOAL := help
-.PHONY: help setup up dev down ps logs build test cov lint fmt migrate makemigrations superuser shell schema gates doctor-deps
+.PHONY: help setup up dev down ps logs build test cov lint fmt migrate makemigrations superuser shell schema gates doctor-deps check-deploy
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN{FS=":.*?## "} {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -70,9 +70,11 @@ gates: ## Run CI gate scripts locally (stubs, openapi drift, app readmes)
 	bash scripts/check_openapi_drift.sh
 	bash scripts/check_app_readmes.sh
 
+check-deploy: ## Django deployment-readiness check against staging settings
+	$(DC) -f docker-compose.staging.yml run --rm backend python manage.py check --deploy
+
 doctor-deps: ## Quick host tool check (versions only; not the /doctor command)
 	@for t in python node claude gh docker; do \
 	  if command -v $$t >/dev/null 2>&1; then printf '  ok  %-8s %s\n' "$$t" "$$(command -v $$t)"; \
 	  else printf '  --  %-8s missing\n' "$$t"; fi; \
 	done
-

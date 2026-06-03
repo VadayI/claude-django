@@ -50,13 +50,23 @@ docker compose exec backend python manage.py shell
 
 ## Staging (VPS <STAGING_HOST>, Debian)
 
+Production-shaped: gunicorn (NOT runserver), `config.settings.staging`, env-driven.
+The canonical model is `docker-compose.staging.yml` (gunicorn in a container); a host
+systemd unit + nginx is the documented alternative (ADR `0015`). See
+`docs/guides/admin.md` for the full deploy + reverse-proxy guide.
+
 ```bash
 ssh <user>@<STAGING_HOST>
 cd ~/projects/<project>
 git pull
+# Pre-deploy gate: refuse to ship an insecure config (Django deployment checklist).
+docker compose -f docker-compose.staging.yml run --rm backend python manage.py check --deploy
 docker compose -f docker-compose.staging.yml up -d --build
 docker compose -f docker-compose.staging.yml exec backend python manage.py migrate
+# Post-deploy smoke: health route + schema must answer.
+curl -fsS http://127.0.0.1:8000/health/ && echo
+curl -fsS http://127.0.0.1:8000/api/schema/ -o /dev/null && echo "schema OK"
 ```
 
-> The VPS already runs many projects — use separate ports/network and a reverse-proxy (nginx/Traefik) with its own subdomain to avoid conflicts. Mobile testing — open the subdomain in the phone's browser.
-<!-- Last reviewed/updated: 2026-05-29 -->
+> The VPS already runs many projects — use separate ports/network and a reverse-proxy (nginx/Traefik) with its own subdomain to avoid conflicts. gunicorn binds to loopback (`127.0.0.1:${BACKEND_PORT}`); the host proxy terminates TLS and forwards to it. Mobile testing — open the subdomain in the phone's browser.
+<!-- Last reviewed/updated: 2026-06-03 -->

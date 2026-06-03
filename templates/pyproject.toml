@@ -24,6 +24,13 @@ dev = [
     "factory-boy>=3.3",
     "ruff>=0.5",
 ]
+# Production/staging runtime extras. Kept out of `dev` so the local image stays
+# lean; the staging build installs `.[prod]` via the Dockerfile INSTALL_EXTRA arg
+# (see docker-compose.staging.yml). gunicorn is the WSGI server — never runserver
+# in production (Django deployment checklist).
+prod = [
+    "gunicorn>=22.0",
+]
 
 # Explicit package discovery. Without this, setuptools flat-layout auto-discovery
 # sees two top-level packages (`apps/` and `config/`) and aborts with
@@ -63,4 +70,4 @@ convention = "google"
 "**/migrations/**" = ["D"]
 "**/__init__.py" = ["D104"]
 "config/**" = ["D100", "D101", "D102", "D103", "D104"]
-# Last reviewed/updated: 2026-05-27
+# Last reviewed/updated: 2026-06-03
