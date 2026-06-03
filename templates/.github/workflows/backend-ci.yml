@@ -27,6 +27,11 @@ on:
   # Manual trigger so /bootstrap can register the status check before the
   # first PR exists, via `gh workflow run backend-ci.yml --ref main`.
   workflow_dispatch:
+# Cancel superseded runs for the same PR/branch so a new push stops stale runs.
+# Pushes to main are NOT cancelled (we want every main run to complete).
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -55,18 +60,42 @@ jobs:
           python-version: "3.13"
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: ruff check .
+      - name: Ruff lint
+        id: ruff
+        run: ruff check .
       - name: Stub gate (no unlogged stubs)
+        id: stub
         working-directory: ${{ github.workspace }}
         run: bash scripts/check_stubs.sh
       - name: OpenAPI docs drift gate
+        id: openapi
         working-directory: ${{ github.workspace }}
         run: bash scripts/check_openapi_drift.sh
       - name: Per-app README gate
+        id: readme
         working-directory: ${{ github.workspace }}
         run: bash scripts/check_app_readmes.sh
       - name: File-size gate (no file over 800 lines)
+        id: filesize
         working-directory: ${{ github.workspace }}
         run: bash scripts/check_file_size.sh
-      - run: pytest --cov=apps --cov-report=term-missing
-# Last reviewed/updated: 2026-06-02 (added file-size gate)
+      - name: Tests + coverage
+        id: pytest
+        run: pytest --cov=apps --cov-report=term-missing
+      - name: Job summary
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          {
+            echo "## backend-ci gates"
+            echo ""
+            echo "| Gate | Result |"
+            echo "|------|--------|"
+            echo "| ruff | ${{ steps.ruff.outcome }} |"
+            echo "| stub ledger | ${{ steps.stub.outcome }} |"
+            echo "| openapi drift | ${{ steps.openapi.outcome }} |"
+            echo "| per-app README | ${{ steps.readme.outcome }} |"
+            echo "| file-size (<800) | ${{ steps.filesize.outcome }} |"
+            echo "| pytest (+branch cov) | ${{ steps.pytest.outcome }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+# Last reviewed/updated: 2026-06-03 (added concurrency + job summary)
