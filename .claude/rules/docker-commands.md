@@ -50,7 +50,7 @@ docker compose exec backend python manage.py shell
 
 ## Staging (VPS <STAGING_HOST>, Debian)
 
-Staging runs **gunicorn in a container** (`docker-compose.staging.yml`, WSGI) behind a host reverse proxy (nginx, see `nginx.staging.conf.template`) — never `runserver`.
+Staging runs **gunicorn in a container** (`docker-compose.staging.yml`, WSGI) behind a host reverse proxy (nginx/Traefik) — never `runserver`.
 
 ```bash
 ssh <user>@<STAGING_HOST>
@@ -75,5 +75,5 @@ curl -fsS -o /dev/null -w '%{http_code}\n' \
 
 > The VPS already runs many projects — `docker-compose.staging.yml` uses a dedicated network and a non-default Postgres host port (`STAGING_DB_PORT`, default `5433`), and `expose`s the backend to the compose network only (no host `publish`). The reverse proxy (nginx/Traefik) terminates TLS on the project's own subdomain (`${STAGING_HOST}`) and forwards `X-Forwarded-*`. Mobile testing — open the subdomain in the phone's browser.
 >
-> Host-native (non-Docker) deploys can instead run gunicorn under systemd — see `templates/deploy/gunicorn.service.example` (an alternative to the container, not used alongside it).
+> Host-native (non-Docker) deploys can instead run gunicorn under systemd behind nginx — described as an alternative in `docs/guides/admin.md`, deliberately NOT shipped as a template (avoids binding the scaffold to a specific reverse proxy / process manager).
 <!-- Last reviewed/updated: 2026-06-03 -->

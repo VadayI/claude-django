@@ -242,8 +242,6 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/docker-compose.yml` -> `docker-compose.yml`
      - `templates/docker-compose.staging.yml` -> `docker-compose.staging.yml` (staging runtime: gunicorn in a container behind a reverse proxy; see `.claude/rules/docker-commands.md` Staging section)
      - `templates/gunicorn.conf.py` -> `backend/gunicorn.conf.py` (gunicorn config the staging compose mounts at `/app/gunicorn.conf.py`)
-     - `templates/nginx.staging.conf.template` -> `nginx.staging.conf.template` (host reverse-proxy template; render `${STAGING_HOST}` / `${BACKEND_UPSTREAM}` with `envsubst` on the VPS)
-     - `templates/deploy/gunicorn.service.example` -> `deploy/gunicorn.service.example` (systemd unit — host-native ALTERNATIVE to the container, not used alongside it)
      - `templates/settings_test.py` -> `backend/config/settings/test.py` (test settings: inherits dev, adds the test-only `MIGRATION_MODULES` override + a fast password hasher; pytest uses it via `DJANGO_SETTINGS_MODULE=config.settings.test`)
      - `templates/Makefile` -> `Makefile` (dev-loop command shortcuts; see `.claude/rules/docker-commands.md`)
      - `templates/PROJECT_README.md` -> `README.md` (project root README — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}` with real values; leave `{TODO}` markers for the user to fill, especially `## License`)
