@@ -62,6 +62,40 @@ class PostViewSet(viewsets.ModelViewSet):
 - Validation errors → **400** with field-keyed messages; conflicts (e.g. duplicate unique) → **409**.
 - Throttle sensitive endpoints (login, registration) via `throttle_classes`.
 
+## Default permission policy (project-wide)
+
+The scaffold sets `DEFAULT_PERMISSION_CLASSES = ["rest_framework.permissions.IsAuthenticated"]`
+in `config/settings/base.py` (`REST_FRAMEWORK`), so **every endpoint is
+authenticated by default**. A view that should be public opts OUT explicitly with
+`permission_classes = [permissions.AllowAny]` — never by relying on a missing
+default. This makes "forgot to set permissions" fail closed (401), not open.
+Stack `IsAuthenticated` with object-level classes (e.g. `IsOwnerOrReadOnly`) as
+shown above; authenticated-but-not-allowed still returns **403**.
+
+## Error envelope (project-wide contract)
+
+Every non-2xx response uses one envelope, produced by
+`apps.common.exceptions.exception_handler` (wired via
+`REST_FRAMEWORK["EXCEPTION_HANDLER"]` — see `apps/common/`):
+
+```json
+{"error": {"code": "<machine>", "message": "<human>", "details": <dict|null>}}
+```
+
+- `code` is a stable machine token: `validation_error` (400), `not_authenticated`
+  (401), `permission_denied` (403), `not_found` (404), `conflict` (409),
+  `throttled` (429), `server_error` (500).
+- `details` is the **field-keyed validation dict for 400 only**; for every other
+  status it is `null` (a `404`/`NotFound` must serialize `details: null`, never a
+  loose string).
+- Raise `apps.common.exceptions.Conflict` (409) for uniqueness/version clashes —
+  do NOT mirror a model's unique constraint as a DRF `UniqueValidator` if you
+  want a 409 instead of a 400.
+
+Do not hand-build per-view error bodies; raise the appropriate DRF exception (or
+`Conflict`) and let the handler render the envelope. The convention tests live in
+`apps/common/tests/` (pagination, default permission, envelope, throttling).
+
 ## Testing (mandatory)
 
 Per endpoint test: success, 400 (validation), 401 (anonymous), 403 (other user), 404, and IDOR (user A cannot touch user B's object). See @.claude/rules/testing.md.
