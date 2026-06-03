@@ -109,6 +109,8 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 | Working tree | clean or only intended changes | `git status -sb` |
 | Sync | up to date with `origin` | `git fetch --dry-run` then `git status -sb` |
 | No secrets tracked | `.env` ignored, not committed | `git ls-files \| grep -E '(^\|/)\.env$'` (empty = good) |
+| Secret scanning & push protection | enabled on the repo so GitHub blocks commits containing known secret patterns **before** they land. **Public repos: free. Private repos: needs GitHub Advanced Security.** On a free plan + private repo this is unavailable — fall back to discipline (`.gitignore` + the `.env` check above). `/doctor` reports absence here as info, not a failure. | `gh api repos/{owner}/{repo}/secret-scanning/alerts` — 403/404 = not enabled (or unavailable on the plan) |
+| Dependabot | `.github/dependabot.yml` present (pip + github-actions, weekly) so dependency/security update PRs are raised automatically — through the normal branch → PR flow, never a direct push to `main` | `test -f .github/dependabot.yml` |
 
 ## Remediation policy
 
@@ -116,4 +118,4 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 - **Ask explicitly, never silently:** anything that writes secrets, force operations, deleting files, enabling branch protection (account-level), pushing. For unsetting a leaked token: `unset GITHUB_TOKEN` for the current shell, plus removing the export line from `~/.bashrc` / `~/.profile` (or `~/.zshrc`).
 - **Forbidden in `/doctor`:** committing, `git push`, pushing to `main`, printing secret values, editing application source code.
 
-<!-- Last reviewed/updated: 2026-06-01 (Scope 1: added 'launch the WSL2-native claude' subsection for the wrong_runner_suspected trap + bashrc PATH fix; /mnt/d is not the platform-gate cause) -->
+<!-- Last reviewed/updated: 2026-06-03 (Scope 4: added secret scanning/push protection + Dependabot rows) -->
