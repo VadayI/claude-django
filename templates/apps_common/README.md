@@ -10,9 +10,10 @@
 **by configuration, not by copy-paste**: the single error envelope
 (`{"error": {"code", "message", "details"}}`) applied via DRF's
 `EXCEPTION_HANDLER`, the `Conflict` (409) exception, and the OpenAPI
-documentation of that envelope. It deliberately owns **no domain data** — it has
-no production models, no business resources, and no public REST endpoints of its
-own. Domain apps depend on it; it depends on no domain app.
+documentation of that envelope. It deliberately owns **no domain data** — no
+production models and no business resources. Its only route is the
+infrastructure health check (`/health/`); it exposes no domain endpoints. Domain
+apps depend on it; it depends on no domain app.
 
 ## Models
 
@@ -25,10 +26,16 @@ a migration into the production `common` app.
 
 ## Endpoints
 
-None. `common` exposes no routes. The sample endpoints used by the convention
-tests are mounted only inside an override `ROOT_URLCONF`
-(`apps/common/tests/urls_sample.py`) during those tests — never in
-`config/urls.py`.
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| GET | `/health/` | Liveness/readiness probe: 200 `{"status":"ok"}` when the DB answers, else 503. Used by the reverse proxy + post-deploy smoke. | `AllowAny` (public) |
+
+Defined in `apps/common/urls.py` (`HealthView` in `views.py`), included at the
+project root via `path("", include("apps.common.urls"))` in `config/urls.py`.
+
+The sample endpoints used by the convention tests are mounted only inside an
+override `ROOT_URLCONF` (`apps/common/tests/urls_sample.py`) during those tests —
+never in `config/urls.py`.
 
 Schema detail for real endpoints lives in `docs/api/openapi.yml` (single source
 of truth, see `.claude/rules/api-docs.md`).
@@ -49,6 +56,8 @@ None.
 - `docs/decisions/` — the ADR introducing project-wide DRF conventions in the
   scaffold (error envelope + default permission policy). See
   `.claude/rules/serializers-permissions.md` for the runtime contract.
+- `docs/decisions/0015-production-ready-staging.md` — the `/health` route is part
+  of the production-ready staging model.
 
 ## How to extend
 

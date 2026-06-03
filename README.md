@@ -196,7 +196,7 @@ These are standalone skills, not vendored into the repo — enable them in your 
 
 ### Templates — `templates/`
 
-Infrastructure: `docker-compose.yml`, `backend.Dockerfile`, `pyproject.toml` (includes `drf-spectacular` + ruff `FIX`, `D` for Google-style docstrings), `.env.example`, `.github/workflows/backend-ci.yml` (runs ruff + stub gate + OpenAPI drift gate + per-app README gate + file-size gate + pytest), `scripts/check_stubs.sh` (stub gate — fails on unlogged `# STUB:`/`NotImplementedError`), `scripts/check_openapi_drift.sh` (OpenAPI gate — fails if `docs/api/openapi.yml` doesn't match the schema regenerated from code), `scripts/check_app_readmes.sh` (per-app README gate — fails if any `backend/apps/<app>/` lacks `README.md`), `scripts/check_file_size.sh` (file-size gate — fails on any non-migration `*.py` over 800 lines).
+Infrastructure: `docker-compose.yml`, `docker-compose.staging.yml` (production-shaped staging: gunicorn, `config.settings.staging` — ADR `0015`), `backend.Dockerfile` (`ARG INSTALL_EXTRA` selects dev/prod deps), `pyproject.toml` (includes `drf-spectacular` + a `prod` extra with gunicorn + ruff `FIX`, `D` for Google-style docstrings), `.env.example`, `.github/workflows/backend-ci.yml` (runs ruff + stub gate + OpenAPI drift gate + per-app README gate + file-size gate + pytest), `scripts/check_stubs.sh` (stub gate — fails on unlogged `# STUB:`/`NotImplementedError`), `scripts/check_openapi_drift.sh` (OpenAPI gate — fails if `docs/api/openapi.yml` doesn't match the schema regenerated from code), `scripts/check_app_readmes.sh` (per-app README gate — fails if any `backend/apps/<app>/` lacks `README.md`), `scripts/check_file_size.sh` (file-size gate — fails on any non-migration `*.py` over 800 lines).
 
 Docs seeds: `STUBS.md` (copy to `docs/STUBS.md` — the stub ledger), `APP_README.md` (copy to `docs/APP_README.md` — template that `django-developer` copies into each new app), `lessons.md` (copy to `docs/lessons.md` — append-only feedback log, seeded with a first entry), `todo.md` (copy to `docs/todo.md` — cross-session backlog), `HANDOFF.md` (copy to `docs/HANDOFF.md` — multi-session handoff snapshot: current state / last finished / next step / open questions, updated by `/wrap-up`).
 
@@ -340,6 +340,7 @@ cp /tmp/claude-django/.gitattributes ./
 cp -r /tmp/claude-django/scripts ./          # detect-env.py (SessionStart hook) + log-cmd.py — REQUIRED; the hook fails SILENTLY without it and /doctor will STOP with NO_ENV_DETECT
 cp -r /tmp/claude-django/templates ./        # FULL templates/ — /bootstrap Mode A needs all of it
 cp /tmp/claude-django/templates/docker-compose.yml ./   # also at repo root (devcontainer entrypoint)
+cp /tmp/claude-django/templates/docker-compose.staging.yml ./   # production-shaped staging (gunicorn)
 cp /tmp/claude-django/templates/Makefile ./          # dev-loop command shortcuts (make help/test/up/...)
 mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/* .github/workflows/
 

@@ -1,5 +1,7 @@
 # План 0007 — кошик B із deep-research рапорту: DRF-конвенції в scaffold + production-ready staging
 
+> **СТАТУС (2026-06-03): ЗАКРИТО.** Крок 0 (Explore) виконано — Крок 1 (DRF-конвенції в scaffold) виявився **вже реалізованим** `/bootstrap` Mode A (REST_FRAMEWORK, apps/common з тестами, split settings), дублювати не треба. Крок 2 (production-ready staging) **впроваджено** у вигляді мінімуму: gunicorn-у-compose + `/health` + `check --deploy`, без systemd/nginx-шаблонів. Рішення зафіксовано в ADR `docs/decisions/0015-production-ready-staging.md`. Деталі — WORKLOG 2026-06-03. Відкриті питання нижче вирішені: (1) exception handler — `apps/common/` (вже було); (2) `test.py` — НЕ створюємо, тести на `dev.py`; (3) staging — gunicorn-у-compose canonical, systemd у доках; (4) ADR — так, 0015.
+
 **Джерело:** `deep-research-report3.md` (зовнішній рапорт), кошик B з аналізу від 2026-06-03 (див. `docs/WORKLOG.md`).
 **Мета:** довести дві суттєвіші рекомендації рапорту до стандарту шаблону — (1) зробити DRF-конвенції частиною scaffold-а, а не «домовленістю в правилах»; (2) закласти production-ready модель staging замість «тимчасової dev-інфраструктури».
 **Природа змін:** Крок 1 торкається коду з тестами → проходить feature-pipeline (`ba → api-architect → tester → django-developer`). Крок 2 — інфраструктурні шаблони → `devops`, без `tester`. Кожна група йде окремою гілкою → PR (правило `git-operations.md`). Прямого пушу в `main` не робимо (виняток лише `/bootstrap` Mode A).

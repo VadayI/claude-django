@@ -1,5 +1,24 @@
 # WORKLOG — claude-django
 
+## 2026-06-03 — Кошик B Крок 2: production-ready staging (gunicorn-у-compose) + /health (ADR 0015)
+
+Продовження аналізу deep-research рапорту. Крок 0 (Explore) показав: **Крок 1 плану 0007 (DRF-конвенції в scaffold) фактично вже зроблено** — `/bootstrap` Mode A генерує реальний `REST_FRAMEWORK` (пагінація/throttle/schema/permission/exception handler), `apps/common/` з error-envelope + тестами конвенцій і split settings `base/dev/staging`. Дублювати не треба. Реальна прогалина — **staging**: `staging.py` був заготовкою, не було `docker-compose.staging.yml`, WSGI-сервера, health-check, `check --deploy`.
+
+**Рішення (опитування maintainer'а):** (1) canonical staging — **gunicorn у docker-compose** (systemd/nginx — документована альтернатива); (2) обсяг — **мінімум** (compose+gunicorn + `/health` + `check --deploy`, без systemd/nginx-шаблонів); (3) `staging.py` наповнити в межах Кроку 2; `test.py` не додавати (тести лишаються на `dev.py`). Зафіксовано в ADR 0015.
+
+**Впроваджено.** Нові: `templates/docker-compose.staging.yml` (gunicorn, env-driven, loopback-publish під reverse-proxy), `templates/apps_common/views.py` (`HealthView` — public, 200 + DB-пінг, 503 при падінні), `templates/apps_common/urls.py` (`/health/`), `templates/apps_common/tests/test_health.py` (3 кейси), ADR `0015`. Змінені: `templates/pyproject.toml` (optional-група `prod`=gunicorn), `templates/backend.Dockerfile` (`ARG INSTALL_EXTRA=dev`), `templates/.env.example` (staging gunicorn/security змінні), `templates/Makefile` (таргет `check-deploy`), `templates/apps_common/README.md` (Endpoints `/health`), `templates/guides_admin.md` (нова секція Staging deployment), `.claude/commands/bootstrap.md` (Step 2 копія staging-compose; Step 3 — `staging.py` production-код + `/health` wiring у `config/urls.py` + `check --deploy`; Step 4 cleanup-чеклист), `.claude/rules/docker-commands.md` (staging-секція: `check --deploy` + health-smoke), `README.md` + `templates/PROJECT_README.md` (інвентар).
+
+**Свідомо НЕ зроблено** (рішення «мінімум»): systemd unit, nginx-конфіг-шаблон, окремий production multi-stage Dockerfile, окремий `test.py`. Відхилено назавжди (з кошика рапорту): `openapi-typescript` (frontend-репо), `NamespaceVersioning` (свідомий `/api/v1/`).
+
+**Верифікація.** `ruff check` (правила проєкту E,F,I,UP,DJ,B,FIX,D + google-docstrings, з `known-first-party=[apps,config]`) — чисто на `views.py`/`urls.py`; `py_compile` усіх трьох py-файлів OK; YAML staging-compose парситься (services db+backend, gunicorn у command); `pyproject.toml` валідний TOML; Makefile `make -n check-deploy` OK.
+
+**Інцидент (урок, знову).** Edit-інструмент Cowork по /mnt **обрізав** 6 редагованих файлів (`pyproject.toml`, `backend.Dockerfile`, `.env.example`, `Makefile`, `apps_common/README.md`, `guides_admin.md`) — кожен на середині. Write-створені нові файли лишились цілими. Усі 6 перебудовано повністю через bash heredoc/`python pathlib`; `.claude/**`-правки робились через `python pathlib` з anchor-assert і не постраждали. **Правило підтверджено: на /mnt не використовувати Edit — лише повний Write через python pathlib з перевіркою хвоста.**
+
+**Доставка.** Зміни в робочому дереві; коміт/PR — з хоста (sandbox git по /mnt ненадійний). Розбити на 2 коміти: (А) інфраструктура staging, (Б) `/health` + bootstrap staging.py + guides.
+
+**Наступне.** План 0007 закрито (Крок 1 — вже було, Крок 2 — зроблено). Кандидати: end-to-end перевірка на свіжому `/bootstrap` (staging up + `check --deploy` + `/health` 200); за потреби — systemd/nginx-шаблони окремою сесією.
+
+
 ## 2026-06-03 — Аналіз зовнішнього рапорту + кошик A покращень (pytest DX, CI, Dependabot, governance)
 
 Драйвер — maintainer надав зовнішній deep-research рапорт (`deep-research-report3.md`) і попросив оцінити, чи варто впроваджувати його рекомендації в backend-only шаблон.

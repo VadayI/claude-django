@@ -41,6 +41,30 @@ Verify it is up: open `http://localhost:8000/api/schema/swagger/` (API) and `htt
 - **Logs:** `docker compose logs -f backend`
 - **Common failures & fixes:** {TODO: e.g. "DB not ready -> wait for healthy", "missing migration -> makemigrations".}
 
+## Staging deployment
+
+Staging runs the **production shape**: gunicorn (never `runserver`), `config.settings.staging` (DEBUG off, HTTPS hardening), and env-driven config. The canonical model is `docker-compose.staging.yml` (gunicorn in a container); a host **systemd** unit running gunicorn behind **nginx** is a supported alternative (decision: `docs/decisions/0015-production-ready-staging.md`).
+
+Fill these `.env` values on the staging host first: `DJANGO_SECRET_KEY`, `STAGING_HOST` (public hostname), `POSTGRES_PASSWORD`, and optionally `GUNICORN_WORKERS` / `BACKEND_PORT` / `SECURE_SSL_REDIRECT`.
+
+```bash
+ssh <user>@<STAGING_HOST>
+cd ~/projects/{SLUG}
+git pull
+# 1. Pre-deploy gate — refuse to ship an insecure config (Django checklist).
+docker compose -f docker-compose.staging.yml run --rm backend python manage.py check --deploy
+# 2. Build + start gunicorn + db.
+docker compose -f docker-compose.staging.yml up -d --build
+docker compose -f docker-compose.staging.yml exec backend python manage.py migrate
+# 3. Post-deploy smoke — health route + schema must answer.
+curl -fsS http://127.0.0.1:8000/health/ && echo            # {"status":"ok",...}
+curl -fsS http://127.0.0.1:8000/api/schema/ -o /dev/null && echo "schema OK"
+```
+
+gunicorn binds to loopback (`127.0.0.1:${BACKEND_PORT}`); put a **reverse proxy** (nginx/Traefik) in front to terminate TLS and forward to it under a subdomain. The proxy config is not templated — {TODO: paste this project's nginx/Traefik server block once chosen}.
+
+**Health check:** `GET /health/` is public and returns `200 {"status":"ok","database":"up"}` when the DB is reachable, or `503` when it is not — use it for the proxy upstream check and uptime monitoring.
+
 ## Where to go next
 
 - API integration: `docs/guides/api-consumer.md`

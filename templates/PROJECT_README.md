@@ -91,6 +91,7 @@ scripts/
 .claude/                    # agents, rules, commands, skills, memory, settings
 .github/workflows/          # backend-ci.yml (ruff + gates + pytest)
 docker-compose.yml          # local dev stack (postgres + backend)
+docker-compose.staging.yml  # production-shaped staging (gunicorn + db)
 ```
 
 ## Deploy (staging)
@@ -99,11 +100,18 @@ docker-compose.yml          # local dev stack (postgres + backend)
 ssh <user>@<STAGING_HOST>
 cd ~/projects/{SLUG}
 git pull
+# Pre-deploy gate: refuse an insecure config (Django deployment checklist).
+docker compose -f docker-compose.staging.yml run --rm backend python manage.py check --deploy
 docker compose -f docker-compose.staging.yml up -d --build
 docker compose -f docker-compose.staging.yml exec backend python manage.py migrate
+# Post-deploy smoke: the public health route must answer 200.
+curl -fsS http://127.0.0.1:8000/health/ && echo
 ```
 
-Mobile testing — open the staging subdomain in the phone's browser.
+Staging runs gunicorn (not `runserver`) under `config.settings.staging`; put a
+reverse proxy (nginx/Traefik) in front for TLS. See `docs/guides/admin.md` and
+ADR `docs/decisions/0015-production-ready-staging.md`. Mobile testing — open the
+staging subdomain in the phone's browser.
 
 ## License
 

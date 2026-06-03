@@ -240,6 +240,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent)
      - `templates/.github/workflows/backend-ci.yml` -> `.github/workflows/backend-ci.yml`
      - `templates/docker-compose.yml` -> `docker-compose.yml`
+     - `templates/docker-compose.staging.yml` -> `docker-compose.staging.yml` (production-shaped staging: gunicorn, `config.settings.staging`; see @.claude/rules/docker-commands.md and ADR `docs/decisions/0015-*.md`)
      - `templates/Makefile` -> `Makefile` (dev-loop command shortcuts; see `.claude/rules/docker-commands.md`)
      - `templates/PROJECT_README.md` -> `README.md` (project root README — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}` with real values; leave `{TODO}` markers for the user to fill, especially `## License`)
      - `templates/PROJECT.md` -> `docs/PROJECT.md` (brief skeleton — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}`; leave `{TODO}` markers for `/synthesize-brief` or the user to fill)
@@ -308,6 +309,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
        > *documents* it and is non-essential. Verify the exact hook signature against
        > current `drf-spectacular` docs (Context7) before relying on it.
      - mount `SpectacularAPIView`, `SpectacularSwaggerView`, `SpectacularRedocView` at `/api/schema/...`
+     - wire the public **health check** into the root `config/urls.py`: `path("", include("apps.common.urls"))` so `GET /health/` resolves (the `HealthView` shipped in `apps/common/`). Used by the staging reverse proxy and the post-deploy smoke step (see @.claude/rules/docker-commands.md).
    - In **`dev.py`** (which pytest uses as `DJANGO_SETTINGS_MODULE`, see `backend/pyproject.toml`), redirect the test-only `common` migrations so `SampleItem` gets a table without polluting the production `common` app:
      ```python
      # Test-only: SampleItem (apps/common/tests/models.py) exercises the DRF
@@ -318,12 +320,41 @@ Run AFTER preflight passes but BEFORE any side-effects.
      > Do NOT add this to `staging.py` — production `common` ships no models. Mirror
      > the line into a dedicated `test.py` settings module instead if the project
      > later splits dev/test settings.
+   - Fill **`staging.py`** with production-shaped settings (NOT a copy of `dev.py`) — used by `docker-compose.staging.yml` under gunicorn (ADR `docs/decisions/0015-*.md`). Read everything from env (django-environ); no secrets in code:
+     ```python
+     from .base import *  # noqa: F401,F403
+     import environ
+
+     env = environ.Env()
+     DEBUG = False
+     # STAGING_HOST is the public hostname (also DJANGO_ALLOWED_HOSTS).
+     ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
+     # Behind a TLS-terminating reverse proxy (nginx/Traefik).
+     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+     SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+     SESSION_COOKIE_SECURE = True
+     CSRF_COOKIE_SECURE = True
+     SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=31536000)
+     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+     SECURE_HSTS_PRELOAD = True
+     SECURE_CONTENT_TYPE_NOSNIFF = True
+     # Log to stdout so `docker compose logs` / journald captures it.
+     LOGGING = {
+         "version": 1,
+         "disable_existing_loggers": False,
+         "handlers": {"console": {"class": "logging.StreamHandler"}},
+         "root": {"handlers": ["console"], "level": "INFO"},
+     }
+     ```
+     > `DATABASES` is inherited from `base.py` via `DATABASE_URL`. Do NOT add the
+     > test-only `MIGRATION_MODULES` line here — production `common` ships no models.
    - `docker compose exec -T backend python manage.py migrate`
    - `docker compose exec -T backend python manage.py spectacular --file ../docs/api/openapi.yml --format openapi-yaml`
+   - **Staging deployment-readiness check (recommended):** verify the production settings load and pass Django's deployment checklist: `docker compose -f docker-compose.staging.yml run --rm backend python manage.py check --deploy` (or `make check-deploy`). Expect no critical warnings; the `SECURE_*`/HSTS settings live in `staging.py`. This is the pre-deploy gate documented in `docs/guides/admin.md`.
    - Ask the user interactively whether to run `createsuperuser` now.
 
 4. **Initial commit + push + register CI** — dispatch `devops`:
-   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the five scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md`; and the recursively-copied `backend/apps/common/` app — confirm `backend/apps/common/exceptions.py`, `backend/apps/common/README.md`, and `backend/apps/common/tests/test_error_envelope.py` all exist, i.e. the whole tree came across, not just the top level). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
+   - **Cleanup:** `rm -rf templates/` — every file in `templates/` was copied into its destination at Step 2; the raw `templates/` folder belongs only in the upstream `claude-django` template repo. Leaving it in a derived project bloats git, confuses `auditor`/`reviewer`, and risks CI gates (`check_openapi_drift.sh` / `check_stubs.sh`) scanning the wrong copy. Verify first that all files from `templates/` are present at their target paths (Step 2 destinations + `templates/output-language.md` -> `.claude/rules/output-language.md` if a non-English language was chosen + `.env.example` AND `.env` both present from the dual-destination copy + the five scaffolding templates: `README.md`, `docs/PROJECT.md`, `docs/api/INDEX.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md`; and the recursively-copied `backend/apps/common/` app — confirm `backend/apps/common/exceptions.py`, `backend/apps/common/README.md`, `backend/apps/common/views.py`, `backend/apps/common/urls.py`, `backend/apps/common/tests/test_error_envelope.py`, and `backend/apps/common/tests/test_health.py` all exist, i.e. the whole tree came across, not just the top level; and `docker-compose.staging.yml` is present at the project root). Additionally verify NO unresolved substitution tokens remain in the copied files: `grep -rE '\{SLUG\}|\{DATE_ISO\}|\{OWNER\}' README.md docs/ 2>/dev/null` must print nothing (the `{TODO}` token IS allowed — it marks fields the user fills later).
    - `git add -A && git status` (show the user what is staged)
    - `git commit -m "chore: bootstrap project from claude-django"`
    - `git branch -M main`
