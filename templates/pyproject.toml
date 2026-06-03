@@ -35,7 +35,14 @@ include = ["apps*", "config*"]
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.dev"
 python_files = ["test_*.py", "tests.py"]
-addopts = "-q"
+# --reuse-db keeps the Postgres test DB between local runs for a faster loop.
+# After changing models/migrations, force a one-time rebuild: pytest --create-db
+addopts = "-q --reuse-db"
+
+[tool.coverage.run]
+# Measure branch coverage, not only line coverage. Applied automatically to any
+# --cov run (e.g. CI's `pytest --cov=apps`), so branches show up in the report.
+branch = true
 
 [tool.ruff]
 line-length = 100
