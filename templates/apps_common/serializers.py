@@ -39,3 +39,16 @@ class ErrorEnvelopeSerializer(serializers.Serializer):
     """
 
     error = ErrorDetailSerializer()
+
+
+class HealthSerializer(serializers.Serializer):
+    """The body returned by ``apps.common.views.HealthView``.
+
+    Documentation-only: the view builds the dict directly. ``status`` is a short
+    machine token — ``"ok"`` on a 200 (process up, database reachable) or
+    ``"unavailable"`` on a 503 (a backing service is down).
+    """
+
+    status = serializers.CharField(
+        help_text='Health token: "ok" (200) or "unavailable" (503).',
+    )

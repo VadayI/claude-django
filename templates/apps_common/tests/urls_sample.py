@@ -13,6 +13,7 @@ from apps.common.tests.views_sample import (
     SampleItemListCreateView,
     SampleItemRetrieveView,
 )
+from apps.common.views import HealthView
 
 urlpatterns = [
     path("sample-items/", SampleItemListCreateView.as_view(), name="sample-item-list"),
@@ -23,4 +24,7 @@ urlpatterns = [
     ),
     path("login/", LoginThrottledView.as_view(), name="sample-login"),
     path("forbidden/", ForbiddenView.as_view(), name="sample-forbidden"),
+    # Real production view (apps.common.views.HealthView), mounted here so the
+    # convention test-suite can exercise it under the shared sample urlconf.
+    path("health/", HealthView.as_view(), name="health"),
 ]

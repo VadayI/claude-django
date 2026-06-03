@@ -1,0 +1,73 @@
+# Staging environment (VPS, Debian) — gunicorn behind a reverse proxy.
+#
+# Differs from docker-compose.yml (dev) on purpose:
+#   * backend runs gunicorn (WSGI), NOT `manage.py runserver`.
+#   * DJANGO_SETTINGS_MODULE = config.settings.staging (DEBUG off, hardened).
+#   * the backend port is `expose`d to the compose network only — the host
+#     reverse proxy (nginx/Traefik, see nginx.staging.conf.template) terminates
+#     TLS and proxies to it. Nothing is `publish`ed to 0.0.0.0:80/443 here.
+#   * a dedicated project network + a non-default published Postgres port keep
+#     this stack from colliding with the other projects on the shared VPS.
+#   * `restart: unless-stopped` so the stack survives reboots.
+#
+# Bring up:  docker compose -f docker-compose.staging.yml up -d --build
+# All values come from `.env` (see .env.example) — never inline secrets here.
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env for staging}
+    volumes:
+      - pgdata_staging:/var/lib/postgresql/data
+    # Published on a non-default host port so it does not clash with other
+    # projects' Postgres on the shared VPS. Adjust STAGING_DB_PORT in .env.
+    ports:
+      - "${STAGING_DB_PORT:-5433}:5432"
+    networks:
+      - staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    # gunicorn (WSGI) is the staging runtime. The config file controls workers,
+    # bind, timeouts, and logging — see gunicorn.conf.py.
+    command: gunicorn config.wsgi:application --config /app/gunicorn.conf.py
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.staging
+      DATABASE_URL: postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-app}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env for staging}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:?set DJANGO_ALLOWED_HOSTS (your staging subdomain) in .env}
+    # NOT published to the host — the host reverse proxy reaches gunicorn over
+    # the compose network on :8000. Exposed for documentation/proxy discovery.
+    expose:
+      - "8000"
+    networks:
+      - staging
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      # Hits the public health route (apps.common.views.HealthView): 200 = up,
+      # 503 = DB unreachable. Drives deploy smoke + container restart decisions.
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/').status==200 else 1)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  pgdata_staging:
+
+networks:
+  staging:
+    name: ${COMPOSE_PROJECT_NAME:-app}_staging

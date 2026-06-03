@@ -1,0 +1,41 @@
+# ALTERNATIVE to running gunicorn in a container (docker-compose.staging.yml).
+#
+# The project's chosen staging runtime is gunicorn INSIDE Docker (see
+# docker-compose.staging.yml). This systemd unit is provided only as a
+# host-native fallback for VPS setups that do not run the backend in Docker —
+# e.g. a bare-metal deploy with a host virtualenv. Do NOT enable both at once.
+#
+# Install (host-native deploy only):
+#   sudo cp deploy/gunicorn.service.example /etc/systemd/system/<project>-gunicorn.service
+#   # edit the placeholders below, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now <project>-gunicorn
+#   sudo systemctl status <project>-gunicorn
+#
+# Replace every <PLACEHOLDER>. EnvironmentFile keeps secrets out of this unit.
+
+[Unit]
+Description=<PROJECT> backend (gunicorn / WSGI)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=notify
+User=<DEPLOY_USER>
+Group=<DEPLOY_USER>
+WorkingDirectory=/srv/<PROJECT>/backend
+# All secrets (DJANGO_SECRET_KEY, DATABASE_URL, DJANGO_ALLOWED_HOSTS, ...) live
+# here, not in the unit. 0600, owned by <DEPLOY_USER>.
+EnvironmentFile=/srv/<PROJECT>/.env
+Environment=DJANGO_SETTINGS_MODULE=config.settings.staging
+# Use the project's virtualenv gunicorn + the shared gunicorn.conf.py.
+ExecStart=/srv/<PROJECT>/.venv/bin/gunicorn config.wsgi:application \
+    --config /srv/<PROJECT>/gunicorn.conf.py
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

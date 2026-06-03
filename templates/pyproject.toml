@@ -14,6 +14,9 @@ dependencies = [
     "django-environ>=0.11",
     "django-filter>=24.0",
     "drf-spectacular>=0.27",
+    # WSGI server for staging/production (docker-compose.staging.yml runs
+    # `gunicorn config.wsgi:application`). Harmless in dev, which uses runserver.
+    "gunicorn>=22.0",
 ]
 
 [project.optional-dependencies]
@@ -33,7 +36,10 @@ where = ["."]
 include = ["apps*", "config*"]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings.dev"
+# Tests run on a dedicated settings module (config/settings/test.py): it inherits
+# dev but adds test-only tweaks (fast password hasher) and owns the test-only
+# MIGRATION_MODULES override for apps.common.tests. See .claude/rules/tdd.md.
+DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py", "tests.py"]
 # --reuse-db keeps the Postgres test DB between local runs for a faster loop.
 # After changing models/migrations, force a one-time rebuild: pytest --create-db

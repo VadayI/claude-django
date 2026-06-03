@@ -1,5 +1,22 @@
 # WORKLOG — claude-django
 
+## 2026-06-03 — Кошик B (план 0007): Крок 0 аудит + staging-шаблони + test.py split
+
+Продовження кошика B. **Крок 0 (Explore-аудит `/bootstrap` Mode A)** показав, що Крок 1 плану (DRF-конвенції в scaffold) **вже реалізований**: Mode A генерує split settings `base/dev/staging`, повний блок `REST_FRAMEWORK` (`bootstrap.md:266–291`) і готовий exception-envelope у `templates/apps_common/` з тестами. Рапорт писався зі статичних джерел і не бачив живий scaffold — звідси «прогалина», якої немає. Відкрите питання плану «exception handler в `apps/common` чи `config/`» закрито: **`apps/common/`**.
+
+**Крок 1 (minor) — окремий `settings/test.py`.** Раніше тести крутилися на `dev.py` (там лежав `MIGRATION_MODULES`). Винесено `templates/settings_test.py` (наслідує `dev`, забирає `MIGRATION_MODULES` для `apps.common.tests.migrations` + швидкий MD5-hasher); pytest перемкнено на `config.settings.test` (`pyproject.toml [tool.pytest.ini_options]`). Тепер dev-сервер не платить за test-only redirect. Відкрите питання #2 закрито: **окремий `test.py`**.
+
+**Крок 2 — production-ready staging (gunicorn-у-контейнері).** Відкрите питання #3 закрито: **gunicorn у контейнері** як canonical; systemd — закоментована альтернатива. Додано: `templates/docker-compose.staging.yml` (gunicorn WSGI, окрема мережа, `STAGING_DB_PORT`, `expose` без `publish`, healthcheck на `/api/v1/health/`, `restart: unless-stopped`, fail-fast на незаданих секретах), `templates/gunicorn.conf.py` (workers/threads/timeouts/recycling/логи через env, X-Forwarded), `templates/nginx.staging.conf.template`, `templates/deploy/gunicorn.service.example`. Health-route у scaffold-овий `apps/common`: `views.py` (`HealthView`, AllowAny, 200/`ok` + 503/`unavailable` через `SELECT 1`, `@extend_schema`), `urls.py`, `HealthSerializer`, тест `tests/test_health.py` (public/ok, 503-при-падінні-БД через mock, no-throttle) + route в `urls_sample.py`. `gunicorn>=22.0` у deps. Деплой-флоу з pre-deploy `manage.py check --deploy` і post-deploy smoke (health + `/api/schema/`) задокументовано в `.claude/rules/docker-commands.md` (Staging переписано) і `templates/guides_admin.md` (day-2). Wiring у `.claude/commands/bootstrap.md` (Step 2 копіювання шаблонів, Step 3 split base/dev/staging/**test** + staging-hardening + include `apps.common.urls`, Step 4 verify health).
+
+**Відкрите питання #4 (ADR на DRF-конвенції)** — не потрібен: конвенції були в scaffold ще до плану (ADR 0011 покриває config-базу); цей план лише додав staging + test.py split.
+
+**Верифікація.** Усі нові/змінені файли звірено авторитетним host-read'ом (Read tool / Windows-шлях): без обрізань і без NUL, синтаксис цілий, `docker-compose.staging.yml` валідний YAML (services db+backend, command=gunicorn). bash-sandbox по `/mnt` віддавав застарілі/обрізані кеш-копії інодів (views.py як 44 рядки замість 85, суперечливі NUL-репорти) — підтверджує правило «git/верифікація на хості, не з `/mnt`-sandbox». Прибрано сміттєві proxy-артефакти попереднього запуску (`_probe_fresh.py`, `_v2_views.py`, `_vchk_staging_compose.yml`) і stale `__pycache__`; з `views.py` знято технічний `# mount-cache-bust-marker`.
+
+**Доставка.** Файли підготовлено й звірено; git/PR — за користувачем із хост-шела (дві гілки: `feat/staging-templates`, `chore/settings-test-split`; `bootstrap.md`+`pyproject.toml` зачеплені обома — розщепити вручну). Деталі та повний перелік файлів — `docs/plans/0007-report-bucket-b-drf-staging.md` (секція «Статус виконання»).
+
+**Наступна сесія.** План 0007 (кошик B) завершено — обидва кошики (A+B) deep-research-рапорту вичерпано; нових net-фіч із рапорту немає. Лишається лише **реальна валідація staging-шаблонів на свіжому bootstrap-проєкті** (не в цьому репо): `pytest` зелений на `config.settings.test`, `ruff check .` чистий (нові `apps/common` файли), `docker compose -f docker-compose.staging.yml config -q` валідний, `python manage.py check --deploy` на `staging`-settings без критичних ворнінгів, `curl /api/v1/health/` → 200. Після валідації — або новий feature через стандартний пайплайн, або наповнення backlog (`templates/todo.md` у похідних проєктах).
+
+
 ## 2026-06-03 — Аналіз зовнішнього рапорту + кошик A покращень (pytest DX, CI, Dependabot, governance)
 
 Драйвер — maintainer надав зовнішній deep-research рапорт (`deep-research-report3.md`) і попросив оцінити, чи варто впроваджувати його рекомендації в backend-only шаблон.

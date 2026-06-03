@@ -61,3 +61,25 @@
 ## Порядок виконання
 
 Крок 0 (Explore) → Крок 1 (feature-pipeline, 1 PR) → Крок 2 (devops, 1 PR). Кроки 1 і 2 незалежні — можна паралелити, але кожен окремим PR.
+
+---
+
+## Статус виконання (2026-06-03)
+
+**Крок 0 (Explore) — зроблено.** Результат: `/bootstrap` Mode A вже генерує майже весь Крок 1.
+- A. Split settings `base/dev/staging` — ✅ вже генерується (`bootstrap.md:255`). Окремого `test.py` НЕ було — тести крутилися на `dev.py`.
+- B. Блок `REST_FRAMEWORK` (pagination + throttle + `DEFAULT_SCHEMA_CLASS` + `EXCEPTION_HANDLER` + `DEFAULT_PERMISSION_CLASSES`) — ✅ вже генерується (`bootstrap.md:266–291`).
+- C. Кастомний exception handler (єдиний envelope) — ✅ готовий код у `templates/apps_common/` (`exceptions.py`, `schema.py`, тести). Відкрите питання «`apps/common/` чи `config/`» → вирішено: **`apps/common/`**.
+- Staging — ❌ був відсутній (лише dev `docker-compose.yml`).
+
+**Крок 1 — закрито як «вже зроблено bootstrap-ом»**, окрім дрібного апдейту: винесено окремий `config/settings/test.py` (`templates/settings_test.py`), pytest перемкнено на `config.settings.test` (`pyproject.toml`); `MIGRATION_MODULES` перенесено з `dev.py` у `test.py` + швидкий MD5-hasher. Відкрите питання #2 → вирішено: **окремий `test.py`**.
+
+**Крок 2 — зроблено (gunicorn-у-контейнері).** Відкрите питання #3 → вирішено: **gunicorn у контейнері** canonical (`docker-compose.staging.yml`), systemd — закоментована альтернатива (`templates/deploy/gunicorn.service.example`). Додано: `gunicorn.conf.py`, `nginx.staging.conf.template`, health-route `/api/v1/health/` у `apps/common` (`views.py`/`urls.py`/`serializers.py` + тест), `gunicorn>=22.0` у deps, staging-env-ключі (`.env.example`), деплой-флоу з `check --deploy` + smoke (`docker-commands.md`, `guides_admin.md`), wiring у `bootstrap.md`.
+
+**Відкрите питання #4 (ADR на DRF-конвенції в scaffold)** — не потрібен: конвенції вже були в scaffold ще до цього плану (історично через bootstrap, ADR 0011 покриває config-базу). Цей план лише додав staging + test.py split.
+
+**Git/PR (виконує користувач із хост-шела, не sandbox):** дві логічні гілки —
+- `feat/staging-templates`: `templates/docker-compose.staging.yml`, `templates/gunicorn.conf.py`, `templates/nginx.staging.conf.template`, `templates/deploy/gunicorn.service.example`, `templates/apps_common/{views.py,urls.py,serializers.py,README.md}`, `templates/apps_common/tests/{test_health.py,urls_sample.py}`, `templates/pyproject.toml` (рядок gunicorn), `templates/.env.example`, `templates/guides_admin.md`, `.claude/rules/docker-commands.md`, відповідні шматки `.claude/commands/bootstrap.md`.
+- `chore/settings-test-split`: `templates/settings_test.py`, `templates/pyproject.toml` (рядок `DJANGO_SETTINGS_MODULE`), шматок `.claude/commands/bootstrap.md` (test.py split).
+
+Примітка: `bootstrap.md` і `pyproject.toml` зачеплені обома темами — при поділі правки розщепити вручну (рядки розділені за темою).

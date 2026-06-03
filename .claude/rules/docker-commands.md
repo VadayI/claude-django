@@ -50,13 +50,30 @@ docker compose exec backend python manage.py shell
 
 ## Staging (VPS <STAGING_HOST>, Debian)
 
+Staging runs **gunicorn in a container** (`docker-compose.staging.yml`, WSGI) behind a host reverse proxy (nginx, see `nginx.staging.conf.template`) — never `runserver`.
+
 ```bash
 ssh <user>@<STAGING_HOST>
 cd ~/projects/<project>
 git pull
+
+# 1) Pre-deploy gate: catch insecure/misconfigured settings before serving.
+docker compose -f docker-compose.staging.yml run --rm backend \
+  python manage.py check --deploy
+
+# 2) Build + start (gunicorn behind the reverse proxy).
 docker compose -f docker-compose.staging.yml up -d --build
-docker compose -f docker-compose.staging.yml exec backend python manage.py migrate
+
+# 3) Apply migrations.
+docker compose -f docker-compose.staging.yml exec -T backend python manage.py migrate
+
+# 4) Post-deploy smoke (replace ${STAGING_HOST} with the real subdomain).
+curl -fsS https://${STAGING_HOST}/api/v1/health/        # expect {"status":"ok"}
+curl -fsS -o /dev/null -w '%{http_code}\n' \
+  https://${STAGING_HOST}/api/schema/                   # expect 200
 ```
 
-> The VPS already runs many projects — use separate ports/network and a reverse-proxy (nginx/Traefik) with its own subdomain to avoid conflicts. Mobile testing — open the subdomain in the phone's browser.
-<!-- Last reviewed/updated: 2026-05-29 -->
+> The VPS already runs many projects — `docker-compose.staging.yml` uses a dedicated network and a non-default Postgres host port (`STAGING_DB_PORT`, default `5433`), and `expose`s the backend to the compose network only (no host `publish`). The reverse proxy (nginx/Traefik) terminates TLS on the project's own subdomain (`${STAGING_HOST}`) and forwards `X-Forwarded-*`. Mobile testing — open the subdomain in the phone's browser.
+>
+> Host-native (non-Docker) deploys can instead run gunicorn under systemd — see `templates/deploy/gunicorn.service.example` (an alternative to the container, not used alongside it).
+<!-- Last reviewed/updated: 2026-06-03 -->

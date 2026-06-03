@@ -41,6 +41,30 @@ Verify it is up: open `http://localhost:8000/api/schema/swagger/` (API) and `htt
 - **Logs:** `docker compose logs -f backend`
 - **Common failures & fixes:** {TODO: e.g. "DB not ready -> wait for healthy", "missing migration -> makemigrations".}
 
+### Staging deploy (gunicorn behind a reverse proxy)
+
+Staging runs gunicorn in a container (`docker-compose.staging.yml`), never `runserver`, behind nginx (`nginx.staging.conf.template`). Full command reference: `.claude/rules/docker-commands.md` (Staging section).
+
+```bash
+ssh <user>@${STAGING_HOST}
+cd ~/projects/{SLUG}
+git pull
+
+# 1) Pre-deploy gate — fail before serving if settings are insecure.
+docker compose -f docker-compose.staging.yml run --rm backend \
+  python manage.py check --deploy
+
+# 2) Build + start, then migrate.
+docker compose -f docker-compose.staging.yml up -d --build
+docker compose -f docker-compose.staging.yml exec -T backend python manage.py migrate
+
+# 3) Post-deploy smoke (expect {"status":"ok"} then 200).
+curl -fsS https://${STAGING_HOST}/api/v1/health/
+curl -fsS -o /dev/null -w '%{http_code}\n' https://${STAGING_HOST}/api/schema/
+```
+
+The container healthcheck polls `/api/v1/health/` (200 = up, 503 = DB unreachable). For a host-native (non-Docker) deploy, run gunicorn under systemd instead — see `templates/deploy/gunicorn.service.example`.
+
 ## Where to go next
 
 - API integration: `docs/guides/api-consumer.md`

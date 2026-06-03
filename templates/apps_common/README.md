@@ -11,8 +11,9 @@
 (`{"error": {"code", "message", "details"}}`) applied via DRF's
 `EXCEPTION_HANDLER`, the `Conflict` (409) exception, and the OpenAPI
 documentation of that envelope. It deliberately owns **no domain data** — it has
-no production models, no business resources, and no public REST endpoints of its
-own. Domain apps depend on it; it depends on no domain app.
+no production models and no business resources. Its only public route is the
+infrastructure **health probe** used by deploy smoke tests and the staging
+container healthcheck. Domain apps depend on it; it depends on no domain app.
 
 ## Models
 
@@ -20,15 +21,20 @@ None in production. A throwaway `SampleItem` model lives under
 `apps/common/tests/models.py` and exists **only** to exercise the shared
 conventions (pagination, default permission, error envelope, throttling) in the
 test suite. It is given a table at test time via `MIGRATION_MODULES` redirected
-to `apps.common.tests.migrations` (see `config/settings/dev.py`); it never ships
+to `apps.common.tests.migrations` (see `config/settings/test.py`); it never ships
 a migration into the production `common` app.
 
 ## Endpoints
 
-None. `common` exposes no routes. The sample endpoints used by the convention
-tests are mounted only inside an override `ROOT_URLCONF`
-(`apps/common/tests/urls_sample.py`) during those tests — never in
-`config/urls.py`.
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| GET | `/api/v1/health/` | Liveness/readiness probe: `200 {"status":"ok"}` when up and the DB answers, `503 {"status":"unavailable"}` when the DB is unreachable. | AllowAny (public, unthrottled) |
+
+`HealthView` (`views.py`, wired in `urls.py`) is the one production route this
+app exposes — the staging container healthcheck and post-deploy smoke poll it.
+The sample endpoints used by the convention tests are mounted only inside an
+override `ROOT_URLCONF` (`apps/common/tests/urls_sample.py`) during those tests —
+never in `config/urls.py`.
 
 Schema detail for real endpoints lives in `docs/api/openapi.yml` (single source
 of truth, see `.claude/rules/api-docs.md`).
