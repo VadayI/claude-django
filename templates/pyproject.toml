@@ -14,9 +14,6 @@ dependencies = [
     "django-environ>=0.11",
     "django-filter>=24.0",
     "drf-spectacular>=0.27",
-    # WSGI server for staging/production (docker-compose.staging.yml runs
-    # `gunicorn config.wsgi:application`). Harmless in dev, which uses runserver.
-    "gunicorn>=22.0",
 ]
 
 [project.optional-dependencies]
@@ -26,6 +23,12 @@ dev = [
     "pytest-cov>=5.0",
     "factory-boy>=3.3",
     "ruff>=0.5",
+]
+prod = [
+    # WSGI server for staging/production. Installed ONLY in the staging image via
+    # the Dockerfile `ARG INSTALL_EXTRA=prod` (see docker-compose.staging.yml).
+    # Kept out of core deps so the dev/CI image stays thin (dev uses runserver).
+    "gunicorn>=22.0",
 ]
 
 # Explicit package discovery. Without this, setuptools flat-layout auto-discovery

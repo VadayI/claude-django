@@ -1,5 +1,20 @@
 # WORKLOG — claude-django
 
+## 2026-06-03 — Звірка з PR #7 + ADR 0015: тонкий dev-образ, прибрані nginx/systemd-шаблони
+
+Після відвантаження staging (запис нижче) виявився паралельний PR #7 — незалежна реалізація тієї самої фічі з власним ADR; конфліктував із main, бо обидві гілки додали ті самі файли. Рішення maintainer'а: лишити повнішу базу main, перейняти з #7 кращі/адитивні шматки, дубль закрити.
+
+**Перейнято з #7.** `INSTALL_EXTRA=prod` — gunicorn винесено з core deps `pyproject.toml` в optional-групу `prod`; `backend.Dockerfile` отримав `ARG INSTALL_EXTRA=dev` (`pip install -e ".[${INSTALL_EXTRA}]"`), `docker-compose.staging.yml` передає `INSTALL_EXTRA=prod` build-arg → dev/CI-образ тонкий (без gunicorn), staging — без dev-toolchain. Makefile-таргет `check-deploy`. Запис у `docs/lessons.md` (навіть `pathlib.write_text` обрізає великі записи на 9p-mount → писати в `/tmp` тоді `cp` + звіряти байти).
+
+**Прибрано (Simplicity first, ADR 0015 рішення #8).** `templates/nginx.staging.conf.template` і `templates/deploy/gunicorn.service.example` видалено, їх згадки прибрано з `.claude/commands/bootstrap.md` (Step 2 copy) і `.claude/rules/docker-commands.md` (рядки 53/78). nginx/systemd лишаються прозовою альтернативою в admin-гайді, не файлами-шаблонами.
+
+**Лишено повнішу базу.** `templates/gunicorn.conf.py` (виділений конфіг) і `config/settings/test.py` збережені — повніше за лаконічний підхід #7.
+
+**ADR 0015 «Production-ready staging».** Врятовано з #7 і **перероблено під фактичну реалізацію main** (виділений gunicorn.conf, окремий test.py, прибрані nginx/systemd-файли, перейнятий `INSTALL_EXTRA`) — інакше ADR суперечив би коду (анти-дрифт). 0015 — наступний вільний номер.
+
+**Доставка.** Файли на диску підготовлено й звірено host-read'ом. git-частина — за користувачем із хост-шела: гілка off main → `git checkout origin/feat/drf-conventions-scaffold -- docs/lessons.md templates/Makefile templates/backend.Dockerfile` (тягне #7-версії трьох файлів без обрізань) → `git rm` двох файлів → commit → PR → `gh pr close 7` + видалити гілку #7.
+
+
 ## 2026-06-03 — Кошик B (план 0007): Крок 0 аудит + staging-шаблони + test.py split
 
 Продовження кошика B. **Крок 0 (Explore-аудит `/bootstrap` Mode A)** показав, що Крок 1 плану (DRF-конвенції в scaffold) **вже реалізований**: Mode A генерує split settings `base/dev/staging`, повний блок `REST_FRAMEWORK` (`bootstrap.md:266–291`) і готовий exception-envelope у `templates/apps_common/` з тестами. Рапорт писався зі статичних джерел і не бачив живий scaffold — звідси «прогалина», якої немає. Відкрите питання плану «exception handler в `apps/common` чи `config/`» закрито: **`apps/common/`**.
@@ -406,14 +421,4 @@ Real-run audit of `/bootstrap` on `carlsberg-ir-data-service` (Windows Git Bash 
 - `/wrap-up` - verify merge via `gh` before writing WORKLOG; mandatory HANDOFF regen (assert no `{TODO}`); enumerate touched doc files for the commit.
 - `reviewer` - flag silent-failure anti-patterns (broad except, content-vs-format, unguarded IntegrityError->409, unbounded upload).
 - `tester` - explicit 409 + file-upload edge cases (both mismatch directions, encoding, empty fields, concurrency, partial-batch).
-- `app-readme` / `no-stubs` / `bootstrap` - README<->INDEX<->OpenAPI reconciliation; initialize `docs/STUBS.md` as an empty ledger.
-- `scripts/session-start.sh` - clear stale empty `.git/index.lock` on /mnt.
-
-**Decision (TDD verdict):** the agents applied TDD correctly by process (RED-first, DB assertions, triangulation) but the RED test set was too shallow to catch the two import bugs; addressed by the expanded `tester` checklist.
-
-**Next steps / open:**
-- Local `.git/index` corrupted on the /mnt mount (`bad index file sha1 signature`) and `templates/pyproject.toml` worktree file truncated by the Cowork mount - repair from the host (see HANDOFF "Next step"). History/origin intact; nothing lost.
-- Verify the pyproject fix end-to-end: fresh `/bootstrap` on a clean project, confirm `pip install -e backend` / CI install succeeds.
-- Clean up pre-existing half-staged truncated renames under `templates/scripts/` and `templates/todo.md` (physical files intact).
-
----
+- `app-readme` / `no-stubs` / `bootstrap` - READM

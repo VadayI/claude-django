@@ -38,6 +38,10 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        # Install the `prod` optional-dependency group (gunicorn) instead of the
+        # dev toolchain. Pairs with `ARG INSTALL_EXTRA=dev` in backend.Dockerfile.
+        INSTALL_EXTRA: prod
     # gunicorn (WSGI) is the staging runtime. The config file controls workers,
     # bind, timeouts, and logging — see gunicorn.conf.py.
     command: gunicorn config.wsgi:application --config /app/gunicorn.conf.py
