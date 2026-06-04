@@ -9,100 +9,45 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 ## Where this runs (supported runtime)
 
-This config is designed for **Claude Code CLI** (the terminal tool, `claude` command) running inside one of:
+This config runs in **Claude Code CLI** (the terminal `claude` command) inside **WSL2 Ubuntu** on Windows (mandatory — ADR `0005`), **Linux**, or **macOS**. That is the only supported runner.
 
-- **WSL2 Ubuntu** on Windows (mandatory on Windows — see ADR `docs/decisions/0005-drop-windows-native-shell.md`),
-- **Linux** native (any modern distro),
-- **macOS** native (bash or zsh).
+**Not supported:** Claude Desktop / Cowork / Code mode, Windows-native shells (PowerShell, cmd, Git Bash), and the Claude API/SDK standalone. All three lack the `SessionStart` hook that writes `.claude/memory/env-detect.json` and never load the `.claude/agents/` pipeline — so the methodology this repo is built around isn't there, and the `/doctor` / `/bootstrap` gates can't fire honestly. You *can* use Claude Desktop as a **companion** (read/edit files, discuss architecture, review a diff), but run `/bootstrap`, the feature pipelines, TDD, and PRs in **Claude Code CLI inside WSL2**.
 
-**Not supported:**
-
-- **Claude Desktop — including Cowork / Code mode** (the desktop app, not the terminal `claude`). Its sandbox has no `SessionStart` hooks, no `/plugin` marketplace command, and only routes file/bash through MCP tools. Crucially, the **agent pipeline is never loaded**: the desktop app does not pick up the custom subagents from `.claude/agents/`, so `ba → api-architect → tester → django-developer → …` simply does not exist there — you lose the entire methodology this repo is built around. Its bash also runs in a **separate isolated Linux sandbox**, not your machine: your Docker Desktop containers and your PostgreSQL are not reachable, so the Docker-based TDD loop (`docker compose exec backend pytest`) and the CI gate scripts cannot really run. And because `/bootstrap`/`/doctor` gates depend on the SessionStart hook writing `.claude/memory/env-detect.json` honestly, running them from the desktop app produces a misleading result (see the callout below).
-- **Windows native shells** (PowerShell, cmd, Git Bash / MINGW64). `detect-env.py` reports `platform_supported: false` and `/bootstrap` STOPs with `UNSUPPORTED_PLATFORM`. WSL2 is required so the bash idioms used by every agent (`rm -rf`, `cp -r`, `mkdir -p`, `&&` chains, `/tmp/...`) work, and so Docker bind-mounts behave correctly.
-- **Claude API / SDK** standalone — there is no SessionStart hook lifecycle there; agents won't be loaded from `.claude/agents/`.
-
-Why the strictness: `/bootstrap` and `/doctor` rely on `.claude/memory/env-detect.json` being written by the `SessionStart` hook (configured in `.claude/settings.json` and registered automatically by Claude Code CLI). The file drives three hard gates (`UNSUPPORTED_PLATFORM`, `NO_GH_SCOPES`, `NO_PYTHON`). In Cowork / Windows-native there is no hook, the file isn't created, and the gates are bypassed silently — the bootstrap looks like it succeeded but the project ends up with mis-detected platform and unverified PAT permissions.
-
-> **⚠️ Symptom you will hit if you run `/doctor` from Claude Desktop (Cowork / Code mode).**
-> The desktop app launches the SessionStart hook with **Windows-Python**, which has no `/proc/version`, so `detect-env.py` writes `is_wsl2: false`, `platform: windows`, `platform_supported: false` — even if you copied the files from inside a WSL2 shell. `/doctor` then **correctly** issues a `🔴 HARD STOP: UNSUPPORTED_PLATFORM`. This is not a bug in `/doctor` and not a broken machine: it means the config is being run from an unsupported runner. The fix is never "install WSL2 again" if you already have it — it is **launch the terminal `claude` from inside WSL2** (see the next section).
-
-> **⚠️ Symptom #2: you ran `claude` from a WSL2 shell but STILL got `UNSUPPORTED_PLATFORM`.**
-> If `env-detect.json` shows `platform: windows` with **`wrong_runner_suspected: true`**, a `python.executable` like `C:\…\python.exe`, and a backslash `cwd`, then PATH interop launched the **Windows** `claude`, not the WSL2-native one — the Linux CLI was never installed inside Ubuntu. Fix: in a WSL2 Ubuntu shell run `npm install -g @anthropic-ai/claude-code`, then `hash -r`, confirm `which claude` is a `/home/…` path (NOT `/mnt/c/…`), and relaunch `claude`. Your project staying on `/mnt/d` is fine — it is **not** the cause. Details: `.claude/rules/environment.md` → "launch the WSL2-native `claude`".
-
-### Can I use Claude Desktop at all?
-
-**Partly — as a companion, not as the runner.** Claude Desktop is fine for reading/editing files in a connected folder, discussing architecture, reviewing a diff, drafting notes, or running throwaway Python in its sandbox. It is **not** able to run the actual claude-django workflow, because three pillars are missing there: (1) the `.claude/agents/` pipeline is not loaded, (2) there is no access to your Docker/PostgreSQL for the TDD loop and CI gates, and (3) the environment gates (`/doctor`, `/bootstrap`, `/preflight`) cannot fire honestly. So: do `/bootstrap`, feature pipelines, TDD, and PRs in **Claude Code CLI inside WSL2**; keep the desktop app as a second pair of hands alongside it.
+The two most common runner failures — the Windows `claude.exe` shadowing the WSL2-native CLI, and a genuinely Windows-native shell — and their fixes live in **[Troubleshooting](#troubleshooting-startup--doctor-hard-stops)** below.
 
 ---
 
 ## Using Claude Code CLI (the only supported runner)
 
-Everything in this repo — the agent pipeline, the slash-commands, the environment gates — runs in **Claude Code CLI**: the terminal program you start by typing `claude`. On Windows this terminal must be **WSL2 Ubuntu**, not PowerShell, not cmd, not Git Bash, and **not** the Claude Desktop app. This is the single most common setup mistake, so it is worth being explicit.
+Everything here — agents, slash-commands, environment gates — runs in **Claude Code CLI**, started by typing `claude`. On Windows that terminal must be **WSL2 Ubuntu**, not PowerShell/cmd/Git Bash and not the Desktop app.
 
-**1. One-time: install the CLI inside WSL2.** Open a real Ubuntu shell (Windows Terminal → *Ubuntu*, or run `wsl` and confirm the prompt is Ubuntu, e.g. `vadym@HOST`, not `docker-desktop`). Then:
+**1. Install the CLI inside WSL2** (one-time). In a real Ubuntu shell:
 
 ```bash
-# inside WSL2 Ubuntu
 node --version                       # need Node 18+ (install via nvm if missing)
 npm install -g @anthropic-ai/claude-code
-claude --version                     # confirm the CLI is on PATH
+which claude                         # MUST be /home/... or /usr/...  — NOT /mnt/c/...
 ```
 
-> Installing `@anthropic-ai/claude-code` on the Windows side (PowerShell) does **not** give you a WSL2 `claude`. The CLI must be installed and launched from within the Ubuntu distro that has your bash toolchain.
+> Installing the CLI on the Windows side does **not** give you a WSL2 `claude`. If `which claude` shows `/mnt/c/...`, the Windows binary is shadowing it on PATH — fix per [Troubleshooting](#troubleshooting-startup--doctor-hard-stops). One-shot alternative for the whole toolchain (Python / Node / `claude` / `gh` + the PATH fix): `bash scripts/setup-wsl.sh` (idempotent; never touches secrets or git).
 
-> **Faster — one-shot toolchain install.** Once you have the repo files in WSL2 (cloned, or copied via the Quick start below), you can install Python / Node / the WSL2-native `claude` / `gh` **and** apply the PATH fix in a single idempotent command, instead of doing steps 1 and 5 by hand:
->
-> ```bash
-> bash scripts/setup-wsl.sh   # re-runnable; never touches secrets or git
-> ```
->
-> It still expects a real WSL2 Ubuntu (or native Debian) shell. After it finishes, open a new shell so `~/.bashrc` applies, then `claude` → `/doctor`.
+**2. Where to put the project.** Working from `/mnt/c` or `/mnt/d` (a Windows drive) is **fully supported** (ADR `0009`); `/doctor` won't ask you to move it. The only caveats are slower Docker bind-mounts and occasional CRLF / `git index.lock` quirks (run `git` from the host shell). `~/projects/<slug>` in the WSL2 FS is optional — for faster bind-mounts only.
 
-**2. Where to put the project — your Windows drive is fine.** Working from `/mnt/c`/`/mnt/d` is **fully supported** (ADR `0009`); `/doctor` will not ask you to move it. The only `/mnt` caveats are slower Docker bind-mounts, occasional CRLF↔LF flips, and `git index.lock` on the 9p mount (run `git` from the host shell — PowerShell/Git Bash — to avoid it). If you want maximum bind-mount speed you *can* keep the repo under `~/projects/<slug>` in the WSL2 filesystem, but it is optional, not required.
+**3. Launch and verify the runner.** From the project root, check the startup banner: forward-slash paths and `(from .claude/settings.json)` mean a correct WSL2 launch; **backslashes** (`D:\Dev\...`, `.claude\settings.json`) mean you launched `claude.exe` — `/exit` and fix the runner. On start the `SessionStart` hook writes `.claude/memory/env-detect.json` (`platform_supported: true`, `is_wsl2: true`, `shell: bash`) — exactly what `/doctor` needs to pass the platform gate.
+
+> Run shell fixes in the **bash terminal**, not Claude's `❯` prompt. When `/doctor` says to run `npm install …`, that goes in the terminal — pasting it into the `❯` chat just sends Claude a message.
+
+**4. Drive the work with slash-commands.** `/doctor` first on a new machine (audits the environment, proposes fixes); `/preflight` before the first feature (brief, stack, Context7, GitHub access). Then describe a feature in plain language and the orchestrator runs `ba → api-architect → tester(RED) → django-developer(GREEN) → Quality Gate → docs-writer`. End each session with `/wrap-up`, commit, and `git pull` on the other machine.
+
+**5. GitHub access** — create the repo by hand + a fine-grained per-repo token (ADR `0008`). Create an **empty** repo at https://github.com/new (no README/.gitignore/license), then mint a **fine-grained token scoped to just that repo** (`/bootstrap` and `/doctor` print a ready-made template URL):
 
 ```bash
-mkdir -p ~/projects && cd ~/projects
-git clone git@github.com:<your-username>/<slug>.git
-cd <slug>
+export GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_xxxxxxxx
 ```
 
-**3. Launch the CLI from the project root — but verify the runner first.** Before typing `claude`, confirm that `claude` resolves to the **WSL2-native** binary, not the Windows `claude.exe` that PATH interop may shadow it with. This one check prevents the single most common setup failure:
+Minimal permissions: **Contents** RW, **Metadata** RO (auto), **Pull requests** RW, **Workflows** RW, **Administration** RW (the last enables auto branch protection; omit it and protection becomes a manual UI step). A classic PAT works too but grants whole-account access.
 
-```bash
-cd ~/projects/<slug>
-which claude         # MUST be /home/... or /usr/...  — NOT /mnt/c/...
-claude
-```
-
-If `which claude` shows a `/mnt/c/...` path, you have not installed the Linux CLI (do step 1) or the Windows bin precedes it on PATH (do step 5's PATH fix). After launch, sanity-check the **startup banner**: a correct WSL2 launch shows forward-slash paths and `(from .claude/settings.json)`; **backslashes** (`D:\Dev\...`, `.claude\settings.json`) mean you are still on `claude.exe` — `/exit` and fix the runner.
-
-On start, the `SessionStart` hook runs `scripts/detect-env.py` and writes `.claude/memory/env-detect.json`. From a correct WSL2 launch it records `platform_supported: true`, `is_wsl2: true`, `shell: bash` — which is exactly what `/doctor` needs to proceed past the platform gate.
-
-> **Type fixes in the bash shell, not into Claude's `❯` prompt.** When `/doctor` tells you to run `npm install -g @anthropic-ai/claude-code`, that goes in the **terminal**, not the `claude` chat. The `❯` prompt is Claude's input — pasting shell commands there just sends a message. `/exit` first (or use a second WSL2 tab), run the command in bash, then relaunch `claude`.
-
-**4. Drive the work with slash-commands and plain prompts.** Inside the `claude` session you type commands like `/doctor`, `/bootstrap`, `/preflight`, then describe features in natural language and let the orchestrator route them through the pipeline. The two rituals to remember:
-
-```text
-/doctor       # first thing on a new machine — audits the environment, proposes fixes
-/preflight    # before the first feature — checks brief, stack, Context7, GitHub access
-```
-
-Then for a feature, just describe it (optionally using the *First-prompt template* below) — the orchestrator runs `ba → api-architect → tester(RED) → django-developer(GREEN) → Quality Gate → docs-writer` for you. End each session with `/wrap-up`, commit, and `git pull` on your other machine.
-
-**5. GitHub access — create the repo by hand + a fine-grained per-repo token.** Per ADR `0008`, `/bootstrap` does **not** create the repository and does **not** want a broad classic PAT. First create an **empty** repo at https://github.com/new (no README/.gitignore/license). Then mint a **fine-grained token scoped to just that repo** — `/bootstrap` and `/doctor` print a ready-made template URL:
-
-```bash
-# template URL (claude-django fills OWNER/SLUG for you):
-#   https://github.com/settings/personal-access-tokens/new?name=claude-django+<slug>&description=...&contents=write&pull_requests=write&workflows=write&administration=write
-# In the page: Resource owner = you · Repository access → Only select repositories → <owner>/<slug> · set an expiration · Generate.
-export GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_xxxxxxxx   # the fine-grained token
-```
-
-Minimal permissions: **Contents** RW, **Metadata** RO (auto), **Pull requests** RW, **Workflows** RW, **Administration** RW (the last enables auto branch protection — omit it and protection becomes a manual UI step). A classic PAT still works but grants whole-account access.
-
-See *Prerequisites*, *Quick start*, and *Step-by-step: a NEW project from scratch* below for the full bring-up. The short version: **install the CLI in WSL2 → clone the repo (your Windows drive is fine) → `claude` → `/doctor` → `/bootstrap` → `/preflight` → first feature.**
-
-If you must work from Claude Desktop or another environment, use it as an editor / chat companion **after** running `/bootstrap`, `/doctor`, `/synthesize-brief`, and `/preflight` from Claude Code CLI.
+Short version: **install the CLI in WSL2 → clone the repo (Windows drive is fine) → `claude` → `/doctor` → `/bootstrap` → `/preflight` → first feature.** If you must use Claude Desktop, treat it as an editor / chat companion **after** running these from the CLI.
 
 ---
 
@@ -283,51 +228,22 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 - **Node.js 18+ (required, via `nvm`)** — needed to install the WSL2-native Claude Code CLI (`npm install -g @anthropic-ai/claude-code`) and for `npx`-based skills (e.g. the Context7 MCP). `/doctor` reports `NO_NODE` if it is missing or below 18
 - A GitHub account
 
-### Shell: bash only
-
-On Windows, install WSL2 Ubuntu and run every command from inside it (`docker compose`, `git`, `gh`, `python`, `npm`). PowerShell is not supported — see `docs/decisions/0005-drop-windows-native-shell.md`. At every session start, `scripts/detect-env.py` writes `.claude/memory/env-detect.json`; if `platform_supported: false`, `/doctor` stops with instructions to install WSL2.
-
-The CI gate scripts (`scripts/check_*.sh`) intentionally stay bash — they run on the Linux GitHub Actions runner.
-
----
-
 ## Quick start (attach the config to an existing project)
 
-> **First time on this Windows machine? Make sure Ubuntu (not `docker-desktop`) is installed.**
+> **First time on this Windows machine?** From PowerShell, `wsl --list --verbose` — if you only see `docker-desktop` (Docker's internal BusyBox distro, not for user work), install Ubuntu: `wsl --install -d Ubuntu` then `wsl --set-default Ubuntu`. On first launch set a Unix username/password, then install the toolchain: `sudo apt update && sudo apt install -y git curl gh python-is-python3 python3-pip`. Verify `ID=ubuntu` in `/etc/os-release` (tested on 24.04+).
 >
-> Check what distros you have from PowerShell:
->
-> ```powershell
-> wsl --list --verbose
-> ```
->
-> If the output shows only `docker-desktop` (Docker Desktop's internal distro — minimal BusyBox, no `git`, no `bash`, not for user work), install Ubuntu:
->
-> ```powershell
-> wsl --install -d Ubuntu       # installs current LTS; creates Unix user on first launch
-> wsl --set-default Ubuntu      # so plain `wsl` lands in Ubuntu, not docker-desktop
-> ```
->
-> First launch will prompt for a username + password (this is your sudo account inside the distro — not your Windows account). After it drops you into Ubuntu, install the toolchain we need:
->
-> ```bash
-> sudo apt update && sudo apt install -y git curl gh python-is-python3 python3-pip
-> git --version && gh --version && python --version
-> ```
->
-> Verify with `cat /etc/os-release` — `ID=ubuntu`. Tested with Ubuntu 24.04+ (works on 26.04 / Resolute Raccoon as well).
+> Then enter WSL with `wsl` (not PowerShell) and `cd` to your project — a `/mnt/c` or `/mnt/d` path is fine (ADR `0009`), no need to move into `~/projects`. The one thing that matters: `which claude` resolves to `/home/...`, not `/mnt/c/...`.
 
-> **Before you start — enter WSL2 (the filesystem location doesn't matter).**
->
-> If your prompt starts with `PS ` (PowerShell), launch WSL with `wsl` (not `wls`). You may land in `/mnt/c/...`, `/mnt/d/...`, or `/mnt/host/d/...` — **that's fine.** Working from the Windows drive is fully supported (ADR `0009`); you do **not** need to move into `~/projects`. `cd` to wherever your project lives:
->
-> ```bash
-> cd /mnt/d/path/to/your/project        # a Windows-drive project — supported
-> # or, for faster Docker bind-mounts, keep it in the WSL2 FS instead:
-> # mkdir -p ~/projects/<slug> && cd $_
-> ```
->
-> The one thing that matters: you launched **WSL** (not PowerShell) and `claude` is the **WSL2-native** binary (`which claude` → `/home/...`, not `/mnt/c/...`). The `/mnt` caveats (slower bind-mounts, CRLF, run git from the host shell) are minor and never block you.
+**Fastest — one-line seed.** From the root of your project folder in WSL2, this clones the template and copies the config in one go (idempotent; refuses to clobber an already-seeded folder unless `--force`):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/VadayI/claude-django/main/scripts/install.sh)
+# optional args:  install.sh [TARGET_DIR] [--ref GIT_REF] [--url FORK_URL] [--force]
+```
+
+Then launch `claude` → `/doctor` → `/bootstrap`. To upgrade an *already-seeded* project use `/update-from-template` instead (it preserves your edits, ADR `0014`).
+
+**Manual equivalent** (what `install.sh` does, if you prefer to run it by hand):
 
 ```bash
 # in WSL2, from the root of your project (a /mnt/d/... Windows-drive path is fine — ADR 0009)
@@ -358,7 +274,7 @@ Then install the plugins (see below) and adjust `CLAUDE.md` for the project name
 
 1. **Quick start** (above) — copy `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `scripts/`, `templates/` into the new project folder under `~/projects/<slug>` in WSL2.
 2. `claude` → `/doctor` — verifies environment and detects scenario `fresh`; recommends `/bootstrap`.
-3. `claude` → `/bootstrap` — interactive. First runs a **hard preflight** (Python, `gh`, `docker`, templates) + **GitHub access check** — you create the empty repo by hand and authenticate with a fine-grained per-repo token (ADR `0008`); `/bootstrap` prints the token template URL and verifies access via `gh repo view`. Then asks GitHub login (default = `gh api user`), slug (default = CWD basename), output language; runs the full scaffold (link `origin` to the repo you created — Mode A never runs `gh repo create`, skeleton, `django-admin startproject`, settings split, drf-spectacular config + URLs, `docker compose up`, `migrate`, generate `docs/api/openapi.yml`, prompt for `createsuperuser`, copy `templates/.env.example` to **both** `.env.example` (committed) and `.env` (gitignored), first commit + push `origin main`, `gh workflow run backend-ci.yml` to register the `backend-ci` status check, auto branch protection via `gh api` when `admin:repo_hook` is present — manual GitHub UI fallback otherwise). Each major step has a `⏸ Checkpoint — Resume` marker so a failed run can be re-invoked safely (Mode B picks up where Mode A stopped). This is the only command that direct-pushes to main (documented exception in `.claude/rules/git-operations.md`).
+3. `claude` → `/bootstrap` — runs the hard preflight (Python / `gh` / `docker` / templates + GitHub access), then scaffolds the project: links `origin` to the empty repo you created (Mode A never runs `gh repo create`), builds the skeleton + drf-spectacular config, brings Docker up, migrates, generates `docs/api/openapi.yml`, makes the first commit + push to `main`, and enables branch protection. Each step has a `⏸ Checkpoint — Resume` marker; Mode B resumes a failed run. This is the only command that direct-pushes to `main` (documented exception in `.claude/rules/git-operations.md`). Full behaviour: the `/bootstrap` entry under *Commands* above.
 4. (manual) Drop your input documents into `docs/` — briefs, ТЗ, PDFs, .docx, screenshots — keeping `docs/api/`, `docs/decisions/`, `docs/plans/` for their existing purpose.
 5. `claude` → `/synthesize-brief` — recursively reads `docs/**` (excluding service folders), delegates to `brief-synthesizer`, writes `docs/PROJECT.md` via feature branch + PR.
 6. `claude` → `/doctor` → `/preflight` — re-verify environment and build inputs.
@@ -379,13 +295,7 @@ claude
 > /update-from-template                # branch chore/sync-template-<date>, sync, open a PR
 ```
 
-What it does (via the `template-sync` agent):
-
-- **Overwrites template-owned files** — `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/rules/*.md` (except your local `output-language.md`), and the `scripts/detect-env.py`/`log-cmd.py` helpers.
-- **Preserves project-owned files** — `CLAUDE.md` edits, `.claude/settings.json`, `.mcp.json`, `.claude/memory/`, `.claude/rules/output-language.md`, all of `docs/` and `backend/`, `.env`. These are never blindly overwritten.
-- **Merge-by-hand items** — `CLAUDE.md`, `settings.json`, `.mcp.json`, and the live `.github/workflows/backend-ci.yml` are shown as diffs; only additive changes (a new rule-import line, a new agent row, a new CI gate step) are proposed, and genuine conflicts are left for you.
-- **New gate scripts** — because derived projects delete `templates/` after bootstrap, a new gate (e.g. `check_file_size.sh`) is copied from the upstream clone into the live `scripts/` and its step + path-trigger are wired into the live `backend-ci.yml`.
-- **Records the synced commit** in `.claude/memory/template-sync.json`, so the next run reports only what changed since.
+What it does (via the `template-sync` agent): **overwrites** template-owned files (`.claude/agents/`, `commands/`, `skills/`, `rules/*.md` except your `output-language.md`, the `scripts/` helpers), **preserves** project-owned ones (`CLAUDE.md`, `settings.json`, `.mcp.json`, `.claude/memory/`, all of `docs/` and `backend/`, `.env`), shows merge-by-hand items (`CLAUDE.md` / `settings.json` / `.mcp.json` / `backend-ci.yml`) as additive-only diffs, copies in any new gate scripts, and records the synced commit in `.claude/memory/template-sync.json`. Full rules: ADR `0014` and the `/update-from-template` entry under *Commands* above.
 
 It lands as a **PR** (the PR-only rule applies to derived projects); review the merge-by-hand diffs, merge, then run `/doctor` to re-verify the environment against the refreshed spec. If you maintain your own fork of the template, pass its URL: `/update-from-template https://github.com/<you>/claude-django.git`.
 
@@ -460,13 +370,11 @@ Rules:
 
 ## How to use (commands · agents · skills)
 
-**Commands** are slash-commands you type inside `claude` from the project folder, with an optional argument: `/bootstrap my-project`, `/synthesize-brief`, `/audit`, `/doctor`, `/preflight`, `/wrap-up "release notes"`, `/fix-ci 42`, `/review-pr 42`, `/security-check apps/auth`. The full list with descriptions is in the *Commands* subsection above; PR-scoped commands need the `github` MCP and an authenticated `gh`. Every invocation is logged to `.claude/memory/command-log.jsonl` so `auditor` can suggest what to run next.
+**Commands** are slash-commands typed inside `claude` (e.g. `/bootstrap my-project`, `/doctor`, `/wrap-up "notes"`, `/review-pr 42`); the full list is the *Commands* subsection above. PR-scoped ones need the `github` MCP + an authenticated `gh`. Every call is logged to `.claude/memory/command-log.jsonl` for `auditor`.
 
-**Agents** you do NOT call directly in the default flow — just describe the task and the orchestrator routes it through the pipeline defined in `.claude/rules/workflow.md` (e.g. a feature goes `ba` → `api-architect` → `tester (RED)` → `django-developer (GREEN)` → Quality Gate → `docs-writer`; see Step 6 for a worked example). You can still name an agent explicitly when you want to (`"use ba to draft user stories for X"`, `"have debugger investigate this 500 first"`). Each agent's triggers and remit live in `.claude/agents/<name>.md`.
+**Agents** you don't call directly — describe the task and the orchestrator routes it through the pipeline in `.claude/rules/workflow.md`. You *can* name one explicitly (`"use ba to draft user stories for X"`). Each agent's triggers live in `.claude/agents/<name>.md`.
 
-**Skills** activate **automatically**: each agent reads its tools and, based on the `description:` field of a skill in `.claude/skills/<name>/SKILL.md`, picks up the right one when its triggers match the task (e.g. `pytest-tdd` engages when `tester` writes tests; `drf-api-design` when `api-architect` defines an endpoint; `security-reviewer` when `security-scanner` runs). You don't invoke skills directly, but you can ask for one by name when relevant (`"use the postgresql-optimization skill on this query"`). To enable Anthropic standalone skills like `mcp-builder` or `web-artifacts-builder` (listed under *Recommended external skills* above), add them in Cowork; they are not vendored into the repo.
-
-Two starting rituals worth knowing: on a fresh machine run **`/doctor`** to bring the environment up to spec, then **`/preflight`** before the first feature to verify the orchestrator has the build inputs (brief, declared stack, Context7 reachability, and GitHub project access) before any code is written.
+**Skills** activate automatically when an agent's task matches a skill's `description:` in `.claude/skills/<name>/SKILL.md` (e.g. `pytest-tdd` for `tester`, `drf-api-design` for `api-architect`). Standalone Anthropic skills (`mcp-builder`, `web-artifacts-builder`) are enabled per machine, not vendored into the repo.
 
 ---
 
@@ -533,14 +441,3 @@ must pass), updates the app's `README.md` and `docs/WORKLOG.md`, then opens a PR
 The result is one reviewed PR for one feature, with tests, docs, and an up-to-date schema.
 For the next feature you repeat from step 0. If a feature would touch more than ~3 files,
 split it into smaller features and run each through the pipeline separately.
-
-**Naming an agent explicitly (optional).** The orchestrator routes for you, but you can
-still address one directly when you want to:
-
-```text
-"use ba to split the import epic into user stories"
-"have api-architect lock the contract for POST /api/v1/<resource>/import/"
-"use dba to design the unique index for the dedup key"
-"have security-scanner audit the role model"
-"use debugger to find why a duplicate import still creates a second row"
-```
