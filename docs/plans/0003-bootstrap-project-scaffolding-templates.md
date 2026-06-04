@@ -1,6 +1,6 @@
 # Plan 0003 — Bootstrap project-scaffolding templates (P1)
 
-> Author: orchestrator session, 2026-05-30. Source: real `/bootstrap` run on `carlsberg-ir-data-service` showed three "expected files" that the spec assumes exist but never creates: `README.md` of the derived project, `docs/api/INDEX.md` (required by `api-docs.md` rule), and `docs/PROJECT.md` (input for `ba` / brief synthesizer). `docs/WORKLOG.md` is created empty by `touch`, which provides no structure.
+> Author: orchestrator session, 2026-05-30. Source: real `/bootstrap` run on `example-service` showed three "expected files" that the spec assumes exist but never creates: `README.md` of the derived project, `docs/api/INDEX.md` (required by `api-docs.md` rule), and `docs/PROJECT.md` (input for `ba` / brief synthesizer). `docs/WORKLOG.md` is created empty by `touch`, which provides no structure.
 
 ## Scope (P1)
 
@@ -24,7 +24,7 @@
 
 In each new template, use single tokens easy to grep + replace by `devops` during Step 2:
 
-- `{SLUG}` — project slug (e.g. `carlsberg-ir-data-service`).
+- `{SLUG}` — project slug (e.g. `example-service`).
 - `{DATE_ISO}` — bootstrap date in `YYYY-MM-DD` (e.g. `2026-05-30`).
 - `{OWNER}` — GitHub login from `gh api user --jq .login`.
 

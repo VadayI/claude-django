@@ -1,6 +1,6 @@
 # Plan 0004 — HANDOFF template + branch protection 403 fallback + lessons seed (P2)
 
-> Author: orchestrator session, 2026-05-30. Source: P2 backlog left over from plans 0002 (preflight robustness) and 0003 (project scaffolding templates). Real-run on `carlsberg-ir-data-service` exposed branch protection silently falling back to manual instructions even when scope and PAT preconditions looked fine; and derived projects had no multi-session HANDOFF document or seeded lessons header.
+> Author: orchestrator session, 2026-05-30. Source: P2 backlog left over from plans 0002 (preflight robustness) and 0003 (project scaffolding templates). Real-run on `example-service` exposed branch protection silently falling back to manual instructions even when scope and PAT preconditions looked fine; and derived projects had no multi-session HANDOFF document or seeded lessons header.
 
 ## Scope (P2)
 

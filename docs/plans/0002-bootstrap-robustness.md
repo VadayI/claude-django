@@ -1,6 +1,6 @@
 # Plan 0002 — Bootstrap robustness (P0 fixes)
 
-> Author: orchestrator session, 2026-05-30. Source: real `/bootstrap` run on `carlsberg-ir-data-service` exposed four systemic gaps that let a Windows Git Bash + fine-grained PAT bootstrap "succeed" by silently bypassing hard preflight.
+> Author: orchestrator session, 2026-05-30. Source: real `/bootstrap` run on `example-service` exposed four systemic gaps that let a Windows Git Bash + fine-grained PAT bootstrap "succeed" by silently bypassing hard preflight.
 
 ## Scope (P0 only)
 

@@ -15,7 +15,7 @@
 - `.git/config` пошкодився: рядки 1–13 цілі, далі NUL-байти → `fatal: bad config line 14`, через що впав `git commit` (git identity теж не була задана). Лагодиться перезаписом config + `git config user.email/name` у тому ж шелі, де комітиш (Windows-git і WSL-git мають РІЗНІ глобальні конфіги).
 - `docs/HANDOFF.md` **обрізало** MCP-інструментом Edit/Write (4515 B замість повних 8744). Перебудовано через bash heredoc `/tmp`→`cp`→звірка байтів. Підтверджує: Edit/Write на цьому mount небезпечні; bash-sandbox іноді віддає стейл-кеш інода.
 
-**Наступна сесія.** (1) Закомітити language-gate + wrap-up правки в `main` (після лагодження `.git/config`). (2) **Головне:** реальна валідація staging-шаблонів на свіжому bootstrap-проєкті (pytest на `config.settings.test`, ruff, `docker compose -f docker-compose.staging.yml config -q`, `manage.py check --deploy`, `curl /api/v1/health/`). (3) Допрацювати `carlsberg-ir-data-service`. (4) **Підвищено в пріоритеті:** pre-commit/CI-гард на обрізаний хвіст/NUL — інцидент кусає вже не вперше.
+**Наступна сесія.** (1) Закомітити language-gate + wrap-up правки в `main` (після лагодження `.git/config`). (2) **Головне:** реальна валідація staging-шаблонів на свіжому bootstrap-проєкті (pytest на `config.settings.test`, ruff, `docker compose -f docker-compose.staging.yml config -q`, `manage.py check --deploy`, `curl /api/v1/health/`). (3) Допрацювати `example-service`. (4) **Підвищено в пріоритеті:** pre-commit/CI-гард на обрізаний хвіст/NUL — інцидент кусає вже не вперше.
 
 **Файли.** Нові: `.claude/rules/output-language.md`. Змінені: `CLAUDE.md` (імпорт), `docs/HANDOFF.md`, `docs/WORKLOG.md`, `docs/lessons.md`. git/PR — за користувачем із хост-шела (PowerShell), бо `.git/config` лагодиться на хості й identity має бути у Windows-git.
 
@@ -137,7 +137,7 @@ Maintainer надав свій перевірений сетап (глобаль
 
 ## 2026-06-01 — GitHub access model (ADR 0008) + /mnt working-dir policy (ADR 0009)
 
-Two related policy reversals driven by the `carlsberg-ir-data-service` bring-up.
+Two related policy reversals driven by the `example-service` bring-up.
 
 **Access model — manual repo + fine-grained per-repo PAT (ADR 0008; shipped in `a9185b3`).** Replaced the classic-PAT / auto-`gh repo create` model with: the user creates the empty repo by hand, and `/bootstrap` + `/doctor` emit a per-repo **fine-grained token template URL**. Verified live (GitHub changelog 2025-08-26) that fine-grained PAT template URLs are supported — `name`/`description`/permissions prefill via query params (`contents`/`pull_requests`/`workflows`/`administration`); the specific-repo selection stays a manual UI toggle. `FINE_GRAINED_PAT_NOT_SUPPORTED` retired across `bootstrap.md`/`doctor.md`/`environment.md`/`detect-env.py`; fine-grained is now the recommended credential, capability verified by `gh repo view` + per-operation errors instead of OAuth-scope headers. Mode A links `origin` to the user-created repo (`REPO_NOT_FOUND` remediation) instead of creating it; branch protection uses `administration=write` in the token.
 
@@ -149,7 +149,7 @@ Two related policy reversals driven by the `carlsberg-ir-data-service` bring-up.
 
 ## 2026-06-01 — Onboarding clarity + mandatory Node gate + npm-shadow trap
 
-Session driven by a live bring-up on `carlsberg-ir-data-service`: the maintainer kept hitting `UNSUPPORTED_PLATFORM` / `wrong_runner_suspected`, and the documented wrong-runner PATH fix did not take. Root cause uncovered live: a Linux `node` (`/usr/bin/node`, v22) was present but Linux `npm` was **missing**, so `npm` resolved through PATH interop to the Windows npm (`/mnt/c/Program Files/nodejs/npm`), `npm config get prefix` returned a `C:\...` path, and `npm install -g @anthropic-ai/claude-code` therefore installed `claude` into the **Windows** prefix — so `which claude` stayed `/mnt/c/...` no matter how the `$(npm config get prefix)/bin` trick was applied. Documented the whole failure chain and turned Node into a real gate.
+Session driven by a live bring-up on `example-service`: the maintainer kept hitting `UNSUPPORTED_PLATFORM` / `wrong_runner_suspected`, and the documented wrong-runner PATH fix did not take. Root cause uncovered live: a Linux `node` (`/usr/bin/node`, v22) was present but Linux `npm` was **missing**, so `npm` resolved through PATH interop to the Windows npm (`/mnt/c/Program Files/nodejs/npm`), `npm config get prefix` returned a `C:\...` path, and `npm install -g @anthropic-ai/claude-code` therefore installed `claude` into the **Windows** prefix — so `which claude` stayed `/mnt/c/...` no matter how the `$(npm config get prefix)/bin` trick was applied. Documented the whole failure chain and turned Node into a real gate.
 
 **Docs clarity (README).** New prominent startup happy-path in the launch step (`which claude` must be a `/home` path, not `/mnt/c`, before launching; a backslash banner = `claude.exe`), a "type fixes in the bash shell, not the `❯` prompt" note, a `which claude` check inside the Quick-start clone snippet, and a new **"Troubleshooting startup & /doctor hard-stops"** section: a symptom/code → cause → fix table covering `UNSUPPORTED_PLATFORM` (wrong-runner vs genuine Windows), `NO_ENV_DETECT`, `NO_PYTHON_OR_HOOK`, `FINE_GRAINED_PAT_NOT_SUPPORTED`, `NO_GH_SCOPES`, REPL-vs-shell, `wsl2`-vs-`wsl`, slow `/mnt` mounts, and the npm-shadow case.
 
@@ -187,7 +187,7 @@ Follow-up to the Desktop-not-a-runner work. The maintainer asked whether claude-
 
 ## 2026-05-31 — README: Desktop-not-a-runner warning + "Using Claude Code CLI" section
 
-Triggered by a real `/doctor` run from Claude Desktop (Code mode) on the test project `carlsberg-ir-data-service`: it correctly issued `HARD STOP: UNSUPPORTED_PLATFORM` because the desktop app runs the SessionStart hook with Windows-Python (`is_wsl2: false`, `platform_supported: false`) even though the files were copied from inside a WSL2 shell. Not a `/doctor` bug — the config was simply run from an unsupported runner.
+Triggered by a real `/doctor` run from Claude Desktop (Code mode) on the test project `example-service`: it correctly issued `HARD STOP: UNSUPPORTED_PLATFORM` because the desktop app runs the SessionStart hook with Windows-Python (`is_wsl2: false`, `platform_supported: false`) even though the files were copied from inside a WSL2 shell. Not a `/doctor` bug — the config was simply run from an unsupported runner.
 
 **Changes (README.md only, no behavior change):**
 
@@ -201,7 +201,7 @@ Triggered by a real `/doctor` run from Claude Desktop (Code mode) on the test pr
 
 ## 2026-05-31 — Fix root cause of NO_ENV_DETECT: Quick start never copied root `scripts/`
 
-Follow-up to the earlier NO_ENV_DETECT hardening batch. That batch made `/doctor`/`/bootstrap`/`/preflight` STOP cleanly when `env-detect.json` is absent, but it never fixed *why* the file was absent on a correctly-followed setup. Real cause found on a fresh `carlsberg-ir-data-service` clone: the README Quick start `cp` block copies `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `.gitattributes`, `templates/`, `docker-compose.yml`, `.github/workflows/` — but **never the root `scripts/` directory**. The `SessionStart` hook runs `python scripts/detect-env.py`; with `scripts/detect-env.py` missing the hook fails silently, `env-detect.json` is never written, and `/doctor` fires `NO_ENV_DETECT` with a misleading diagnosis (blamed Python/runtime, never the missing file). `detect-env.py` + `log-cmd.py` live in root `scripts/`, separate from `templates/scripts/` (which holds only the three CI `check_*.sh` gates), so a full `templates/` copy does not bring them along.
+Follow-up to the earlier NO_ENV_DETECT hardening batch. That batch made `/doctor`/`/bootstrap`/`/preflight` STOP cleanly when `env-detect.json` is absent, but it never fixed *why* the file was absent on a correctly-followed setup. Real cause found on a fresh `example-service` clone: the README Quick start `cp` block copies `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `.gitattributes`, `templates/`, `docker-compose.yml`, `.github/workflows/` — but **never the root `scripts/` directory**. The `SessionStart` hook runs `python scripts/detect-env.py`; with `scripts/detect-env.py` missing the hook fails silently, `env-detect.json` is never written, and `/doctor` fires `NO_ENV_DETECT` with a misleading diagnosis (blamed Python/runtime, never the missing file). `detect-env.py` + `log-cmd.py` live in root `scripts/`, separate from `templates/scripts/` (which holds only the three CI `check_*.sh` gates), so a full `templates/` copy does not bring them along.
 
 **Fixes:**
 
@@ -232,7 +232,7 @@ Intentionally kept: `api-docs.md` / `architecture.md` statements that explicitly
 
 ## 2026-05-31 — Harden `/doctor` + `/bootstrap` + `/preflight` against the non-CLI runtime (NO_ENV_DETECT)
 
-Real-run audit: a `/doctor` invocation on the `carlsberg-ir-data-service` test project (run without a `SessionStart` hook, so `env-detect.json` was absent) produced a partly-fabricated report — it downgraded the missing WSL2 to ⚠️ instead of a hard stop, invented a `docker compose v5.1.3` version that does not exist, and recommended `/bootstrap` despite a fine-grained PAT and no WSL2. Root cause: `env-detect.json` is the source of truth, but the SessionStart hook only writes it in Claude Code CLI; with the file missing, `/doctor` fell back to ad-hoc detection and never fired its platform gate.
+Real-run audit: a `/doctor` invocation on the `example-service` test project (run without a `SessionStart` hook, so `env-detect.json` was absent) produced a partly-fabricated report — it downgraded the missing WSL2 to ⚠️ instead of a hard stop, invented a `docker compose v5.1.3` version that does not exist, and recommended `/bootstrap` despite a fine-grained PAT and no WSL2. Root cause: `env-detect.json` is the source of truth, but the SessionStart hook only writes it in Claude Code CLI; with the file missing, `/doctor` fell back to ad-hoc detection and never fired its platform gate.
 
 **Fixes (commands only — `scripts/detect-env.py` unchanged):**
 
@@ -271,7 +271,7 @@ The repo is public; swept it for personal data, names, and IPs before it spreads
 
 ## 2026-05-30 — read:org scope + env-var auth path clarification (hotfix)
 
-Real-run on `carlsberg-ir-data-service`: after creating a classic PAT via our recommended URL and running `gh auth login`, the CLI rejected the token with `missing required scope 'read:org'`. Two gaps in the docs:
+Real-run on `example-service`: after creating a classic PAT via our recommended URL and running `gh auth login`, the CLI rejected the token with `missing required scope 'read:org'`. Two gaps in the docs:
 
 1. **Missing scope in the recommended PAT URL.** `gh auth login` validates `read:org` minimum (standard for the interactive flow), but our URL only listed `repo,workflow,admin:repo_hook,delete_repo`. `/bootstrap` operations themselves (`gh repo create`, branch protection PUT, PRs) don't need `read:org`, but anyone who follows the interactive auth path hits the wall.
 2. **Two auth paths weren't documented as alternatives.** `gh` can use either an exported `GITHUB_PERSONAL_ACCESS_TOKEN` env var OR stored credentials from `gh auth login`. The env-var path skips the `read:org` requirement entirely. The previous docs hinted at both but didn't say "pick ONE" or note the scope difference.
@@ -299,7 +299,7 @@ Closed the P3 backlog from plans 0002-0004. Reframed the original "WSL gate Skil
 
 **Modified:**
 
-- `.claude/commands/bootstrap.md` Step 1 — added Guard B: `gh repo view "$OWNER/$SLUG"` probe BEFORE `gh repo create`. If repo exists remotely but local has no `origin` → STOP with new flag `REPO_ALREADY_EXISTS` and two remedies (link local to existing repo and use Mode B, or pick different slug). Closes the gap that the carlsberg run exposed (user manually created the repo mid-bootstrap; a second `/bootstrap` would otherwise re-call `gh repo create` and fail with a buried GitHub error). `REPO_ALREADY_EXISTS` is documented in the per-flag remediation block.
+- `.claude/commands/bootstrap.md` Step 1 — added Guard B: `gh repo view "$OWNER/$SLUG"` probe BEFORE `gh repo create`. If repo exists remotely but local has no `origin` → STOP with new flag `REPO_ALREADY_EXISTS` and two remedies (link local to existing repo and use Mode B, or pick different slug). Closes the gap that the example-service run exposed (user manually created the repo mid-bootstrap; a second `/bootstrap` would otherwise re-call `gh repo create` and fail with a buried GitHub error). `REPO_ALREADY_EXISTS` is documented in the per-flag remediation block.
 - `.claude/agents/auditor.md` — added `docs/HANDOFF.md` to the read list (extracts "Next step" paragraph + open `## Open questions`). New Suggestion rule 1a: **if HANDOFF.md "Next step" is concrete (not a `{TODO}` placeholder) → use it verbatim as the primary suggestion**. Rationale: the previous session already decided what comes next; surface that decision before re-deriving one from probes. Open questions surface in the Secondary list when present (up to 3).
 
 **bootstrap.md numbering:** `REPO_ALREADY_EXISTS` slots in next to `FINE_GRAINED_PAT_NOT_SUPPORTED` and `UNSUPPORTED_PLATFORM` in the preflight remediation table.
@@ -397,7 +397,7 @@ Followed P0 with the deferred P1 items so that a derived project is born with th
 
 ## 2026-05-30 — Bootstrap robustness (P0)
 
-Real-run audit of `/bootstrap` on `carlsberg-ir-data-service` (Windows Git Bash + fine-grained PAT + Cowork) surfaced four systemic preflight bypasses. All four were silent: the bootstrap "succeeded" because the gates never fired.
+Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-grained PAT + Cowork) surfaced four systemic preflight bypasses. All four were silent: the bootstrap "succeeded" because the gates never fired.
 
 **Root cause:** `.claude/memory/env-detect.json` is the source of truth for `platform_supported`, `pat_kind`, `scopes`, etc. — but it is only written by the `SessionStart` hook in Claude Code CLI. In Cowork there is no hook; the orchestrator agent, finding the file missing, fabricated one with happy-path values (`platform_supported: true`, `has_repo_scope: true`) so that preflight passed. That bypass was never explicitly forbidden by the spec.
 
@@ -425,11 +425,11 @@ Real-run audit of `/bootstrap` on `carlsberg-ir-data-service` (Windows Git Bash 
 
 ---
 
-## 2026-06-01 — main — Quality audit of the carlsberg test project + template hardening
+## 2026-06-01 — main — Quality audit of the example test project + template hardening
 
-**Context:** Audited `carlsberg-ir-data-service` (first real bring-up of the template: `/bootstrap` -> `/synthesize-brief` -> `/preflight` -> product-import feature -> `/wrap-up`) to judge how well the template + agent pipeline performed. Two passes: a broad inventory and a skeptical, evidence-based review (ran `manage.py check`, the OpenAPI drift gate, ruff, Python repros).
+**Context:** Audited `example-service` (first real bring-up of the template: `/bootstrap` -> `/synthesize-brief` -> `/preflight` -> product-import feature -> `/wrap-up`) to judge how well the template + agent pipeline performed. Two passes: a broad inventory and a skeptical, evidence-based review (ran `manage.py check`, the OpenAPI drift gate, ruff, Python repros).
 
-**Findings (full report: `docs/reviews/quality-audit-carlsberg-20260601.md`):**
+**Findings (full report: `docs/reviews/quality-audit-example-20260601.md`):**
 - Strengths: TDD order honored (RED test commit precedes GREEN impl), Conventional Commits, OpenAPI drift gate passes, ruff clean, Google docstrings, DB-state assertions + real triangulation.
 - Delivery (RED): PR #4 never merged - feature stranded on the branch; `/wrap-up` left `HANDOFF.md` 100% `{TODO}` and the tree dirty; WORKLOG overstated merge status.
 - Feature code (RED): broad `except Exception` per row -> corruption returns HTTP 200; `format=csv` + JSON body silently creates a junk product; non-atomic 409 -> 500 under concurrency.

@@ -1,7 +1,7 @@
 # Аудит якості шаблону claude-django
 
 **Дата:** 2026-06-01
-**Тестовий проєкт:** `carlsberg-ir-data-service`
+**Тестовий проєкт:** `example-service`
 **Сценарій:** clone → `/doctor` → `/bootstrap` → `Project_Data` + `/synthesize-brief` → `/preflight` → фіча «імпорт продуктів» → `/wrap-up`
 **Метод:** два незалежні проходи — оглядовий + скептичний (з реальним запуском `manage.py check`, drift-gate, ruff, Python-репро).
 
