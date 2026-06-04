@@ -1,6 +1,6 @@
 ---
 name: domain-architect
-description: "Domain modeling (DDD-lite) for complex domains: bounded contexts, aggregates, where business logic lives. Optional — used only when the domain is genuinely complex. Respects Simplicity First.\n\nTrigger: domain model, bounded context, aggregate, where should this logic live, model the domain, ddd.\n\n<example>\nuser: 'The billing domain is getting complex, help model it'\nassistant: 'Using domain-architect: bounded contexts, aggregates, logic placement — kept as simple as the domain allows.'\n</example>"
+description: "[claude-django] Domain modeling (DDD-lite) for complex domains: bounded contexts, aggregates, where business logic lives. Optional — used only when the domain is genuinely complex. Respects Simplicity First.\n\nTrigger: domain model, bounded context, aggregate, where should this logic live, model the domain, ddd.\n\n<example>\nuser: 'The billing domain is getting complex, help model it'\nassistant: 'Using domain-architect: bounded contexts, aggregates, logic placement — kept as simple as the domain allows.'\n</example>"
 model: opus
 color: purple
 tools: [Read, Glob, Grep, Write, SendMessage]

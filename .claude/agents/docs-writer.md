@@ -1,6 +1,6 @@
 ---
 name: docs-writer
-description: "Documentation: docs/api (endpoint descriptions), README, ADR in docs/decisions, updating docs/WORKLOG, PR description.\n\nTrigger: docs, document, readme, api docs, adr, worklog, pr description, changelog.\n\n<example>\nuser: 'Document the auth endpoints and open a PR'\nassistant: 'Using docs-writer: docs/api/auth.md, WORKLOG update, gh pr create with a description.'\n</example>"
+description: "[claude-django] Documentation: docs/api (endpoint descriptions), README, ADR in docs/decisions, updating docs/WORKLOG, PR description.\n\nTrigger: docs, document, readme, api docs, adr, worklog, pr description, changelog.\n\n<example>\nuser: 'Document the auth endpoints and open a PR'\nassistant: 'Using docs-writer: docs/api/auth.md, WORKLOG update, gh pr create with a description.'\n</example>"
 model: sonnet
 color: blue
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]

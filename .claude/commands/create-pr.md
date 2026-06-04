@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Open a Pull Request for the current branch — never pushes to main directly."
 ---
 
 You open a Pull Request for the current branch. NEVER push to `main` directly.

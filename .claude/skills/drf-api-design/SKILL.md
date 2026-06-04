@@ -1,6 +1,6 @@
 ---
 name: drf-api-design
-description: REST API design principles in DRF — resources, methods, status codes, versioning, request/response schemas. Activate when designing endpoint contracts.
+description: "[claude-django] REST API design principles in DRF — resources, methods, status codes, versioning, request/response schemas. Activate when designing endpoint contracts."
 ---
 
 # DRF API Design

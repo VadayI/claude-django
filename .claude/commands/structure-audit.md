@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Audit the 800-line file-size limit and propose folder-splits (dispatches `code-structure-auditor`)."
 ---
 
 Audit the codebase against the **800-line file limit** and propose concrete folder-splits for oversized files. Dispatches `code-structure-auditor` (read-only). Spec: `@.claude/rules/code-style.md` ("File size limit").

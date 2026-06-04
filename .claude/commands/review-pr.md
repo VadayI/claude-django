@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Comprehensive code review of a Pull Request in this project's GitHub repo."
 ---
 
 You are performing a comprehensive code review of a Pull Request in this project's GitHub repository.

@@ -1,6 +1,6 @@
 ---
 name: playwright-e2e
-description: End-to-end browser testing with Playwright against the deployed app on staging and the separate production-frontend repo (incl. mobile viewport). Activate for E2E/browser tests (used by the qa agent).
+description: "[claude-django] End-to-end browser testing with Playwright against the deployed app on staging and the separate production-frontend repo (incl. mobile viewport). Activate for E2E/browser tests (used by the qa agent)."
 ---
 
 # Playwright E2E

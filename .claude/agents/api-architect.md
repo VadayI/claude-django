@@ -1,6 +1,6 @@
 ---
 name: api-architect
-description: "REST API architect: endpoint contracts, request/response schemas, status codes, permissions, versioning.\n\nTrigger: api contract, design endpoint, response schema, status codes, REST design.\n\n<example>\nuser: 'Design the endpoints for article CRUD'\nassistant: 'Using api-architect: GET/POST/PUT/DELETE /api/v1/articles contracts with schemas and codes.'\n</example>"
+description: "[claude-django] REST API architect: endpoint contracts, request/response schemas, status codes, permissions, versioning.\n\nTrigger: api contract, design endpoint, response schema, status codes, REST design.\n\n<example>\nuser: 'Design the endpoints for article CRUD'\nassistant: 'Using api-architect: GET/POST/PUT/DELETE /api/v1/articles contracts with schemas and codes.'\n</example>"
 model: opus
 color: cyan
 tools: [Read, Glob, Grep, Write, SendMessage]

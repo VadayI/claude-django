@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Quick plugin setup + status — wrapper over /doctor's plugin checks with a paste-ready install block."
 ---
 
 Quick **plugin** setup + status for this project — a thin wrapper over `/doctor`'s plugin checks plus the paste-ready install block from `/bootstrap` Step 6. Plugin installation can NOT be automated by an agent (it runs inside the Claude UI), so this command's job is to (a) report what is installed vs expected and (b) hand you the exact lines to paste.

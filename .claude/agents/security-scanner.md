@@ -1,6 +1,6 @@
 ---
 name: security-scanner
-description: "Security audit: authentication/authorization, OWASP, input validation, secret leaks, DRF permissions.\n\nTrigger: security, auth check, owasp, permissions, secret leak, vulnerability, injection.\n\n<example>\nuser: 'Check the security of the new endpoint'\nassistant: 'Using security-scanner: permissions, validation, secrets, OWASP.'\n</example>"
+description: "[claude-django] Security audit: authentication/authorization, OWASP, input validation, secret leaks, DRF permissions.\n\nTrigger: security, auth check, owasp, permissions, secret leak, vulnerability, injection.\n\n<example>\nuser: 'Check the security of the new endpoint'\nassistant: 'Using security-scanner: permissions, validation, secrets, OWASP.'\n</example>"
 model: opus
 color: red
 tools: [Read, Glob, Grep, Bash, SendMessage]

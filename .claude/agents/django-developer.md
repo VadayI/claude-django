@@ -1,6 +1,6 @@
 ---
 name: django-developer
-description: "Django/DRF developer: models, serializers, views, routes, permissions. Writes code that greens the tests (GREEN).\n\nTrigger: implement, build endpoint, add model, serializer, viewset, make tests pass.\n\n<example>\nuser: 'Implement the registration endpoint'\nassistant: 'Using django-developer: model/serializer/view/route so the feature tests go green.'\n</example>"
+description: "[claude-django] Django/DRF developer: models, serializers, views, routes, permissions. Writes code that greens the tests (GREEN).\n\nTrigger: implement, build endpoint, add model, serializer, viewset, make tests pass.\n\n<example>\nuser: 'Implement the registration endpoint'\nassistant: 'Using django-developer: model/serializer/view/route so the feature tests go green.'\n</example>"
 model: sonnet
 color: green
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]

@@ -1,6 +1,6 @@
 ---
 name: code-structure-auditor
-description: "File-structure & size auditor: finds source files over the 800-line limit (and those approaching it), and proposes a concrete split into a package of smaller, single-responsibility modules grouped in folders. Read-only analysis — does not edit code. Optional, run on demand via /structure-audit.\n\nTrigger: file too big, 800 lines, split file, structure audit, oversized module, group into folders, file size, /structure-audit.\n\n<example>\nuser: 'views.py is huge, what should I do?'\nassistant: 'Using code-structure-auditor: measure, find the seams, propose apps/<x>/views/ split with __init__.py re-exports.'\n</example>"
+description: "[claude-django] File-structure & size auditor: finds source files over the 800-line limit (and those approaching it), and proposes a concrete split into a package of smaller, single-responsibility modules grouped in folders. Read-only analysis — does not edit code. Optional, run on demand via /structure-audit.\n\nTrigger: file too big, 800 lines, split file, structure audit, oversized module, group into folders, file size, /structure-audit.\n\n<example>\nuser: 'views.py is huge, what should I do?'\nassistant: 'Using code-structure-auditor: measure, find the seams, propose apps/<x>/views/ split with __init__.py re-exports.'\n</example>"
 model: sonnet
 color: gray
 tools: [Read, Glob, Grep, Bash, SendMessage]

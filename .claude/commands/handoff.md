@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Regenerate docs/HANDOFF.md — the rolling 'where we are / what's next' snapshot for new sessions."
 ---
 
 Regenerate `docs/HANDOFF.md` — the rolling snapshot read by every new session ("where we are right now and what's next").

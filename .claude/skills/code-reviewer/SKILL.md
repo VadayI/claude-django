@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Code-review methodology and checklist for Django/DRF (backend-only). Activate when reviewing changes before a PR (used by the reviewer agent).
+description: "[claude-django] Code-review methodology and checklist for Django/DRF (backend-only). Activate when reviewing changes before a PR (used by the reviewer agent)."
 ---
 
 # Code Reviewer

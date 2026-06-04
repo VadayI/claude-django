@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Workflow audit — read the command log + live state and propose what to run next (dispatches `auditor`)."
 ---
 
 You run a workflow audit — read the command log and the live state, then propose what to run next. Dispatch the `auditor` agent and relay its findings; never decide for the user.

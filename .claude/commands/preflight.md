@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Project-kickoff preflight — hard gate verifying brief/stack/docs/GitHub access before any feature work."
 ---
 
 You run the **project kickoff preflight** — a hard gate that verifies agents have the inputs and access to build correctly, BEFORE any feature work. Spec: `@.claude/rules/preflight.md`. Invoke at the start of a new project, or whenever access/inputs are in doubt.

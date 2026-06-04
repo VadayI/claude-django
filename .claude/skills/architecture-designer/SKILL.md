@@ -1,6 +1,6 @@
 ---
 name: architecture-designer
-description: General architecture design & review for Django/DRF projects — layering, module boundaries, where logic belongs, trade-offs. Activate when shaping or reviewing structure (lighter than ddd-strategic-design).
+description: "[claude-django] General architecture design & review for Django/DRF projects — layering, module boundaries, where logic belongs, trade-offs. Activate when shaping or reviewing structure (lighter than ddd-strategic-design)."
 ---
 
 # Architecture Designer

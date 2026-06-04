@@ -1,6 +1,6 @@
 ---
 name: ci-cd-engineer
-description: "GitHub Actions CI: lint + tests on every PR; (optional) auto-deploy to staging on merge to main.\n\nTrigger: ci, github actions, workflow, pipeline, on pull request, auto deploy.\n\n<example>\nuser: 'Add CI for the tests'\nassistant: 'Using ci-cd-engineer: workflow with a postgres service, ruff and pytest on every PR.'\n</example>"
+description: "[claude-django] GitHub Actions CI: lint + tests on every PR; (optional) auto-deploy to staging on merge to main.\n\nTrigger: ci, github actions, workflow, pipeline, on pull request, auto deploy.\n\n<example>\nuser: 'Add CI for the tests'\nassistant: 'Using ci-cd-engineer: workflow with a postgres service, ruff and pytest on every PR.'\n</example>"
 model: sonnet
 color: gray
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]

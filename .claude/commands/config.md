@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Quick audit of this project's Claude configuration (settings.json, .mcp.json, MCP/plugins) — wrapper over /doctor's claude scope."
 ---
 
 Quick audit of this project's **Claude configuration** — a thin wrapper over `/doctor`'s `claude` scope (`.claude/settings.json`, `.mcp.json`, MCP servers, env keys, hooks). Use it for a fast "is my Claude setup correct?" check without running the full four-scope environment audit.

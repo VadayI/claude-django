@@ -1,6 +1,6 @@
 ---
 name: test-master
-description: Test strategy and coverage planning on top of TDD for Django/DRF — what to test, test pyramid, fixtures/factories, coverage targets. Activate when planning test strategy or reviewing coverage (complements pytest-tdd).
+description: "[claude-django] Test strategy and coverage planning on top of TDD for Django/DRF — what to test, test pyramid, fixtures/factories, coverage targets. Activate when planning test strategy or reviewing coverage (complements pytest-tdd)."
 ---
 
 # Test Master (strategy)

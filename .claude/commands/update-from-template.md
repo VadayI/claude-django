@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Sync a derived project to a newer claude-django template version (template-owned overwrite, project-owned preserved) and open a PR."
 ---
 
 Update a **derived project** (one bootstrapped from `claude-django`) to a newer version of the template config — agents, commands, skills, rules, and CI gate scripts — overwriting only template-owned files and preserving everything the project owns. Dispatches `template-sync`, then opens a **PR** (derived projects are PR-only, `@.claude/rules/git-operations.md`). Background: ADR `0014`; derived projects carry a pinned copy with no automatic upgrade channel (ADR `0002`).
@@ -37,7 +38,7 @@ python scripts/log-cmd.py /update-from-template $ARGUMENTS
    git checkout -b chore/sync-template-$(date +%Y%m%d)
    ```
 4. **Dispatch `template-sync`** (`subagent_type: "template-sync"`) with `$UPSTREAM=/tmp/claude-django` and the dry-run flag if present. It performs the categorized sync (template-owned overwrite · merge-by-hand diff · project-owned untouched), wires any new gate scripts into the live `scripts/` + `.github/workflows/backend-ci.yml`, writes `.claude/memory/template-sync.json`, and returns the change report.
-5. **Relay** the report. Highlight the **merge-by-hand** items (CLAUDE.md / settings.json / live CI) so the user reviews those hunks.
+5. **Relay** the report. Highlight the **merge-by-hand** items (CLAUDE.md / settings.json / live CI) so the user reviews those hunks, and the **Stale** section (template-owned files removed/renamed upstream) so the user can decide on manual cleanup — the sync never auto-deletes.
 6. **Open a PR** (skip on `--dry-run`): hand off to `docs-writer` (or run `/create-pr`) with a description summarizing the synced SHA range and the merge-by-hand files to review. **Never push to `main`.**
 
 ## Hard limits
@@ -48,4 +49,4 @@ python scripts/log-cmd.py /update-from-template $ARGUMENTS
 - Never print secret values.
 
 > Pairs with `/doctor` (run it after the PR merges to re-verify the environment against the refreshed `environment.md`).
-<!-- Last reviewed/updated: 2026-06-02 -->
+<!-- Last reviewed/updated: 2026-06-04 (relay Stale section from template-sync) -->

@@ -1,6 +1,6 @@
 ---
 name: debugger
-description: "Bug investigation: reproduction, root-cause analysis, localization. First in the bug-fix pipeline.\n\nTrigger: bug, error, traceback, not working, fails, unexpected behavior, debug.\n\n<example>\nuser: 'Registration throws a 500'\nassistant: 'Using debugger: I reproduce it, read the traceback, find the root cause.'\n</example>"
+description: "[claude-django] Bug investigation: reproduction, root-cause analysis, localization. First in the bug-fix pipeline.\n\nTrigger: bug, error, traceback, not working, fails, unexpected behavior, debug.\n\n<example>\nuser: 'Registration throws a 500'\nassistant: 'Using debugger: I reproduce it, read the traceback, find the root cause.'\n</example>"
 model: sonnet
 color: yellow
 tools: [Read, Glob, Grep, Bash, SendMessage]

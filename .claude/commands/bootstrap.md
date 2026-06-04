@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Bootstrap a Django backend project from this template config (Mode A fresh scaffold / Mode B resume)."
 ---
 
 Bootstrap a Django backend project from this template config. Two modes:

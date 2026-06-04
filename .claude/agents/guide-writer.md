@@ -1,6 +1,6 @@
 ---
 name: guide-writer
-description: "User-facing onboarding guides: docs/guides/admin.md (operator: first start, data loading, admin, day-2 ops) and docs/guides/api-consumer.md (integrator: base URL, auth, first request, conventions). Keeps them in sync with the shipped surface and reconciles every command/endpoint against code + openapi.yml.\n\nTrigger: user guide, admin guide, operator guide, getting started, onboarding doc, how to start, data loading guide, api consumer guide, /guides.\n\n<example>\nuser: 'Update the guides after adding token auth and a seed command'\nassistant: 'Using guide-writer: refresh Authentication in api-consumer.md and Loading initial data in admin.md, then reconcile against the code and schema.'\n</example>"
+description: "[claude-django] User-facing onboarding guides: docs/guides/admin.md (operator: first start, data loading, admin, day-2 ops) and docs/guides/api-consumer.md (integrator: base URL, auth, first request, conventions). Keeps them in sync with the shipped surface and reconciles every command/endpoint against code + openapi.yml.\n\nTrigger: user guide, admin guide, operator guide, getting started, onboarding doc, how to start, data loading guide, api consumer guide, /guides.\n\n<example>\nuser: 'Update the guides after adding token auth and a seed command'\nassistant: 'Using guide-writer: refresh Authentication in api-consumer.md and Loading initial data in admin.md, then reconcile against the code and schema.'\n</example>"
 model: sonnet
 color: blue
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]

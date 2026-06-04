@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Security audit methodology (OWASP + DRF specifics) for Django REST APIs. Activate during security review (used by the security-scanner agent).
+description: "[claude-django] Security audit methodology (OWASP + DRF specifics) for Django REST APIs. Activate during security review (used by the security-scanner agent)."
 ---
 
 # Security Reviewer

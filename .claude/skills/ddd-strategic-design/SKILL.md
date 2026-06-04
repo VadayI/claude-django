@@ -1,6 +1,6 @@
 ---
 name: ddd-strategic-design
-description: DDD-lite strategic design — subdomains, bounded contexts, ubiquitous language, aggregates — mapped onto Django layering. Use ONLY for genuinely complex domains (paired with the domain-architect agent). Respects Simplicity First.
+description: "[claude-django] DDD-lite strategic design — subdomains, bounded contexts, ubiquitous language, aggregates — mapped onto Django layering. Use ONLY for genuinely complex domains (paired with the domain-architect agent). Respects Simplicity First."
 ---
 
 # DDD Strategic Design (lite)

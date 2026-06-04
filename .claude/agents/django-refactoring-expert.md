@@ -1,6 +1,6 @@
 ---
 name: django-refactoring-expert
-description: "Refactoring & code-quality specialist for Django/DRF: reduce complexity, fix N+1, remove duplication, pay down tech debt — without changing behavior. Optional — used for mature codebases.\n\nTrigger: refactor, clean up, reduce complexity, remove duplication, tech debt, simplify, fix N+1, code smell.\n\n<example>\nuser: 'This view got messy, refactor it'\nassistant: 'Using django-refactoring-expert: extract logic to the model/service, keep tests green.'\n</example>"
+description: "[claude-django] Refactoring & code-quality specialist for Django/DRF: reduce complexity, fix N+1, remove duplication, pay down tech debt — without changing behavior. Optional — used for mature codebases.\n\nTrigger: refactor, clean up, reduce complexity, remove duplication, tech debt, simplify, fix N+1, code smell.\n\n<example>\nuser: 'This view got messy, refactor it'\nassistant: 'Using django-refactoring-expert: extract logic to the model/service, keep tests green.'\n</example>"
 model: opus
 color: yellow
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]

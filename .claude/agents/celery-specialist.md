@@ -1,6 +1,6 @@
 ---
 name: celery-specialist
-description: "Async/background processing specialist: Celery + Redis/RabbitMQ, tasks, scheduling (beat), retries, idempotency. Optional — used when the project has background work.\n\nTrigger: celery, background task, async job, queue, worker, scheduled task, beat, retry, idempotent.\n\n<example>\nuser: 'Send the welcome email in the background after registration'\nassistant: 'Using celery-specialist: a Celery task with retry/idempotency + a test.'\n</example>"
+description: "[claude-django] Async/background processing specialist: Celery + Redis/RabbitMQ, tasks, scheduling (beat), retries, idempotency. Optional — used when the project has background work.\n\nTrigger: celery, background task, async job, queue, worker, scheduled task, beat, retry, idempotent.\n\n<example>\nuser: 'Send the welcome email in the background after registration'\nassistant: 'Using celery-specialist: a Celery task with retry/idempotency + a test.'\n</example>"
 model: sonnet
 color: orange
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]

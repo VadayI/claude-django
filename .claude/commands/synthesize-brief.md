@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Synthesize/update docs/PROJECT.md from docs/** input documents (via feature branch + PR)."
 ---
 
 Recursively synthesize/update `docs/PROJECT.md` from input documents in `docs/**`. Always commits via feature branch + PR — NEVER direct push to `main`.

@@ -1,6 +1,6 @@
 ---
 name: devops
-description: "Docker, docker-compose, deploy to VPS staging (Debian), reverse-proxy, environment.\n\nTrigger: docker, compose, deploy, staging, nginx, traefik, dockerfile, environment.\n\n<example>\nuser: 'Set up deployment to the VPS'\nassistant: 'Using devops: compose for staging, separate network/ports, subdomain via reverse-proxy.'\n</example>"
+description: "[claude-django] Docker, docker-compose, deploy to VPS staging (Debian), reverse-proxy, environment.\n\nTrigger: docker, compose, deploy, staging, nginx, traefik, dockerfile, environment.\n\n<example>\nuser: 'Set up deployment to the VPS'\nassistant: 'Using devops: compose for staging, separate network/ports, subdomain via reverse-proxy.'\n</example>"
 model: sonnet
 color: orange
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]

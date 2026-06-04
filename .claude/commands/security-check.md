@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Focused security audit over the working changes (or a given path)."
 ---
 
 You run a focused security audit over the working changes (or a given path).

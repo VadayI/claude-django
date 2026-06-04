@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Wrap up the work session — summarize, persist context to Git, run checks, prepare to commit."
 ---
 
 You wrap up the current work session: summarize, persist context to Git-tracked files, run checks, and prepare for commit. Invoke this when the user wants to finish work in this session / context window. This operationalizes principle 5 (Context in Git).

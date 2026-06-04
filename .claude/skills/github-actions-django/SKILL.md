@@ -1,6 +1,6 @@
 ---
 name: github-actions-django
-description: GitHub Actions CI for Django (ruff + pytest with a postgres service); the gate before merging to main. Activate for CI/CD.
+description: "[claude-django] GitHub Actions CI for Django (ruff + pytest with a postgres service); the gate before merging to main. Activate for CI/CD."
 ---
 
 # GitHub Actions for Django

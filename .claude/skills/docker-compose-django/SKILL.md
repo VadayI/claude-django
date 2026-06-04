@@ -1,6 +1,6 @@
 ---
 name: docker-compose-django
-description: Docker Compose for Django + PostgreSQL (dev and staging) in WSL2/on the VPS — services, volumes, healthcheck, env, environment parity. Activate for containerization/deployment.
+description: "[claude-django] Docker Compose for Django + PostgreSQL (dev and staging) in WSL2/on the VPS — services, volumes, healthcheck, env, environment parity. Activate for containerization/deployment."
 ---
 
 # Docker Compose for Django

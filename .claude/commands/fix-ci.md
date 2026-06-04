@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Diagnose and fix GitHub Actions CI failures on the current Pull Request."
 ---
 
 You are diagnosing and fixing CI/CD failures on a Pull Request in this project's GitHub repository. The CI system is GitHub Actions (workflow: `.github/workflows/backend-ci.yml` — this repo is backend-only).

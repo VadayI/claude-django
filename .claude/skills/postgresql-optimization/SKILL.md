@@ -1,6 +1,6 @@
 ---
 name: postgresql-optimization
-description: PostgreSQL and Django ORM optimization — N+1 elimination, indexes, select_related/prefetch_related, EXPLAIN, safe migrations. Activate when working with the DB / slow queries.
+description: "[claude-django] PostgreSQL and Django ORM optimization — N+1 elimination, indexes, select_related/prefetch_related, EXPLAIN, safe migrations. Activate when working with the DB / slow queries."
 ---
 
 # PostgreSQL + ORM Optimization

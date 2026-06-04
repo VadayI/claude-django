@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Generate (and optionally run) the human-facing endpoint verification guide for a feature."
 ---
 
 Generate (and optionally run) the **human-facing endpoint verification guide** for a feature — the manual, copy-paste smoke test described in `@.claude/rules/verification.md`. This is the on-demand twin of the automatic block `docs-writer` emits at the end of the feature pipeline.

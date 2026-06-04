@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Change the project's output language after bootstrap (idempotent)."
 ---
 
 Change the output language for this project after bootstrap. Idempotent — running it twice with the same answer leaves the repo unchanged.

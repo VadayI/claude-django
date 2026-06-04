@@ -1,6 +1,6 @@
 ---
 name: pytest-tdd
-description: TDD with pytest + pytest-django for Django/DRF — fixtures, factories, APIClient, the RED-GREEN-REFACTOR pattern. Always activate during testing.
+description: "[claude-django] TDD with pytest + pytest-django for Django/DRF — fixtures, factories, APIClient, the RED-GREEN-REFACTOR pattern. Always activate during testing."
 ---
 
 # pytest + TDD

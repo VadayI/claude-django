@@ -1,6 +1,6 @@
 ---
 name: tester
-description: "pytest/pytest-django test engineer. TDD: writes FAILING tests first (RED), then verifies green.\n\nTrigger: write tests, unit test, feature test, coverage, TDD, test fails, regression test.\n\n<example>\nuser: 'Write tests for the registration endpoint'\nassistant: 'Using tester: feature tests via APIClient for all codes and authorization (RED).'\n</example>"
+description: "[claude-django] pytest/pytest-django test engineer. TDD: writes FAILING tests first (RED), then verifies green.\n\nTrigger: write tests, unit test, feature test, coverage, TDD, test fails, regression test.\n\n<example>\nuser: 'Write tests for the registration endpoint'\nassistant: 'Using tester: feature tests via APIClient for all codes and authorization (RED).'\n</example>"
 model: opus
 color: green
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]

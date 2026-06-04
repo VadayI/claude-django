@@ -1,6 +1,6 @@
 ---
 name: django-specialist
-description: Best practices for Django 6 + DRF — models, serializers, ViewSets, routes, permissions, settings. Activate during any backend implementation.
+description: "[claude-django] Best practices for Django 6 + DRF — models, serializers, ViewSets, routes, permissions, settings. Activate during any backend implementation."
 ---
 
 # Django + DRF Specialist

@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Update project documentation to match the latest changes."
 ---
 
 You update project documentation to match the latest changes.

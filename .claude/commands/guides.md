@@ -1,5 +1,6 @@
 ---
 model: sonnet
+description: "[claude-django] Generate/refresh the user-facing onboarding guides (docs/guides/admin.md + api-consumer.md)."
 ---
 
 Generate or refresh the **user-facing onboarding guides** — `docs/guides/admin.md` (operator) and `docs/guides/api-consumer.md` (API integrator) — per `@.claude/rules/user-guides.md`. This is the on-demand twin of the guide updates `guide-writer` emits in the Documentation phase of the feature pipeline.

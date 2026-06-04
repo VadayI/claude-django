@@ -1,6 +1,6 @@
 ---
 name: template-sync
-description: "Template updater: syncs a project's pinned claude-django config (.claude/agents, commands, skills, rules, gate scripts) to a newer upstream version — overwriting ONLY template-owned files, never clobbering project-owned ones (CLAUDE.md edits, settings, memory, docs, backend). Surfaces merge-by-hand files as a diff and opens the change as a PR.\n\nTrigger: update from template, sync template, upgrade claude-django, pull template updates, refresh agents/skills, /update-from-template.\n\n<example>\nuser: 'pull the latest agents and rules from claude-django into this project'\nassistant: 'Using template-sync: overwrite template-owned files, preserve local config, flag CLAUDE.md/settings for manual merge, open a PR.'\n</example>"
+description: "[claude-django] Template updater: syncs a project's pinned claude-django config (.claude/agents, commands, skills, rules, gate scripts) to a newer upstream version — overwriting ONLY template-owned files, never clobbering project-owned ones (CLAUDE.md edits, settings, memory, docs, backend). Surfaces merge-by-hand files as a diff and opens the change as a PR.\n\nTrigger: update from template, sync template, upgrade claude-django, pull template updates, refresh agents/skills, /update-from-template.\n\n<example>\nuser: 'pull the latest agents and rules from claude-django into this project'\nassistant: 'Using template-sync: overwrite template-owned files, preserve local config, flag CLAUDE.md/settings for manual merge, open a PR.'\n</example>"
 model: sonnet
 color: cyan
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]
@@ -53,10 +53,11 @@ Most derived projects deleted `templates/` after bootstrap, so a brand-new gate 
 
 1. Confirm this is a derived project (`.claude/` exists; ideally `backend/` too). If it looks like the template repo itself (has `docs/decisions/0001-*` AND `templates/` AND no `backend/`), STOP — you do not sync the template into itself.
 2. For each template-owned file: compare with the project's copy; overwrite when different; collect the change list.
-3. For each merge-by-hand file: `diff` and propose the minimal additive change; apply only with the additions clearly attributable to the new template (new import lines, new agent/command rows, new CI step). Leave genuinely conflicting hunks for the user and list them.
-4. Wire any new gate scripts per above.
-5. Write `.claude/memory/template-sync.json`: `{"upstream": "<url>", "synced_sha": "<HEAD of $UPSTREAM>", "synced_at": "<ISO>", "previous_sha": "<old value or null>"}`.
-6. Produce the report.
+3. **Stale scan (removed/renamed upstream).** For each template-owned path that exists in the project but has **no** counterpart in `$UPSTREAM` — an agent / command / skill / rule the template dropped or renamed — do **NOT** delete it. Collect it for the **Stale** report section. Also scan `CLAUDE.md`'s `@.claude/rules/*.md` import block and the *Available agents* list for references to files that are no longer present upstream, and flag those as cleanup candidates. The sync never auto-deletes; removal is always the user's call in the PR (a rename shows up as one stale file + one added file).
+4. For each merge-by-hand file: `diff` and propose the minimal additive change; apply only with the additions clearly attributable to the new template (new import lines, new agent/command rows, new CI step). Leave genuinely conflicting hunks for the user and list them.
+5. Wire any new gate scripts per above.
+6. Write `.claude/memory/template-sync.json`: `{"upstream": "<url>", "synced_sha": "<HEAD of $UPSTREAM>", "synced_at": "<ISO>", "previous_sha": "<old value or null>"}`.
+7. Produce the report.
 
 ## Report format
 
@@ -74,6 +75,10 @@ Merge-by-hand (review these diffs):
 New gates wired:
 - check_file_size.sh -> scripts/ (+chmod) + backend-ci.yml step
 
+Stale (in project, removed/renamed upstream — review for manual cleanup; NOT auto-deleted):
+- .claude/agents/<old-agent>.md  (no upstream counterpart)
+- CLAUDE.md: import @.claude/rules/<removed>.md points to a file absent upstream
+
 Skipped (project-owned, untouched): .claude/memory/*, output-language.md, docs/**, backend/**
 
 Next: open a PR (hand to docs-writer / /create-pr). Do NOT push to main.
@@ -88,4 +93,4 @@ Next: open a PR (hand to docs-writer / /create-pr). Do NOT push to main.
 - If `--dry-run` was requested, do all the comparison and produce the report, but make NO file changes.
 
 > Goal: a derived project can adopt newer agents, rules, commands, skills, and gates with one command — gaining template improvements while keeping every project-specific customization intact.
-<!-- Last reviewed/updated: 2026-06-02 (new agent: pinned-copy -> upstream sync for derived projects, ADR 0014) -->
+<!-- Last reviewed/updated: 2026-06-04 (added stale-scan: report template-owned files removed/renamed upstream; never auto-delete) -->
