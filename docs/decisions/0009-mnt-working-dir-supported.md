@@ -11,7 +11,7 @@
 
 ```
 2. ⚠️  Перенести проєкт (необов'язково, але рекомендовано):
-   cp -r "/mnt/d/Dev/.../carlsberg-ir-data-service" ~/projects/carlsberg-ir-data-service
+   cp -r "/mnt/d/Dev/.../example-service" ~/projects/example-service
 ```
 
 Maintainer тримає всі свої проєкти на Windows-диску (`D:\Dev\...`), редагує їх рідними Windows-інструментами й не хоче ні переносити їх, ні бачити повторювані нагадування про це. Перенос не є вимогою для проходження platform-гейту — WSL2-нативний `claude`, запущений з `/mnt/d`, дає `platform: linux, is_wsl2: true, platform_supported: true`.

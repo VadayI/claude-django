@@ -7,7 +7,7 @@
 
 ## Context
 
-ADR 0005 made the config OS-portable by collapsing to a single bash path and mandating WSL2 on Windows. That removed accidental complexity, but real `/doctor` runs on the `carlsberg-ir-data-service` test project surfaced recurring *onboarding* friction that the gates correctly stopped at without smoothing:
+ADR 0005 made the config OS-portable by collapsing to a single bash path and mandating WSL2 on Windows. That removed accidental complexity, but real `/doctor` runs on the `example-service` test project surfaced recurring *onboarding* friction that the gates correctly stopped at without smoothing:
 
 - **The wrong-runner trap.** The single most common failure is typing `claude` inside a WSL2 shell while only the **Windows** CLI is installed. PATH interop resolves `claude` to `claude.exe`, the `SessionStart` hook runs Windows-Python, and `env-detect.json` records `platform: windows`, `platform_supported: false`. `/doctor` then HARD STOPs with `UNSUPPORTED_PLATFORM` — correct, but the generic remedy ("install WSL2") is misleading when WSL2 already exists; the real fix is to install/launch the WSL2-native `claude`.
 - **Manual, undocumented setup.** Bringing a fresh WSL2 up to standard (`python-is-python3`, Node/nvm, the CLI, `gh`, the PATH-precedence fix) was a hand-run checklist.

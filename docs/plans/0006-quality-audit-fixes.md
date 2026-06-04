@@ -1,6 +1,6 @@
-# План 0006 — правки claude-django за аудитом carlsberg
+# План 0006 — правки claude-django за аудитом example-service
 
-**Джерело:** `docs/reviews/quality-audit-carlsberg-20260601.md`
+**Джерело:** `docs/reviews/quality-audit-example-20260601.md`
 **Мета:** усунути дефекти «останньої милі» (доставка + глибина quality-gate) і один баг скафолда.
 **Природа змін:** правки конфігурації шаблону (markdown-команди/агенти/правила + `templates/pyproject.toml`). Це НЕ проходить feature-pipeline Django; кожна група йде окремою гілкою → PR (правило `git-operations.md`).
 

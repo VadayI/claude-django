@@ -32,7 +32,7 @@
 
 2. **Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті** (НЕ в цьому репо) — головний змістовний крок, бо обидва кошики (A+B) рапорту вичерпано: `pytest` зелений на `config.settings.test`; `ruff check .` чистий (нові `apps/common`); `docker compose -f docker-compose.staging.yml config -q` валідний; `python manage.py check --deploy` на `staging` без критичних ворнінгів; `curl /api/v1/health/` → 200.
 
-3. **Допрацювати похідний `carlsberg-ir-data-service`** (синкнуто вручну, `052ae15`): реєстрація нових агентів у його `CLAUDE.md` + імпорт `@.claude/rules/user-guides.md`, крок file-size-гейту в живому `backend-ci.yml`, запустити `/guides`, переконатись що `bash scripts/check_file_size.sh` проходить перед наступним PR.
+3. **Допрацювати похідний `example-service`** (синкнуто вручну, `052ae15`): реєстрація нових агентів у його `CLAUDE.md` + імпорт `@.claude/rules/user-guides.md`, крок file-size-гейту в живому `backend-ci.yml`, запустити `/guides`, переконатись що `bash scripts/check_file_size.sh` проходить перед наступним PR.
 
 4. **Пріоритезувати pre-commit/CI-гард на обрізаний хвіст файлу** — цей інцидент (HANDOFF обрізало, `.git/config` забило NUL) уже втретє за історію кусає на /mnt; перевести з «відкритого питання» в задачу.
 
