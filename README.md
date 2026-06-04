@@ -329,6 +329,17 @@ The CI gate scripts (`scripts/check_*.sh`) intentionally stay bash — they run 
 >
 > The one thing that matters: you launched **WSL** (not PowerShell) and `claude` is the **WSL2-native** binary (`which claude` → `/home/...`, not `/mnt/c/...`). The `/mnt` caveats (slower bind-mounts, CRLF, run git from the host shell) are minor and never block you.
 
+**Fastest — one-line seed.** From the root of your project folder in WSL2, this clones the template and copies the config in one go (idempotent; refuses to clobber an already-seeded folder unless `--force`):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/VadayI/claude-django/main/scripts/install.sh)
+# optional args:  install.sh [TARGET_DIR] [--ref GIT_REF] [--url FORK_URL] [--force]
+```
+
+Then launch `claude` → `/doctor` → `/bootstrap`. To upgrade an *already-seeded* project use `/update-from-template` instead (it preserves your edits, ADR `0014`).
+
+**Manual equivalent** (what `install.sh` does, if you prefer to run it by hand):
+
 ```bash
 # in WSL2, from the root of your project (a /mnt/d/... Windows-drive path is fine — ADR 0009)
 rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django

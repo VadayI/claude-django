@@ -1,6 +1,20 @@
 # WORKLOG — claude-django
 
 
+## 2026-06-04 — Seed-скрипт `scripts/install.sh` (онбординг в один рядок)
+
+Додав `scripts/install.sh` — згортає багатокроковий Quick-start-блок копіювання в одну команду: клонує апстрім у tmp, копіює `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`/`.gitattributes`, `scripts/`, повний `templates/`, root `docker-compose.yml`/`Makefile`, `.github/workflows/*`, тоді витирає transient memory. Ідемпотентний: відмовляє на вже-засіяній теці без `--force`, для апгрейду скеровує на `/update-from-template` (ADR 0014). Guard платформи (Linux/WSL2/macOS), перевірка WSL2-native `claude`. Стиль — як `setup-wsl.sh`. README: додано блок «Fastest — one-line seed», ручний блок позначено «Manual equivalent».
+
+**Чому не агент-інсталятор.** `/bootstrap` уже є інсталятором; окремий агент має проблему «курка-яйце» (не запуститься, поки конфіг не в теці) і дублює команду. Реальне тертя — копіювання файлів, що й знімає скрипт.
+
+**Інцидент /mnt (знову).** MCP-Edit/Write обрізали хвіст `README.md` і `docs/WORKLOG.md` на 9p-mount. Відновлено з канонічного апстріму через `/tmp` → `cp` + звірка байтів. Правило: великі файли на цьому mount правити ЛИШЕ через /tmp+cp.
+
+## 2026-06-04 — Аудит шаблону + анонімізація назви тестового проєкту
+
+Аудит на хардкод інших проектів (два `Explore`-проходи: карта структури + пошук витоків). Робочий код чистий. `carlsberg-ir-data-service` → `example-service` у 11 файлах docs/; review-файл перейменовано на `quality-audit-example-20260601.md`. `VadayI`/clone-URL та IP у WORKLOG лишено свідомо. Влито PR #9 (`cfbe1c1`).
+
+**Відоме передіснуюче пошкодження.** Хвіст `docs/WORKLOG.md` обірвано на «…bootstrap` - READM» ще з `d91ba4a` (минула /mnt-Write-обрізка). Остання повна версія хвоста — у `efbb504:docs/WORKLOG.md`, якщо треба відновити втрачений найстаріший запис.
+
 ## 2026-06-04 — Завершення сесії: language-gate, звірка staging-мерджу, інциденти /mnt
 
 Сесія обслуговування шаблону. Драйвер — ознайомлення з проектом, фіксація мови відповідей і закриття staging-роботи.
