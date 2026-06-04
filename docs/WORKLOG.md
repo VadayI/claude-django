@@ -1,5 +1,24 @@
 # WORKLOG — claude-django
 
+
+## 2026-06-04 — Завершення сесії: language-gate, звірка staging-мерджу, інциденти /mnt
+
+Сесія обслуговування шаблону. Драйвер — ознайомлення з проектом, фіксація мови відповідей і закриття staging-роботи.
+
+**Language-gate.** Спрацював gate з `CLAUDE.md` (IMPORTANT §0): `.claude/rules/output-language.md` не існував і це була перша взаємодія. Опитуванням обрано **Українську**; скопійовано `templates/output-language.md` → `.claude/rules/output-language.md` із підстановкою, дописано `@.claude/rules/output-language.md` в імпорт-блок `CLAUDE.md` (після `preflight.md`).
+
+**HANDOFF.** `docs/HANDOFF.md` (курсор) переписано під фактичний стан: ADR 0015 staging вже на `main`; додано секцію інцидентів, оновлено наступні кроки й нотатки середовища.
+
+**Звірка staging-мерджу.** Гілка `chore/staging-refine-adr-0015` (`297ebb5`) виявилась дублем changeset, що вже залетів у `main` як `d91ba4a` (видалені nginx/systemd-шаблони, ADR 0015, `INSTALL_EXTRA=prod`). Гілку видалено локально й на remote; PR #7 був уже закритий. Нічого не втрачено — обидва кошики (A+B) deep-research рапорту лишаються вичерпаними.
+
+**Два інциденти середовища (/mnt 9p) — записано в `docs/lessons.md`:**
+- `.git/config` пошкодився: рядки 1–13 цілі, далі NUL-байти → `fatal: bad config line 14`, через що впав `git commit` (git identity теж не була задана). Лагодиться перезаписом config + `git config user.email/name` у тому ж шелі, де комітиш (Windows-git і WSL-git мають РІЗНІ глобальні конфіги).
+- `docs/HANDOFF.md` **обрізало** MCP-інструментом Edit/Write (4515 B замість повних 8744). Перебудовано через bash heredoc `/tmp`→`cp`→звірка байтів. Підтверджує: Edit/Write на цьому mount небезпечні; bash-sandbox іноді віддає стейл-кеш інода.
+
+**Наступна сесія.** (1) Закомітити language-gate + wrap-up правки в `main` (після лагодження `.git/config`). (2) **Головне:** реальна валідація staging-шаблонів на свіжому bootstrap-проєкті (pytest на `config.settings.test`, ruff, `docker compose -f docker-compose.staging.yml config -q`, `manage.py check --deploy`, `curl /api/v1/health/`). (3) Допрацювати `carlsberg-ir-data-service`. (4) **Підвищено в пріоритеті:** pre-commit/CI-гард на обрізаний хвіст/NUL — інцидент кусає вже не вперше.
+
+**Файли.** Нові: `.claude/rules/output-language.md`. Змінені: `CLAUDE.md` (імпорт), `docs/HANDOFF.md`, `docs/WORKLOG.md`, `docs/lessons.md`. git/PR — за користувачем із хост-шела (PowerShell), бо `.git/config` лагодиться на хості й identity має бути у Windows-git.
+
 ## 2026-06-03 — Звірка з PR #7 + ADR 0015: тонкий dev-образ, прибрані nginx/systemd-шаблони
 
 Після відвантаження staging (запис нижче) виявився паралельний PR #7 — незалежна реалізація тієї самої фічі з власним ADR; конфліктував із main, бо обидві гілки додали ті самі файли. Рішення maintainer'а: лишити повнішу базу main, перейняти з #7 кращі/адитивні шматки, дубль закрити.
