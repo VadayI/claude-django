@@ -22,10 +22,20 @@ cd "$ROOT" || exit 0
 
 # 0. SAFE: clear a stale, EMPTY git index.lock left behind on /mnt drives by a
 #    crashed/interrupted git process. Guarded so an ACTIVE git operation is never
-#    disturbed: only a zero-byte lock older than 5 minutes is removed.
-if [ -f .git/index.lock ] && [ ! -s .git/index.lock ]; then
-  find .git/index.lock -mmin +5 -delete 2>/dev/null \
+#    disturbed: only a zero-byte lock older than 5 minutes is touched.
+#    Caveat: on Windows bind-mounts the lock is often owned by the host git
+#    process and refuses deletion from WSL2 ("Operation not permitted"). The old
+#    code swallowed that, leaving git silently wedged. Now, if the stale lock
+#    survives the delete, we print an actionable hint to clear it from the host.
+if [ -f .git/index.lock ] && [ ! -s .git/index.lock ] \
+   && find .git/index.lock -mmin +5 -print -quit 2>/dev/null | grep -q .; then
+  rm -f .git/index.lock 2>/dev/null \
     && echo "session-start: removed stale empty .git/index.lock" >&2 || true
+  if [ -f .git/index.lock ]; then
+    echo "session-start: stale empty .git/index.lock survived deletion -- likely a host-owned lock on a /mnt bind-mount (WSL2 cannot remove it). Clear it from the WINDOWS HOST shell, then relaunch:" >&2
+    echo "    PowerShell:  Remove-Item -Force .git\\index.lock" >&2
+    echo "    WSL/bash:    rm -f .git/index.lock" >&2
+  fi
 fi
 
 # 1. MANDATORY: environment detection -> .claude/memory/env-detect.json.

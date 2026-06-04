@@ -454,4 +454,19 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 - `/wrap-up` - verify merge via `gh` before writing WORKLOG; mandatory HANDOFF regen (assert no `{TODO}`); enumerate touched doc files for the commit.
 - `reviewer` - flag silent-failure anti-patterns (broad except, content-vs-format, unguarded IntegrityError->409, unbounded upload).
 - `tester` - explicit 409 + file-upload edge cases (both mismatch directions, encoding, empty fields, concurrency, partial-batch).
-- `app-readme` / `no-stubs` / `bootstrap` - READM
+- `app-readme` / `no-stubs` / `bootstrap` - README<->INDEX<->OpenAPI endpoint reconciliation enforced after GREEN; `docs/STUBS.md` initialized as an empty per-project ledger (template example row removed) on bootstrap.
+- `scripts/session-start.sh` - auto-clean a stale `.git/index.lock` (only when empty and older than 5 min) so `/mnt` bind-mounts don't wedge git.
+
+---
+
+## 2026-06-04 — fix/worklog-truncation — Integrity sweep + WORKLOG repair
+
+**Context:** Full file-integrity scan of the template repo (NUL bytes, empty files, broken UTF-8, JSON/JSONL/Python/Bash syntax, unbalanced code fences, truncation, CRLF). Triggered by the known Edit/Write-on-`/mnt` truncation hazard.
+
+**Findings:**
+- `docs/WORKLOG.md` was truncated mid-word (`...`bootstrap` - READM`) with no trailing newline — the prior session's WORKLOG write was cut off on the mount. Committed into HEAD `cb41079`.
+- `.claude/rules/output-language.md` + `templates/output-language.md` had CRLF in the working copy only; the index blobs were already LF (`i/lf w/crlf`), so git treated them as clean — cosmetic, not a repo defect.
+- Everything else clean: no NUL, no bad UTF-8, all JSON/JSONL/`.py`/`.sh` valid, code fences balanced, only legitimate empty `__init__.py`.
+
+**Done:** Restored the truncated WORKLOG tail (Steps 6-7 of plan `0006`: README<->INDEX<->OpenAPI reconciliation + empty per-project `docs/STUBS.md` on bootstrap; `session-start.sh` stale `.git/index.lock` auto-clean) and added the final newline. Normalized the two `output-language.md` working copies to LF (no git diff — index was already LF).
+- Hardened `scripts/session-start.sh` Step 0: when a stale empty `.git/index.lock` survives deletion (host-owned lock on a `/mnt` bind-mount -- WSL2 cannot remove it, "Operation not permitted"), it now prints an actionable hint to clear it from the Windows host shell instead of swallowing the failure and leaving git silently wedged. Hit this exact blocker mid-session.
