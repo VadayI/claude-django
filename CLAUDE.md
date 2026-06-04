@@ -7,6 +7,7 @@
 @.claude/rules/code-style.md
 @.claude/rules/environment.md
 @.claude/rules/preflight.md
+@.claude/rules/output-language.md
 @.claude/rules/verification.md
 @.claude/rules/user-guides.md
 
