@@ -1,5 +1,17 @@
 # WORKLOG — claude-django
 
+## 2026-06-05 — Впровадження «живого плану» (план 0010, кроки 1–8) + консистентність доків
+
+Реалізовано затверджений дизайн плану 0010 і усунуто дві супутні неконсистентності.
+
+- **Done:**
+  - План 0010 «Живий план», кроки 1–8: `templates/plan.md` (шаблон) + `.claude/rules/living-plan.md` (правило, в import-блоці `CLAUDE.md`); wiring у `workflow.md` Plan Mode; «Living plan» blockquote у 5 виконавців (дозапис Execution log) + 3 gate-агентів (read-only, репорт оркестратору); `Edit` додано в `tools` `ba`. Сам план 0010 переведено у формат живого плану (Status + Execution log + Amendments) — перший dogfood.
+  - Аудит `/update-from-template` — працює коректно (ownership glob-based, нові файли підхоплюються; маніфесту нема). Супутньо: README **Rules 19 → 20** + `living-plan.md` в enumeration.
+  - Аудит контуру доків (`/update-docs` · `/wrap-up` · фаза 6) — усунуто **подвійне власництво WORKLOG**: прибрано WORKLOG із per-feature виходу фази 6 + переформульовано `docs-writer.md` (WORKLOG лише через `/wrap-up`, не автономно в пайплайні).
+- **Decisions:** Amendment #1 у плані 0010 — крок 6 звужено до `ba` (`api-architect` уже мав `Edit`). `docs-writer` пише WORKLOG тільки коли делегує `/wrap-up`.
+- **Status:** прямий push у `main` (template-repo policy), запушено — 7 комітів: `7544d72`, `8e19761`, `13ad486`, `2c88f3f`, `2f73d9c`, `c0de764`, `34fd73f`. Дерево чисте; цілісність конфігу: 0 NUL / 0 обрізаних.
+- **Next steps:** п.13 (`ba` ↔ `docs/PROJECT.md`); спостереження дисципліни живого плану на реальних задачах; pre-commit/CI-гард на NUL/обрізаний хвіст.
+
 ## 2026-06-05 — Доробка 🟢-беклогу + README + закриття п.2 (debugger)
 
 Продовження аудиту: закрито 🟢-дрібниці та завершено частково-зроблений п.2.
