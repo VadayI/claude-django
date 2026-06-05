@@ -1,9 +1,24 @@
 # План 0010 — «Живий план»: агенти ведуть `docs/plans/NNNN-*.md` у процесі
 
-> Статус: ✅ ДИЗАЙН ЗАТВЕРДЖЕНО (2026-06-05), до впровадження (кроки 1–8, наступна сесія) · Driver: пункт із `docs/todo.md`
+> Статус: 🟢 ВПРОВАДЖЕНО (2026-06-05) — кроки 1–8 виконано й верифіковано · Driver: пункт із `docs/todo.md`
 > Тип: правки конфіг-шаблону (нове правило + шаблон + промпти агентів + wiring). Коду немає → feature-pipeline не застосовується.
 >
 > ⚠️ **Реконструкція.** Оригінальний вміст цього файлу було втрачено (закомічено порожнім у `0de247b` через баг обрізання на /mnt-mount). Відновлено зі збереженого опису дизайну в `docs/HANDOFF.md` + `docs/WORKLOG.md` (запис 2026-06-05). Перед впровадженням — звірити з власною пам'яттю про обговорення.
+
+## Status
+
+| Крок | Стан | Власник |
+|---|---|---|
+| 1. `templates/plan.md` | done | orchestrator |
+| 2. `.claude/rules/living-plan.md` | done | orchestrator |
+| 3. wiring (`CLAUDE.md` import + `workflow.md` Plan Mode) | done | orchestrator |
+| 4. Execution-log рядок у 5 виконавців | done | orchestrator |
+| 5. gate-агенти не редагують план | done | orchestrator |
+| 6. `Edit` у `tools` для `ba` | done | orchestrator |
+| 7. Верифікація (grep + цілісність) | done | orchestrator |
+| 8. Dogfood (цей файл як перший живий план) | done | orchestrator |
+
+> Стани: `pending` · `in_progress` · `done` · `blocked`. Курсор плану.
 
 ## Мета
 
@@ -32,7 +47,7 @@
 3. **`CLAUDE.md` + `.claude/rules/workflow.md`** — wiring: у Plan Mode-секцію workflow додати, що для non-trivial задач оркестратор сідить `docs/plans/NNNN-*.md` з `templates/plan.md` і веде Status/Execution log протягом пайплайну.
 4. **Промпти агентів-виконавців** (`ba`, `api-architect`, `django-developer`, `tester`, `docs-writer`) — дописати рядок: після завершення своєї фази дописати підтвердження в Execution log активного плану (через append, не перезапис).
 5. **Промпти gate-агентів** (`reviewer`, `security-scanner`, `dba`) — явно зафіксувати: НЕ редагують план; результат гейту репортують оркестратору, який вносить запис (рішення #2).
-6. **`tools: Edit`** для `ba` та `api-architect` — щоб дописувати в Execution log/Amendments потрібен `Edit` (зараз у них лише `Write`; append через Edit безпечніший за перезапис цілого файлу, особливо на /mnt-mount). Згорнуто сюди з окремого todo-пункта.
+6. **`tools: Edit`** для `ba` та `api-architect` — щоб дописувати в Execution log/Amendments потрібен `Edit` (зараз у них лише `Write`; append через Edit безпечніший за перезапис цілого файлу, особливо на /mnt-mount). Згорнуто сюди з окремого todo-пункта. (⚠️ Уточнено — див. Amendment #1: `api-architect` уже мав `Edit`, фактично змінено лише `ba`.)
 7. **Верифікація** — `grep` що: `templates/plan.md` існує; `living-plan.md` згаданий в import-блоці `CLAUDE.md`; кожен агент-виконавець згадує Execution log; gate-агенти згадують «report→оркестратор»; `ba`/`api-architect` мають `Edit` у `tools`. Цілісність файлів (`wc -c` + `tail` + no-NUL) перед комітом.
 8. **(Опц.) Dogfood** — провести наступну реальну non-trivial задачу шаблону через живий план як перший приклад; за потреби підкрутити шаблон/правило.
 
@@ -46,3 +61,20 @@
 
 - **CI-гард «план оновлено в тому ж PR»** (на кшталт `check_app_readmes.sh`) — лише після ручної обкатки дисципліни живого плану. Винесено в «Відкриті питання» HANDOFF.
 - Машинно-читаний формат Status (JSON) — поки markdown-таблиці достатньо (Simplicity First).
+## Execution log
+
+> Append-only. Підтвердження фактів виконання під час задачі. Не дублює `docs/WORKLOG.md` (міжсесійна хроніка, власник `/wrap-up`).
+
+- 2026-06-05 — план звірено з дизайном (HANDOFF + WORKLOG); підхід підтверджено; обрано «спершу 1–3 на ревʼю».
+- 2026-06-05 — крок 1 done: `templates/plan.md` (1922 B, 0 NUL, cmp IDENTICAL).
+- 2026-06-05 — крок 2 done: `.claude/rules/living-plan.md` (3678 B, 0 NUL).
+- 2026-06-05 — крок 3 done: `@.claude/rules/living-plan.md` в import-блоці `CLAUDE.md`; абзац живого плану в Plan Mode-секції `workflow.md` (0 NUL, хвости цілі).
+- 2026-06-05 — кроки 4–6 done: «Living plan» blockquote у 5 виконавців + 3 gate-агентів; `Edit` додано в `tools` `ba` (api-architect уже мав — Amendment #1).
+- 2026-06-05 — крок 7 done: верифікація 10/10 (вимоги) + 12/12 (цілісність) зелено.
+- 2026-06-05 — крок 8 done: цей файл переведено у формат живого плану (Status + Execution log + Amendments) — перший dogfood-приклад.
+
+## Amendments
+
+> Append-only. Зміни/уточнення курсу; оригінал не видаляється — додається запис + інлайн-вказівник біля оригіналу.
+
+1. **2026-06-05 — Крок 6 звужено до `ba`.** Тіло плану закладало `tools: Edit` для `ba` **та** `api-architect`, але `api-architect` уже мав `Edit` (додано в green-backlog минулої сесії). Фактично змінено лише `ba`; вимозі кроку 6 `api-architect` уже відповідав.
