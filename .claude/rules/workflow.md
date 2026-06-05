@@ -56,6 +56,8 @@ For any non-trivial task (3+ steps, an architectural decision, or touching >2 fi
 3. If anything is unclear or the plan breaks — stop and re-plan (clarify via `AskUserQuestion`).
 4. Wait for the user's approval, then implement the minimal change.
 
+Once approved, the plan becomes a **living plan**: seed `docs/plans/NNNN-<slug>.md` from `templates/plan.md` (the orchestrator assigns the next free `NNNN`), then keep its **Status table** and **Execution log** current as the pipeline runs — executor agents append confirmations, gate agents report to you, and changed decisions go to **Amendments** (never rewritten in place). Full discipline: `@.claude/rules/living-plan.md`.
+
 Trivial tasks (typo, single config value) skip this. The Superpowers `brainstorming`/`writing-plans` skills support this phase.
 
 ## Pipeline trigger: REQUIRED if ANY applies
