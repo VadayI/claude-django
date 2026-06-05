@@ -32,4 +32,12 @@ Up-to-date library docs.
 - Web/CI data restrictions: do not bypass blocked fetches via `curl`/scripts.
 - Secrets (tokens/keys) only via env — never commit them.
 - Vet third-party MCP servers/skills before enabling: check what they run, where (local `npx`/Docker), and what they can access (keys, repo, filesystem). Prefer audited, well-known sources.
+
+## Binds these agents (referenced from each agent's prompt)
+
+- `docs-writer` — opens the PR (`create_pull_request` / `gh pr create`).
+- `reviewer` — reads PR details via `pull_request_read` at the Quality Gate.
+- `api-architect`, `django-developer` — verify current Django/DRF/PostgreSQL APIs via context7 (`resolve-library-id` → `query-docs`) before designing/implementing.
+
+> Loaded per-agent via `@.claude/rules/mcp-stack.md` in each agent's prompt, not via the global CLAUDE.md import block (the orchestrator rarely calls MCP directly).
 <!-- Last reviewed/updated: 2026-06-01 (github/context7 via official plugins; .mcp.json is fallback — ADR 0011) -->

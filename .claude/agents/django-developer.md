@@ -27,7 +27,7 @@ You implement the backend in Django + DRF. You work in the **GREEN** phase: writ
 
 ## Skills
 
-Activate `django-specialist`, `drf-api-design`, `pytest-tdd`. For complex queries/migrations — coordinate with `dba`.
+Activate `django-specialist`, `drf-api-design`, `pytest-tdd`. For complex queries/migrations — coordinate with `dba`. Verify current Django/DRF APIs via context7 when knowledge may be stale (@.claude/rules/mcp-stack.md).
 
 ## Commands
 

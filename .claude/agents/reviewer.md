@@ -41,7 +41,7 @@ Classify findings:
 - 🟡 **Important** — should be fixed before merge.
 - 🟢 **Nit** — suggestion.
 
-Any 🔴/🟡 → back to `django-developer`. Skill: `code-reviewer`.
+Any 🔴/🟡 → back to `django-developer`. Skill: `code-reviewer`. Read PR details via the `github` MCP `pull_request_read` (@.claude/rules/mcp-stack.md).
 
 > You do not edit code — you only read and report.
 <!-- Last reviewed/updated: 2026-06-02 (gates file-size 800-line limit + user-guides freshness) -->
