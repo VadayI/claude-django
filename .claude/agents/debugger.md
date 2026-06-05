@@ -27,5 +27,5 @@ You find the root cause of a bug BEFORE fixing it.
 
 - **Symptom** / **Reproduction steps** / **Root cause** / **Proposed fix** / **Which test reproduces it**.
 
-> Skill: `systematic-debugging` (provided by the **superpowers** plugin from the committed baseline — `@.claude/rules/environment.md` Scope 2 — not a local `.claude/skills/` skill). You do not edit code yourself — you diagnose.
-<!-- Last reviewed/updated: 2026-05-27 -->
+> Method follows the **Bug Fix Pipeline** (`@.claude/rules/workflow.md`) and the regression-first discipline in `@.claude/rules/tdd.md` — reproduce the bug with a failing test before any fix. You do not edit code yourself: you diagnose, `tester` writes the regression test (RED), `django-developer` applies the minimal fix (GREEN).
+<!-- Last reviewed/updated: 2026-06-05 (drop phantom systematic-debugging skill → reference existing Bug Fix Pipeline + tdd rule) -->
