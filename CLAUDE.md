@@ -5,6 +5,7 @@
 @.claude/rules/app-readme.md
 @.claude/rules/git-operations.md
 @.claude/rules/code-style.md
+@.claude/rules/simplicity-surgical.md
 @.claude/rules/environment.md
 @.claude/rules/preflight.md
 @.claude/rules/output-language.md
@@ -74,4 +75,4 @@ This config is also an **environment configurator**. The expected local environm
 ## Project bootstrap & preflight
 
 On a **new project**, the order is: `/doctor` (detects scenario, recommends `/bootstrap`) → `/bootstrap` (Mode A scaffolds from scratch, Mode B PRs missing pieces) → optionally `/synthesize-brief` (PROJECT.md from `docs/**`) → `/preflight` (build-inputs gate) → first feature via the pipeline. Spec: @.claude/rules/preflight.md.
-<!-- Last reviewed/updated: 2026-06-02 (added user-guides rule + guide-writer/code-structure-auditor/template-sync agents, /guides + /structure-audit + /update-from-template commands, file-size gate) -->
+<!-- Last reviewed/updated: 2026-06-05 (added simplicity-surgical rule — Karpathy principles 2 & 3 — wired into reviewer Quality Gate; ADR 0016) -->

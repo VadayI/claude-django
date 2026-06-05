@@ -1,6 +1,16 @@
 # WORKLOG — claude-django
 
 
+## 2026-06-05 — Karpathy-guardrails: правило `simplicity-surgical` + Quality-Gate (план 0008, ADR 0016)
+
+Проаналізовано зовнішній репо `multica-ai/andrej-karpathy-skills` (MIT). Виявилось: попри назву «…-skills», це один behavioral-doc із 4 принципами Карпаті, запакований тричі (CLAUDE.md / Cursor-rule / один skill), а не колекція агентів/скілів. Зіставлення зі шаблоном: принципи 1 (Think Before Coding) і 4 (Goal-Driven) уже покриті глибше (Plan Mode, `devil`, `tdd.md` double-loop, `verification.md`); 2 (Simplicity First) і 3 (Surgical Changes) явно відсутні.
+
+**Зроблено (гілка `chore/karpathy-guardrails`):** новий `.claude/rules/simplicity-surgical.md` (41 рядок, перефразовано під Python/Django, крос-посилання на `tdd`/`no-stubs`/`code-style`/`architecture`/`git-operations`); підключено в import-блок `CLAUDE.md` після `code-style.md` + оновлено дату-коментар; агент `reviewer` отримав явний Quality-Gate пункт «Simplicity & surgical changes» (оверінжиніринг і drive-by зміни → 🟡). Рішення «що взяли / що відхилили» зафіксовано в ADR `docs/decisions/0016-*.md`; повний план — `docs/plans/0008-*.md`.
+
+**Свідомо відхилено:** підключати плагін/скіл цілком (generic дубль, як skill не тригериться, зайва залежність); копіювати принципи 1/4 (дублювання порушило б сам «Simplicity First»).
+
+**Git:** правки робив через bash heredoc; `git add/commit/push` + PR лишаю на host-шел (правило з `lessons.md` про /mnt 9p).
+
 ## 2026-06-04 — Seed-скрипт `scripts/install.sh` (онбординг в один рядок)
 
 Додав `scripts/install.sh` — згортає багатокроковий Quick-start-блок копіювання в одну команду: клонує апстрім у tmp, копіює `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`/`.gitattributes`, `scripts/`, повний `templates/`, root `docker-compose.yml`/`Makefile`, `.github/workflows/*`, тоді витирає transient memory. Ідемпотентний: відмовляє на вже-засіяній теці без `--force`, для апгрейду скеровує на `/update-from-template` (ADR 0014). Guard платформи (Linux/WSL2/macOS), перевірка WSL2-native `claude`. Стиль — як `setup-wsl.sh`. README: додано блок «Fastest — one-line seed», ручний блок позначено «Manual equivalent».

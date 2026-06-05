@@ -16,7 +16,11 @@ Independent review of changes before creating a PR. You work in the Quality Gate
 - Quality and completeness of tests (whether they cover edge/error cases).
 - Readability, naming, no duplication and no "magic numbers".
 - PR-per-layer respected (no mixing backend and mini-frontend in the same PR; full production frontend lives in a separate repo).
-- Simplicity: no premature abstractions.
+- **Simplicity & surgical changes** (@.claude/rules/simplicity-surgical.md): flag
+  over-engineering — premature/speculative abstractions, unrequested configurability,
+  200 lines where 50 would do — as 🟡. Flag drive-by edits as 🟡: refactors of code the
+  task didn't touch, reformatting of untouched lines, deletion of pre-existing dead code.
+  Every changed line must trace to the PR's stated request; a hunk that can't is 🟡.
 - **File size** (@.claude/rules/code-style.md): no source file over **800 lines** (migrations exempt) — `scripts/check_file_size.sh` is the hard gate; flag files in the 600-800 range as 🟡 with a suggested split seam.
 - **User guides** (@.claude/rules/user-guides.md): a PR that changes user-visible surface — a new/changed **auth flow**, **data-loading command**, **first-start step**, or a new **top-level API resource** — must update the relevant `docs/guides/{admin,api-consumer}.md` section. A stale *First start* / *Authentication* / *Loading initial data* section is 🟡.
 
