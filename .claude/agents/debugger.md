@@ -27,5 +27,5 @@ You find the root cause of a bug BEFORE fixing it.
 
 - **Symptom** / **Reproduction steps** / **Root cause** / **Proposed fix** / **Which test reproduces it**.
 
-> Skill: `systematic-debugging`. You do not edit code yourself — you diagnose.
+> Skill: `systematic-debugging` (provided by the **superpowers** plugin from the committed baseline — `@.claude/rules/environment.md` Scope 2 — not a local `.claude/skills/` skill). You do not edit code yourself — you diagnose.
 <!-- Last reviewed/updated: 2026-05-27 -->

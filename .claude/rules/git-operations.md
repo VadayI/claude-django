@@ -60,7 +60,7 @@ Edge cases, risks, next steps.
 
 ## Context sync between machines
 
-At the end of a session, update and commit: `docs/WORKLOG.md`, and if needed `.claude/memory/*` and ADRs `docs/decisions/NNNN-*.md`. This is how Claude's work history travels between computers via a plain `git pull`.
+At the end of a session, update and commit the context files: `docs/HANDOFF.md` (the rolling "where we are / what's next" snapshot — read first on a new machine), `docs/WORKLOG.md` (the append-only "what we did" chronicle), and if needed `docs/todo.md` (cross-session backlog), `docs/lessons.md`, `.claude/memory/*` and ADRs `docs/decisions/NNNN-*.md`. This is how Claude's work history travels between computers via a plain `git pull`. Regenerate `HANDOFF.md` via `/wrap-up` (or `/handoff` alone).
 
 ## Prohibitions
 

@@ -1,5 +1,23 @@
 # WORKLOG — claude-django
 
+## 2026-06-05 — Аудит колізій агентів/команд/скілів + правки 4×🔴
+
+Повний аудит конфігу шаблону на колізії та суперечності (4 паралельні агенти: агенти / команди / скіли / правила+контекст). Реєстр загалом здоровий: routing синхронізований (0 сиріт серед 22 агентів), git/PR-семантика, ієрархія джерела правди (`openapi.yml`), output-language gate — без суперечностей. Знайдено 16 пунктів; кожен 🔴 звірено через `git log -S`/`git show first-commit`/`grep` перед правкою.
+
+**Виправлено 4×🔴** (усі через bash heredoc + python, з diff-звіркою):
+- `config.md` — застарілий baseline плагінів (3 з `claude-hud` як committed, без `playwright/github/context7`); розходився з `/doctor`/`/plugins`. Тепер делегує авторитет `environment.md` Scope 2 + правильний summary.
+- `api-architect.md` — прибрано фантом-скіл `api-design-principles` (історія: ніколи не існував, биття від first commit; `drf-api-design` покриває те саме).
+- `debugger.md` — `systematic-debugging` ВАЛІДНЕ (superpowers-плагін, як `brainstorming`/`writing-plans` у `workflow.md`); додано уточнення про походження.
+- `drf-api-design/SKILL.md` — формат помилок `{"detail":...}` суперечив проєктному конверту; узгоджено з `{"error":{code,message,details}}` + мапа токенів + посилання на `serializers-permissions.md`/`api-docs.md`.
+- `CLAUDE.md` п.5 + `git-operations.md` — `docs/HANDOFF.md`/`docs/todo.md` були обов'язкові за `/wrap-up`/`/handoff`, але відсутні в нормативці (orphaned-механізм). Внесено з розмежуванням ролей.
+
+**Лишилось (🟡, у `docs/todo.md`):** brief-synthesizer без SendMessage; orphaned-скіли architecture-designer/test-master; дубль WORKLOG між update-docs/wrap-up; HANDOFF регенерується двічі; dba↔refactoring N+1; code-reviewer дублює security-reviewer; реєстрація /plugins,/handoff,/set-language; orphan-rule mcp-stack.md.
+
+**Бонус:** скіл `react-vite-client` чисто видалений (backend-only); `templates/__pycache__` закомічено в шаблон (гігієна).
+
+**Git:** правки — bash heredoc; коміт на host-шел (template-repo дозволяє прямий push у `main`).
+
+
 
 ## 2026-06-05 — Karpathy-guardrails: правило `simplicity-surgical` + Quality-Gate (план 0008, ADR 0016)
 

@@ -34,5 +34,5 @@ After fixing the contract, **record each route in `.claude/memory/endpoints.json
 
 A table/list of endpoints with full contracts + request/response examples. Pass it down the pipeline.
 
-> You do not write the implementation. Activate skills `drf-api-design`, `api-design-principles`.
+> You do not write the implementation. Activate the `drf-api-design` skill (local) — it covers REST API design principles in DRF: resources, methods, status codes, versioning, request/response schemas.
 <!-- Last reviewed/updated: 2026-06-01 (records routes in .claude/memory/endpoints.json) -->

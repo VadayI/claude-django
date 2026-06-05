@@ -16,7 +16,7 @@ description: "[claude-django] REST API design principles in DRF — resources, m
 ## Contract
 - Clear request schema (fields, types, required-ness) and response (JSON example).
 - Pagination (`limit/offset` or cursor), filters (`django-filter`), sorting — consistent.
-- Errors — a single format (`{"detail": ...}` / `{"field": [...]}`).
+- Errors — the project-wide envelope `{"error": {"code", "message", "details"}}`, produced by `apps.common.exceptions.exception_handler` (NOT DRF's default `{"detail": ...}`). `code` is a stable token (`validation_error` 400, `not_authenticated` 401, `permission_denied` 403, `not_found` 404, `conflict` 409, `throttled` 429, `server_error` 500); `details` is the field-keyed validation dict for 400 only, `null` otherwise. Source of truth: `@.claude/rules/serializers-permissions.md` + `@.claude/rules/api-docs.md`.
 
 ## Versioning
 - Incompatible changes → a new version. Do not change the contract silently.

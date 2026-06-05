@@ -2,41 +2,30 @@
 
 > Поточний знімок репозиторію-шаблону конфігу. Читай першим при під'єднанні; онови наприкінці сесії.
 >
-> Maintainer · Останнє торкання: 2026-06-04
+> Maintainer · Останнє торкання: 2026-06-05
 
 ## Поточний стан
 
-На `main`, tip `d91ba4a` — **запушено** (`origin/main == d91ba4a`). ADR 0015 staging-робота **вже на main** (видалені nginx/systemd-шаблони, доданий `0015-production-ready-staging.md`, `INSTALL_EXTRA=prod` у `backend.Dockerfile`, `check-deploy` у Makefile). Гілка `chore/staging-refine-adr-0015` (`297ebb5`) була дублем цього changeset — видалена локально й на remote; PR #7 закрито.
+На `main`, синхронізовано з `origin/main`. **Незакомічені правки цієї сесії** (аудит колізій, 6 файлів конфігу + 3 docs): `.claude/agents/api-architect.md`, `.claude/agents/debugger.md`, `.claude/commands/config.md`, `.claude/rules/git-operations.md`, `.claude/skills/drf-api-design/SKILL.md`, `CLAUDE.md` + `docs/WORKLOG.md`, `docs/HANDOFF.md`, `docs/todo.md` (новий). Усі правки конфігу точкові. Закомітити в `main` напряму (template-repo дозволяє) — команди в «Наступні кроки».
 
-**Незакомічені правки в робочому дереві** (language-gate цієї сесії, на `main`): новий `.claude/rules/output-language.md` (Українська) + дописаний імпорт у `CLAUDE.md` + оновлені `docs/HANDOFF.md`, `docs/WORKLOG.md`, `docs/lessons.md`. Закомітити в `main` (template-repo дозволяє напряму) — команди в розділі «Наступні кроки».
-
-**Два інциденти середовища цієї сесії (обидва — /mnt 9p):**
-- `.git/config` пошкодився (рядки 1–13 цілі, далі NUL-байти) → git падав `fatal: bad config line 14`, через що впав `git commit` (+ git identity не була задана). Лагодиться перезаписом config.
-- `docs/HANDOFF.md` **обрізало** MCP-інструментом Edit/Write (4515 B замість повного) — довелося перебудувати через bash heredoc `/tmp`→`cp`→звірка байтів.
+> `index.lock` на /mnt знову заважав sandbox-git (`git diff` падав `Operation not permitted`). `output-language.md`×2 показувались «modified», але `diff vs HEAD` — ідентичні (false-positive). git ганяти з host-шела.
 
 ## Останнє завершене
 
-- **ADR 0015 «Production-ready staging».** Звірено з паралельним дублем (PR #7): лишено повнішу базу main (`gunicorn.conf.py`, `settings/test.py`), перейнято `INSTALL_EXTRA=prod` (тонкий dev-образ) + Makefile `check-deploy`; прибрано nginx/systemd-шаблони (лишились прозою в admin-гайді). Тепер на `main` (`d91ba4a`).
-- **План 0007 (кошик B) — завершено.** Окремий `config/settings/test.py` + production-ready staging (gunicorn-у-контейнері, health-route `/api/v1/health/`).
-- **Кошик A deep-research рапорту.** `--reuse-db` + branch coverage, `concurrency` + job summary в CI, Dependabot, governance-рядки.
-- **Language-gate.** Зафіксовано українську як мову відповідей проекту (`output-language.md` + імпорт у `CLAUDE.md`).
+- **Аудит колізій конфігу шаблону** (4 паралельні агенти: агенти/команди/скіли/правила) + виправлено всі 4×🔴: baseline плагінів у `config.md` (тепер посилається на `environment.md` Scope 2), фантом-скіл `api-design-principles` у `api-architect.md`, уточнення superpowers у `debugger.md`, формат помилок у `drf-api-design`, orphaned HANDOFF/todo внесено в `CLAUDE.md` п.5 + `git-operations.md`. Кожен 🔴 звірено історією перед правкою. Деталі — `docs/WORKLOG.md` (2026-06-05).
+- 🟡-беклог (8+2 пункти) винесено в новий `docs/todo.md`.
 
 ## Наступні кроки
 
-1. **Закомітити language-gate + wrap-up правки в `main`** (після лагодження `.git/config` + identity, з хост-шела/PowerShell):
+1. **Закомітити аудит-правки в `main`** (з host-шела/PowerShell — template-repo дозволяє прямий push):
    ```
-   git add .claude/rules/output-language.md CLAUDE.md docs/HANDOFF.md docs/WORKLOG.md docs/lessons.md
-   git commit -m "docs: wrap-up session — Ukrainian output language, HANDOFF/WORKLOG refresh, /mnt truncation lesson"
+   git add .claude/agents/api-architect.md .claude/agents/debugger.md .claude/commands/config.md .claude/rules/git-operations.md .claude/skills/drf-api-design/SKILL.md CLAUDE.md docs/WORKLOG.md docs/HANDOFF.md docs/todo.md
+   git commit -m "fix(config): resolve audit collisions — plugin baseline, phantom skill, error-envelope, HANDOFF/todo normative"
    git push origin main
    ```
-
-2. **Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті** (НЕ в цьому репо) — головний змістовний крок, бо обидва кошики (A+B) рапорту вичерпано: `pytest` зелений на `config.settings.test`; `ruff check .` чистий (нові `apps/common`); `docker compose -f docker-compose.staging.yml config -q` валідний; `python manage.py check --deploy` на `staging` без критичних ворнінгів; `curl /api/v1/health/` → 200.
-
-3. **Допрацювати похідний `example-service`** (синкнуто вручну, `052ae15`): реєстрація нових агентів у його `CLAUDE.md` + імпорт `@.claude/rules/user-guides.md`, крок file-size-гейту в живому `backend-ci.yml`, запустити `/guides`, переконатись що `bash scripts/check_file_size.sh` проходить перед наступним PR.
-
-4. **Пріоритезувати pre-commit/CI-гард на обрізаний хвіст файлу** — цей інцидент (HANDOFF обрізало, `.git/config` забило NUL) уже втретє за історію кусає на /mnt; перевести з «відкритого питання» в задачу.
-
-5. Після валідації — нова фіча через стандартний пайплайн або наповнення backlog (`templates/todo.md`).
+2. **Доробити 🟡-беклог** (`docs/todo.md`, 8+2 пункти) — почати зі швидких: `SendMessage` у brief-synthesizer + прив'язка orphaned-скілів (test-master→tester, architecture-designer→api/domain-architect); далі дедуплікація `update-docs`/`wrap-up`.
+3. (з минулої сесії) Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті (НЕ в цьому репо).
+4. (з минулої сесії) Pre-commit/CI-гард на обрізаний хвіст/NUL файлу — підвищено до задачі.
 
 ## Відкриті питання
 
