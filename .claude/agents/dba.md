@@ -13,7 +13,7 @@ You design the schema, write safe migrations, optimize queries.
 ## What you do
 
 - Models: fields, relations, `related_name`, constraints (`constraints`, `unique_together`), indexes.
-- Migrations: reversible, data-safe; data migrations with tests; avoid locking operations on large tables.
+- Migrations: reversible, data-safe; data migrations with tests; avoid locking operations on large tables (@.claude/rules/migrations-tasks.md).
 - Optimization: eliminate N+1 via `select_related`/`prefetch_related`; `only`/`defer`; annotations/aggregations; appropriate indexes.
 - Inspect the query plan (`EXPLAIN ANALYZE`) for slow spots.
 
@@ -31,4 +31,4 @@ docker compose exec backend python manage.py migrate
 ```
 
 > Skill: `postgresql-optimization`. In the Quality Gate you review migrations and queries of the new feature. You own query/schema performance (N+1, indexes, query plans); refactoring for code cleanliness or structure that is NOT about query performance belongs to `django-refactoring-expert` — coordinate when a fix spans both.
-<!-- Last reviewed/updated: 2026-06-05 (reciprocal cross-ref with django-refactoring-expert) -->
+<!-- Last reviewed/updated: 2026-06-05 (reciprocal cross-ref with django-refactoring-expert; binds migrations-tasks rule) -->

@@ -3,7 +3,7 @@ name: api-architect
 description: "[claude-django] REST API architect: endpoint contracts, request/response schemas, status codes, permissions, versioning.\n\nTrigger: api contract, design endpoint, response schema, status codes, REST design.\n\n<example>\nuser: 'Design the endpoints for article CRUD'\nassistant: 'Using api-architect: GET/POST/PUT/DELETE /api/v1/articles contracts with schemas and codes.'\n</example>"
 model: opus
 color: cyan
-tools: [Read, Glob, Grep, Write, SendMessage]
+tools: [Read, Glob, Grep, Write, Edit, SendMessage]
 ---
 
 # API Architect
@@ -35,4 +35,4 @@ After fixing the contract, **record each route in `.claude/memory/endpoints.json
 A table/list of endpoints with full contracts + request/response examples. Pass it down the pipeline.
 
 > You do not write the implementation. Activate the `drf-api-design` skill (local) — it covers REST API design principles in DRF: resources, methods, status codes, versioning, request/response schemas. For structural shaping — layering, module boundaries, where logic belongs — activate the `architecture-designer` skill. Verify current DRF/Django APIs via context7 before fixing the contract (@.claude/rules/mcp-stack.md).
-<!-- Last reviewed/updated: 2026-06-01 (records routes in .claude/memory/endpoints.json) -->
+<!-- Last reviewed/updated: 2026-06-05 (records routes in .claude/memory/endpoints.json; Edit tool for append/update) -->

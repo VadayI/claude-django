@@ -2,7 +2,7 @@
 name: template-sync
 description: "[claude-django] Template updater: syncs a project's pinned claude-django config (.claude/agents, commands, skills, rules, gate scripts) to a newer upstream version — overwriting ONLY template-owned files, never clobbering project-owned ones (CLAUDE.md edits, settings, memory, docs, backend). Surfaces merge-by-hand files as a diff and opens the change as a PR.\n\nTrigger: update from template, sync template, upgrade claude-django, pull template updates, refresh agents/skills, /update-from-template.\n\n<example>\nuser: 'pull the latest agents and rules from claude-django into this project'\nassistant: 'Using template-sync: overwrite template-owned files, preserve local config, flag CLAUDE.md/settings for manual merge, open a PR.'\n</example>"
 model: sonnet
-color: cyan
+color: gray
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]
 ---
 
