@@ -87,7 +87,7 @@ ba → api-architect → tester (RED) → django-developer (GREEN) → tester (R
         → [Quality Gate: reviewer | security-scanner | dba] → docs-writer
 ```
 
-> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, per @.claude/rules/verification.md. Regenerate/run on demand with `/verify`. When a feature changes first-start, data-loading, an auth flow, or a top-level resource, `guide-writer` also refreshes `docs/guides/{admin,api-consumer}.md` per @.claude/rules/user-guides.md (regenerate on demand with `/guides`).
+> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, per @.claude/rules/verification.md. Regenerate/run on demand with `/verify`. `docs/WORKLOG.md` is NOT a per-feature output — it is persisted once at session end by `/wrap-up` (single owner, @.claude/rules/git-operations.md), which may delegate the append to `docs-writer`. When a feature changes first-start, data-loading, an auth flow, or a top-level resource, `guide-writer` also refreshes `docs/guides/{admin,api-consumer}.md` per @.claude/rules/user-guides.md (regenerate on demand with `/guides`).
 
 | Phase | Mode | Agent(s) | Output |
 |------|-------|----------|-------|
@@ -96,7 +96,7 @@ ba → api-architect → tester (RED) → django-developer (GREEN) → tester (R
 | 3. RED | sequential | `tester` | Failing pytest tests for the endpoint/logic |
 | 4. GREEN | sequential | `django-developer` | Code that greens the tests + ruff |
 | 5. Quality Gate | **parallel** | `reviewer`, `security-scanner`, `dba` | Independent reports |
-| 6. Documentation | sequential | `docs-writer`, `guide-writer` | docs/api, `docs/verify/<feature>.md` (verification handoff), `docs/guides/{admin,api-consumer}.md` (when surface changed), WORKLOG, PR description + `gh pr create` |
+| 6. Documentation | sequential | `docs-writer`, `guide-writer` | docs/api, `docs/verify/<feature>.md` (verification handoff), `docs/guides/{admin,api-consumer}.md` (when surface changed), PR description + `gh pr create` |
 
 **Quality Gate resolution:** all passed → phase 6. Any 🔴 Critical / 🟡 Important → back to `django-developer` → re-run the gate. Max 2 cycles, then escalate to the user.
 
