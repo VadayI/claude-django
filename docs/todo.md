@@ -2,22 +2,17 @@
 
 Long-term, cross-session backlog for this template repo — items that survive between `claude` sessions (unlike in-conversation `TaskCreate`/`TaskUpdate`). The `auditor` agent (`/audit`) reads this alongside `.claude/memory/command-log.jsonl`.
 
-## To do — 🟡 from collision audit (2026-06-05)
+## To do — нове (2026-06-05)
 
-- [ ] **brief-synthesizer без `SendMessage`** — єдиний не-read-only агент без нього; решта командних агентів (template-sync/guide-writer/auditor) мають. Уніфікувати: додати SendMessage у `.claude/agents/brief-synthesizer.md` (або задокументувати виняток).
-- [ ] **Orphaned-скіли** — `architecture-designer` і `test-master` не активує жоден агент. Прив'язати: `test-master` → `tester.md`, `architecture-designer` → `api-architect.md`/`domain-architect.md`.
-- [ ] **Дубль WORKLOG/ADR/lessons** між `/update-docs` і `/wrap-up` (обидва через `docs-writer`) — ризик дубльованих записів. Звузити WORKLOG лише до `/wrap-up` або явно розмежувати в `update-docs.md`.
-- [ ] **HANDOFF регенерується двічі** — `wrap-up` «run the /handoff logic» замість виклику. Зробити `/wrap-up` викликом `/handoff` (єдине джерело генерації).
-- [ ] **dba ↔ django-refactoring-expert** — спільний тригер `N+1`/`optimize query`, розмежування одностороннє. Додати зустрічну згадку в `dba.md`.
-- [ ] **code-reviewer ↔ security-reviewer** — `code-reviewer` skill дублює security-блок (IDOR/401/403/секрети) і відстав від тіла агента `reviewer` (немає 800-рядків, silent-failure). Прибрати дубль + синхронізувати з агентом.
-- [ ] **Реєстрація команд у CLAUDE.md** — `/plugins`, `/handoff`, `/set-language` ніде не згадані (доповнюють процеси плагінів/контексту/мови).
-- [ ] **mcp-stack.md — orphan-rule** — жодного посилання ніде. Підключити (через агентів docs-writer/reviewer або в import-блок) чи свідомо лишити поза контекстом оркестратора.
+- [ ] **п.13 — `ba` не споживає `docs/PROJECT.md` явно.** Вихід `/synthesize-brief` прив'язаний лише на рівні preflight; агент `ba` згадує абстрактний «brief», не названий читати `docs/PROJECT.md` першим. Зробити прив'язку явною в `ba.md` (Read `docs/PROJECT.md` як основне джерело вимог, якщо існує).
+- [ ] **«Живий план» — впровадити план `docs/plans/0010-living-plan-workflow.md`** (кроки 1–8: шаблон `templates/plan.md` → правило `living-plan.md` → CLAUDE.md/workflow → промпти агентів → tools `Edit` для ba/api-architect → верифікація). Дизайн затверджено, 3 відкриті питання закриті.
 
 ## To do — гігієна
 
 - [ ] Прибрати `templates/__pycache__` з git (скомпільований Python потрапив у каталог шаблонів).
-- [ ] (опц.) `ba`/`api-architect`/`domain-architect` мають `Write` без `Edit` — для append у `endpoints.json` доречніший `Edit`.
 
 ## Done
 
 - [x] **4×🔴 з аудиту** — `config.md` baseline, фантом-скіл `api-architect`, уточнення `debugger`, формат помилок `drf-api-design`, orphaned HANDOFF/todo в CLAUDE.md+git-operations.md · 2026-06-05
+- [x] **8×🟡 з аудиту (п.5–12)** — Коміти A/B/C/D: SendMessage brief-synthesizer; скіли-сироти прив'язано; dba↔refactoring; WORKLOG→wrap-up; HANDOFF→/handoff; code-reviewer dedup+sync; /plugins,/set-language; mcp-stack orphan-rule. Деталі — `docs/plans/0009-*.md`, WORKLOG 2026-06-05 · 2026-06-05
+- [x] **ba/api-architect `Edit`** — згорнуто в план 0010 (Крок 7), не окремий пункт · 2026-06-05
