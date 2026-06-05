@@ -38,4 +38,7 @@ docker compose exec backend python manage.py makemigrations && docker compose ex
 ```
 
 > You do not write tests yourself (that's `tester`) — except to quickly reproduce a bug before a fix.
-<!-- Last reviewed/updated: 2026-06-05 (binds migrations-tasks rule) -->
+
+> **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
+
+<!-- Last reviewed/updated: 2026-06-05 (living-plan: append Execution log after phase; plan 0010) -->

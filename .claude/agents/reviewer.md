@@ -44,4 +44,7 @@ Classify findings:
 Any 🔴/🟡 → back to `django-developer`. Skill: `code-reviewer`. Read PR details via the `github` MCP `pull_request_read` (@.claude/rules/mcp-stack.md).
 
 > You do not edit code — you only read and report.
-<!-- Last reviewed/updated: 2026-06-02 (gates file-size 800-line limit + user-guides freshness) -->
+
+> **Living plan.** Do NOT edit the plan — you stay read-only over both code and plan. Report your gate result to the orchestrator, which records the Execution log entry. See @.claude/rules/living-plan.md.
+
+<!-- Last reviewed/updated: 2026-06-05 (living-plan: gate reports to orchestrator, never edits plan; plan 0010) -->

@@ -30,4 +30,7 @@ The final phase of the pipeline: you document and prepare the PR.
 ```
 
 > Write clearly and concisely, no fluff. You create the PR but do NOT merge to main.
-<!-- Last reviewed/updated: 2026-06-05 (PR opened via github MCP / gh — @.claude/rules/mcp-stack.md) -->
+
+> **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
+
+<!-- Last reviewed/updated: 2026-06-05 (living-plan: append Execution log after phase; plan 0010) -->

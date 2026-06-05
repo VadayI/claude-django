@@ -31,4 +31,7 @@ docker compose exec backend python manage.py migrate
 ```
 
 > Skill: `postgresql-optimization`. In the Quality Gate you review migrations and queries of the new feature. You own query/schema performance (N+1, indexes, query plans); refactoring for code cleanliness or structure that is NOT about query performance belongs to `django-refactoring-expert` — coordinate when a fix spans both.
-<!-- Last reviewed/updated: 2026-06-05 (reciprocal cross-ref with django-refactoring-expert; binds migrations-tasks rule) -->
+
+> **Living plan.** Do NOT edit the plan — you stay read-only over both code and plan. Report your gate result to the orchestrator, which records the Execution log entry. See @.claude/rules/living-plan.md.
+
+<!-- Last reviewed/updated: 2026-06-05 (living-plan: gate reports to orchestrator, never edits plan; plan 0010) -->
