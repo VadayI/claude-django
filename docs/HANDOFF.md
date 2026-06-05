@@ -6,43 +6,41 @@
 
 ## Поточний стан
 
-На `main`. **Незакомічені правки цієї сесії** (доробка 🟡-беклогу A/B/C/D + 2 плани + контекст):
+На `main`. **Незакомічені правки цієї сесії** (🟢-беклог + README + закриття п.2) — 9 файлів:
 
-- **Конфіг (12 файлів):** `.claude/agents/{api-architect,brief-synthesizer,dba,django-developer,docs-writer,reviewer,tester}.md`, `.claude/commands/{update-docs,wrap-up}.md`, `.claude/rules/mcp-stack.md`, `.claude/skills/code-reviewer/SKILL.md`, `CLAUDE.md`.
-- **Плани (нові):** `docs/plans/0009-yellow-backlog-config-consistency.md` (виконано), `docs/plans/0010-living-plan-workflow.md` (затверджено, до впровадження).
-- **Контекст:** `docs/WORKLOG.md`, `docs/HANDOFF.md`, `docs/todo.md`.
+- **Агенти (7):** `api-architect` (+`Edit`), `auditor` (тригер `workflow audit`), `brief-synthesizer` (color→purple), `template-sync` (color→gray), `dba` (+migrations-tasks rule), `django-developer` (+migrations-tasks rule), `debugger` (drop phantom `systematic-debugging`).
+- **`CLAUDE.md`** — примітка «Rule scoping» (6 agent/command-scoped правил задокументовано).
+- **`README.md`** — Rules 17 → 19 (+`simplicity-surgical`, `output-language`).
 
-> `output-language.md`×2 знову показуються «modified» — false-positive 9p (`diff vs HEAD` ідентичний). НЕ додавати в коміт. git — з host-шела.
+> Цілісність звірено: **0 NUL, 0 обрізаних**. Раніша примітка про false-positive `output-language.md` неактуальна (його немає в `git status`).
 
 ## Останнє завершене
 
-- **Весь 🟡-беклог аудиту (п.5–12)** закрито 4 логічними групами:
-  - **A** агенти: SendMessage у `brief-synthesizer`; скіли-сироти `test-master`→`tester`, `architecture-designer`→`api-architect` (прив'язано, не видалено); `dba`↔`django-refactoring-expert` крос-ref.
-  - **B** команди: WORKLOG/lessons → єдиний власник `/wrap-up`; `wrap-up` крок 41 → чисте делегування `/handoff`.
-  - **C** скіл: `code-reviewer` без security-дублю (→ `security-reviewer`) + синк із тілом `reviewer` (800-рядків/silent-failure/surgical).
-  - **D** реєстрація: `/plugins`,`/set-language` у CLAUDE.md; `mcp-stack.md` де-orphan через хвіст + 4 агенти (варіант B).
-  - Деталі — `docs/plans/0009-*.md` + WORKLOG (2026-06-05).
-- **Дизайн «живого плану»** (`docs/plans/0010-*.md`) затверджено: 3 відкриті питання закриті (gate-агенти report→оркестратор; нумерація — оркестратор при сідінгу; Execution log ≠ WORKLOG).
-- **Знахідка п.13:** `ba` не споживає `docs/PROJECT.md` явно (лише preflight-рівень) — у `docs/todo.md`.
+- **🟢-беклог аудиту** закрито: `Edit` для `api-architect`; тригер `auditor` `audit`→`workflow audit`; cyan розведено (brief-synthesizer→purple, template-sync→gray; cyan = пара архітекторів); orphan-rule `migrations-tasks.md` прив'язано до `dba`+`django-developer`; «Rule scoping» у CLAUDE.md.
+- **п.2 (биті скіл-прив'язки)** закрито повністю: `systematic-debugging` (фантом) у `debugger` → наявний Bug Fix Pipeline + `tdd.md`; `api-design-principles` прибрано раніше.
+- **README** звірено з фактом: єдина застарілість — лічильник правил (виправлено); agents 22 / skills 12 / commands 20 коректні.
 
 ## Наступні кроки
 
-1. **Закомітити правки цієї сесії в `main`** (з host-шела — template-repo дозволяє прямий push). Merge-послідовність (3 логічні коміти):
+1. **Закомітити правки цієї сесії в `main`** (host-шел, template-repo дозволяє прямий push). Merge-послідовність (4 логічні коміти):
    ```bash
    git checkout main && git pull
-   # 1) 🟡 backlog config cleanup (п.5–12)
-   git add .claude/agents/api-architect.md .claude/agents/brief-synthesizer.md .claude/agents/dba.md .claude/agents/django-developer.md .claude/agents/docs-writer.md .claude/agents/reviewer.md .claude/agents/tester.md .claude/commands/update-docs.md .claude/commands/wrap-up.md .claude/rules/mcp-stack.md .claude/skills/code-reviewer/SKILL.md CLAUDE.md
-   git commit -m "fix(config): resolve yellow-backlog collisions (items 5-12)"
-   # 2) plans
-   git add docs/plans/0009-yellow-backlog-config-consistency.md docs/plans/0010-living-plan-workflow.md
-   git commit -m "docs(plans): backlog consistency 0009 + living-plan design 0010"
-   # 3) context
-   git add docs/WORKLOG.md docs/HANDOFF.md docs/todo.md
-   git commit -m "docs(context): wrap-up — WORKLOG/HANDOFF/todo refresh"
+   # 1) green-backlog config cleanup
+   git add .claude/agents/api-architect.md .claude/agents/auditor.md .claude/agents/brief-synthesizer.md .claude/agents/template-sync.md .claude/agents/dba.md .claude/agents/django-developer.md CLAUDE.md
+   git commit -m "fix(config): green-backlog — Edit tool, audit trigger, agent colors, migrations-tasks wiring, rule-scoping doc"
+   # 2) debugger (closes item 2 — broken skill refs)
+   git add .claude/agents/debugger.md
+   git commit -m "fix(debugger): drop phantom systematic-debugging skill, reference Bug Fix Pipeline + tdd rule"
+   # 3) README
+   git add README.md
+   git commit -m "docs(readme): rules count 17 -> 19 (simplicity-surgical, output-language)"
+   # 4) context
+   git add docs/WORKLOG.md docs/HANDOFF.md
+   git commit -m "docs(context): wrap-up — WORKLOG/HANDOFF refresh"
    git push origin main
    ```
-   > НЕ `git add .` — `output-language.md` (false-positive) має лишитись поза комітом. Лише явні шляхи вище.
-2. **Впровадити «живий план»** — `docs/plans/0010-living-plan-workflow.md`, кроки 1–8: `templates/plan.md` → `.claude/rules/living-plan.md` → CLAUDE.md/workflow → промпти агентів (writer + gate) → `Edit` для `ba`/`api-architect` → верифікація → опц. dogfood.
+   > Лише явні шляхи (НЕ `git add .`).
+2. **Впровадити «живий план»** — `docs/plans/0010-living-plan-workflow.md`, кроки 1–8 (з минулої сесії, ще не зроблено).
 3. **п.13** — зробити `ba` явним споживачем `docs/PROJECT.md` (`ba.md`).
 4. (з минулих сесій) Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті (НЕ в цьому репо).
 5. (з минулих сесій) Pre-commit/CI-гард на обрізаний хвіст/NUL файлу.

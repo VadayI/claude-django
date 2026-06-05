@@ -1,5 +1,25 @@
 # WORKLOG — claude-django
 
+## 2026-06-05 — Доробка 🟢-беклогу + README + закриття п.2 (debugger)
+
+Продовження аудиту: закрито 🟢-дрібниці та завершено частково-зроблений п.2.
+
+**🟢 беклог (config):**
+- `api-architect` — +`Edit` (append/update `endpoints.json`; `ba`/`domain-architect` лишено на `Write` — пишуть нові звіти, не редагують наявні).
+- `auditor` — голий тригер `audit` → `workflow audit` (зняв колізію з `reviewer` «audit code» / `code-structure-auditor` «structure audit»).
+- Кольори `cyan` розведено за функцією: `brief-synthesizer`→`purple` (синтез/аналіз), `template-sync`→`gray` (meta-ops); `cyan` лишився осмисленим для пари архітекторів `api-architect`+`integration-architect`.
+- `migrations-tasks.md` (справжній orphan-rule — не згадане ніде) прив'язано до `dba` (bullet Migrations) і `django-developer` (рядок Conventions).
+- `CLAUDE.md` — додано примітку «Rule scoping»: документує всі 6 agent/command-scoped правил (architecture, serializers-permissions, migrations-tasks, testing, mcp-stack, docker-commands) з власниками; orphan = wire-or-remove.
+
+**п.2 (биті скіл-прив'язки) — закрито повністю:** `api-design-principles` прибрано раніше; `systematic-debugging` (фантом — постачання superpowers непідтверджене, серед 12 локальних скілів немає) у `debugger.md` замінено на наявний підхід: Bug Fix Pipeline (`workflow.md`) + regression-first (`tdd.md`).
+
+**README:** лічильник правил 17 → 19 (+`simplicity-surgical`, `output-language` у прозу). Решта звірено з фактом: agents 22 (11+11), skills 12, commands 20 — коректні. Baseline плагінів у README вже правильний (застарілою була копія в `config.md`, виправлено минулої сесії).
+
+**Гігієна/цілісність:** `templates/__pycache__` НЕ закомічено (0 у `git ls-files`, є в `.gitignore`) — попередня примітка хибна. Звірка: 0 NUL, 0 обрізаних (2 порожні `__init__.py` — легітимні маркери пакетів).
+
+**Git:** правки — bash heredoc → `/dev/shm` → `cp` → звірка `wc -c`/no-NUL; коміт/push — з host-шела (template-repo дозволяє прямий push у `main`).
+
+
 ## 2026-06-05 — Доробка 🟡-беклогу (A/B/C/D) + дизайн «живого плану» (план 0010)
 
 Продовження аудиту колізій: закрито весь 🟡-беклог (8 пунктів, п.5–12) чотирма логічними групами + спроєктовано «живий план».
