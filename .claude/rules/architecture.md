@@ -1,13 +1,14 @@
 # Project architecture
 
-## API-first (backend-only)
+## API-first (contract-first, backend consumes)
 
-Order of work on a feature:
+The canonical REST API contract is authored externally in `claude-api-contract` and pinned here via `CONTRACT_VERSION` (ADR `0017`). Order of work on a feature:
 
-1. The backend REST API for the endpoint is built test-first: api-contract → tests (RED) → models / migrations / serializers / views / routes / permissions (GREEN) → endpoint docs.
-2. `docs/api/openapi.yml` is regenerated from the live code (`drf-spectacular`) and committed in the same PR. The CI drift gate (`scripts/check_openapi_drift.sh`) enforces sync between code and docs.
+1. The contract for the endpoint already exists in `claude-api-contract` (designed there first); pull it with `scripts/pull_contract.sh`.
+2. The backend implements the endpoint test-first against that contract: read contract → tests (RED) → models / migrations / serializers / views / routes / permissions (GREEN) → endpoint docs.
+3. The implementation is validated against the pinned `docs/api/openapi.yml` by `scripts/check_contract_conformance.sh` (schemathesis + drf-openapi-tester) in the same PR. The backend **never regenerates** the canonical schema.
 
-Interactive API testing is via **Swagger UI / Redoc**, served by Django at `/api/schema/swagger/` and `/api/schema/redoc/` — no hand-rolled mini-frontend in this repo. A real production frontend, if needed, lives in a **separate repository** that consumes `docs/api/openapi.yml` as the contract. Details: `@.claude/rules/api-docs.md`.
+Interactive API testing is via **Swagger UI / Redoc**, served by Django at `/api/schema/swagger/` and `/api/schema/redoc/` via `drf-spectacular` (UI only, not the canon) — no hand-rolled mini-frontend in this repo. The production frontend lives in a **separate repository** (`claude-react-mui`) that consumes the same external contract. Details: `@.claude/rules/api-docs.md`.
 
 ## Project structure (backend-only)
 

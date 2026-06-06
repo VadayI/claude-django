@@ -90,6 +90,8 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 | Requirement | Expected | Check |
 |---|---|---|
 | Skeleton | `backend/`, `docs/api/`, `docs/decisions/`, `docs/plans/`, `.claude/memory/` exist | `test -d <dir>` |
+| `CONTRACT_VERSION` pin | set in `.env` to the consumed `claude-api-contract` tag (`vX.Y.Z`); raising it is a deliberate PR (ADR `0017`) | `grep -q '^CONTRACT_VERSION=' .env` |
+| External contract vendored | `docs/api/openapi.yml` present, fetched at the pinned version via `scripts/pull_contract.sh` (vendored copy of the external canon, never generated) | `test -f docs/api/openapi.yml` |
 | Config files | `CLAUDE.md`, `.claude/`, `docker-compose.yml`, `.env.example` present (committed) | `test -f <file>` |
 | `.env.example` | committed canonical key list; new clones use it to seed `.env` | `test -f .env.example` |
 | `.env` | local-only (gitignored), copied from `.env.example`; secrets filled | `test -f .env` (never print contents). Missing → `cp .env.example .env && $EDITOR .env` |

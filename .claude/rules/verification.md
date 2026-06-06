@@ -1,6 +1,6 @@
 # Endpoint verification handoff (mandatory, automatic block)
 
-Every feature that adds or changes an endpoint MUST ship a **human-facing verification guide** so the user (or a reviewer) can confirm the slice works by hitting the live API — via **Swagger UI** and ready-to-paste **`curl` / `httpie`** commands. The automated pytest suite proves correctness for CI; this guide is the manual, copy-paste smoke test a person runs against a running server. It is generated automatically at the end of the feature pipeline (this is "Варіант 1" — the automatic verification block) and on demand via `/verify`.
+Every feature that adds or changes an endpoint MUST ship a **human-facing verification guide** so the user (or a reviewer) can confirm the slice works by hitting the live API — via **Swagger UI** and ready-to-paste **`curl` / `httpie`** commands. The automated conformance suite (schemathesis + drf-openapi-tester, see `@.claude/rules/api-docs.md`) proves the implementation matches the external contract for CI; this guide is the manual, copy-paste smoke test a person runs against a running server. It is generated automatically at the end of the feature pipeline (this is "Варіант 1" — the automatic verification block) and on demand via `/verify`.
 
 > Why this exists: tests are green inside the container, but the user still wants a quick, concrete "open this URL / run this command / expect this status" checklist to trust the endpoint by hand. The guide is derived from the contract, never hand-invented, so it cannot drift from the real routes.
 
@@ -21,7 +21,7 @@ Keep it copy-paste runnable. Bodies and codes come from `.claude/memory/endpoint
 
 ## Source of truth — `.claude/memory/endpoints.json` + the OpenAPI schema
 
-The verification guide is generated from a machine-readable route registry plus the committed OpenAPI schema, so it always matches the real contract:
+The verification guide is generated from a machine-readable route registry plus the committed (vendored external) OpenAPI schema, so it always matches the real contract:
 
 - **`.claude/memory/endpoints.json`** — the route registry. `api-architect` writes/updates an entry the moment it fixes a contract (phase 2), so the registry is the early, authoritative list of what the feature will expose. Schema per entry:
 
@@ -39,7 +39,7 @@ The verification guide is generated from a machine-readable route registry plus 
 
   `auth` is one of `anonymous` | `authenticated` | `owner` | `admin`. `path` is the full versioned path. The file is a JSON array of such objects.
 
-- **`docs/api/openapi.yml`** — the re-derived contract (drf-spectacular). The source of truth for field shapes and the final code set.
+- **`docs/api/openapi.yml`** — the **external contract** vendored from `claude-api-contract` (pulled via `scripts/pull_contract.sh`, pinned by `CONTRACT_VERSION`). The source of truth for field shapes and the final code set. The backend does not generate it.
 
 ### Three-way reconciliation (enforced like `app-readme.md`)
 
@@ -49,7 +49,7 @@ After GREEN, before the PR opens, `docs-writer` reconciles the routes across **t
 .claude/memory/endpoints.json  <->  docs/api/openapi.yml  <->  docs/api/INDEX.md
 ```
 
-`openapi.yml` (re-derived from code) is the **source of truth**. If `endpoints.json` or `INDEX.md` disagree (a renamed path, a dropped endpoint, a changed status code), they are wrong and get corrected to match the schema. Stale entries for endpoints no longer in the schema are removed from `endpoints.json`. This is the same discipline the README *Endpoints* section follows — `endpoints.json` simply makes it machine-checkable and feeds `/verify`.
+`openapi.yml` (the external contract) is the **source of truth**. If `endpoints.json` or `INDEX.md` disagree (a renamed path, a dropped endpoint, a changed status code), they are wrong and get corrected to match the schema. Stale entries for endpoints no longer in the schema are removed from `endpoints.json`. This is the same discipline the README *Endpoints* section follows — `endpoints.json` simply makes it machine-checkable and feeds `/verify`.
 
 ## Lifecycle (per feature)
 
