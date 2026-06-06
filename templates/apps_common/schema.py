@@ -1,11 +1,11 @@
-"""drf-spectacular postprocessing hook: document the error envelope in OpenAPI.
+"""drf-spectacular postprocessing hook: document the error envelopes in OpenAPI.
 
 The runtime error envelope is produced by
 ``apps.common.exceptions.exception_handler``; the generated schema does not know
-about it unless we say so. This hook registers the ``ErrorEnvelope`` component
-(from ``apps.common.serializers``) and points every 4xx/5xx response that has no
-explicit body at it, so the published contract matches what the API actually
-returns on failure.
+about it unless we say so. This hook points each documented 4xx/5xx response with
+no explicit body at the matching contract envelope (ADR 0020): the validation
+shape for ``400`` and the ``{"detail": ...}`` shape for everything else, so the
+published contract matches what the API actually returns on failure.
 
 Wire it in settings::
 
@@ -24,26 +24,32 @@ from typing import Any
 from drf_spectacular.plumbing import build_basic_type
 from drf_spectacular.utils import OpenApiTypes
 
-# Inline JSON-Schema for the envelope. Inlined (rather than a $ref to a generated
-# component) so the hook has no ordering dependency on serializer registration.
-_ERROR_ENVELOPE_SCHEMA: dict[str, Any] = {
+# Inline JSON-Schema for the two envelopes. Inlined (rather than a $ref to a
+# generated component) so the hook has no ordering dependency on serializer
+# registration.
+_VALIDATION_ERROR_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "error": {
-            "type": "object",
-            "properties": {
-                "code": build_basic_type(OpenApiTypes.STR),
-                "message": build_basic_type(OpenApiTypes.STR),
-                "details": {
-                    "type": "object",
-                    "additionalProperties": True,
-                    "nullable": True,
+        "errors": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "field": {**build_basic_type(OpenApiTypes.STR), "nullable": True},
+                    "code": build_basic_type(OpenApiTypes.STR),
+                    "message": build_basic_type(OpenApiTypes.STR),
                 },
+                "required": ["field", "code", "message"],
             },
-            "required": ["code", "message", "details"],
         }
     },
-    "required": ["error"],
+    "required": ["errors"],
+}
+
+_DETAIL_ERROR_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {"detail": build_basic_type(OpenApiTypes.STR)},
+    "required": ["detail"],
 }
 
 
@@ -53,13 +59,14 @@ def add_error_envelope_responses(
     request: Any,
     public: bool,
 ) -> dict[str, Any]:
-    """Attach the error-envelope schema to documented 4xx/5xx responses.
+    """Attach the matching error-envelope schema to documented 4xx/5xx responses.
 
     Iterates every operation in the generated OpenAPI ``result`` and, for each
     response whose status code starts with ``4`` or ``5`` but carries no JSON
-    body schema, sets an ``application/json`` content type pointing at the shared
-    error envelope. Responses that already declare a body are left untouched, so
-    hand-annotated error shapes win.
+    body schema, sets an ``application/json`` content type pointing at the
+    validation envelope (for ``400``) or the ``detail`` envelope (otherwise).
+    Responses that already declare a body are left untouched, so hand-annotated
+    error shapes win.
 
     Args:
         result: The OpenAPI document built by ``drf-spectacular`` so far.
@@ -85,7 +92,10 @@ def add_error_envelope_responses(
                     continue
                 if response.get("content"):
                     continue
-                response["content"] = {
-                    "application/json": {"schema": dict(_ERROR_ENVELOPE_SCHEMA)}
-                }
+                schema = (
+                    _VALIDATION_ERROR_SCHEMA
+                    if str(code) == "400"
+                    else _DETAIL_ERROR_SCHEMA
+                )
+                response["content"] = {"application/json": {"schema": dict(schema)}}
     return result

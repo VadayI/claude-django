@@ -17,7 +17,8 @@ Independent security audit of changes in the Quality Gate.
 - **Secrets**: no hardcoded keys/passwords/tokens; everything via env; `.env` in `.gitignore`.
 - **Injections**: no raw SQL without parameters; ORM used safely.
 - **Data exposure**: serializers do not return extra/sensitive fields (passwords, hashes, tokens).
-- **Throttling/rate-limit** on sensitive endpoints (login, registration).
+- **Throttling/rate-limit** on sensitive endpoints (login, registration, token); throttled -> **429** + `Retry-After` (ADR 0020).
+- **JWT/token hygiene (ADR 0018/0019):** short access lifetime; refresh rotation + blacklist on logout; `scope` claims enforced via `apps.common.permissions.HasScope` on non-public endpoints; refresh-in-body XSS trade-off acknowledged (D2); no tokens in logs or error bodies.
 - **CORS/CSRF** configured accordingly.
 
 ## Report format

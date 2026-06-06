@@ -7,10 +7,11 @@
 ## Purpose
 
 `common` owns the project-wide REST conventions that every other app inherits
-**by configuration, not by copy-paste**: the single error envelope
-(`{"error": {"code", "message", "details"}}`) applied via DRF's
-`EXCEPTION_HANDLER`, the `Conflict` (409) exception, and the OpenAPI
-documentation of that envelope. It deliberately owns **no domain data** — it has
+**by configuration, not by copy-paste**: the contract error envelope
+(`{"detail": ...}` for simple errors, `{"errors": [{"field", "code", "message"}]}`
+for 400 validation) applied via DRF's `EXCEPTION_HANDLER`, the `Conflict` (409)
+exception, the reusable `HasScope` permission, and the OpenAPI documentation of
+that envelope. It deliberately owns **no domain data** — it has
 no production models and no business resources. Its only public route is the
 infrastructure **health probe** used by deploy smoke tests and the staging
 container healthcheck. Domain apps depend on it; it depends on no domain app.
@@ -61,7 +62,8 @@ None.
 To add another cross-cutting concern (e.g. a base pagination class with a larger
 page size, a custom renderer, a shared mixin), add it here and wire it through
 `config/settings/base.py` so all apps inherit it uniformly — do not duplicate
-the behaviour in individual domain apps. New error codes go in
-`_STATUS_TO_CODE` inside `exceptions.py` and the documented shape in `schema.py`.
+the behaviour in individual domain apps. Error codes come from the raised DRF exception / serializer `ErrorDetail` code;
+the two documented shapes live in `schema.py`. Shared authorization base classes
+(e.g. `HasScope`) go in `permissions.py`.
 
 <!-- Last reviewed/updated: 2026-06-03 -->

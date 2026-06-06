@@ -1,6 +1,6 @@
 # 18. Auth: Bearer/JWT + service-flow (client_credentials) + scopes
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-06-06
 - **Deciders:** Project maintainer
 - **Tags:** security, auth, api, contract
@@ -23,5 +23,5 @@ Backend реалізує auth за контрактом:
 
 - (+) Один auth-механізм для людей і сервісів; гранульована авторизація через scopes.
 - (−) Більша поверхня (client-credentials модель, scope-перевірки, revocation) — складніше за дефолтний `IsAuthenticated`.
-- Відкрите: бібліотека JWT (`djangorestframework-simplejwt` + blacklist vs власна під scopes) — вирішується на PR3.
+- **Бібліотека JWT (вирішено):** `djangorestframework-simplejwt` + `token_blacklist` для user-flow (access + refresh-у-тілі, revocation), а service-flow `/auth/token` (client_credentials) — невеликий кастомний view, що видає JWT зі `scope`-claim; enforcement через `apps.common.permissions.HasScope`. Один формат токена (JWT) для всіх клієнтів = глобальний `bearerAuth`. **Upgrade-path:** `django-oauth-toolkit`, коли потрібен стандартний OAuth2 для зовнішніх інтеграторів (реєстрація клієнтів, introspection) — окремим ADR.
 - Зачіпає `rules/serializers-permissions.md`, агентів `integration-architect`/`security-scanner`, скафолд auth-додатку, налаштування.

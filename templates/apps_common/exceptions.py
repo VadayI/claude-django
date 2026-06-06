@@ -1,15 +1,17 @@
-"""Project-wide DRF exception handling: a single error envelope for all 4xx/5xx.
+"""Project-wide DRF exception handling: the contract error envelope for 4xx/5xx.
 
-Every error response from the API has the shape::
+Two shapes, per the external contract (ADR 0020, ``.claude/rules/api-docs.md``):
 
-    {"error": {"code": <machine>, "message": <human>, "details": <dict|null>}}
+- **Validation errors (400)**::
 
-``code`` is a stable machine-readable token (``validation_error``,
-``not_authenticated``, ``permission_denied``, ``not_found``, ``conflict``,
-``throttled``, ``server_error``). ``details`` carries field-keyed validation
-errors for ``400`` responses and is ``null`` for every other status. This module
-is wired via ``REST_FRAMEWORK["EXCEPTION_HANDLER"]`` so the envelope applies to
-the whole project without per-view code.
+      {"errors": [{"field": <str|null>, "code": <machine>, "message": <human>}]}
+
+- **Every other handled error (401/403/404/409/429/5xx)**::
+
+      {"detail": <human>}
+
+Wired via ``REST_FRAMEWORK["EXCEPTION_HANDLER"]`` so the envelope applies to the
+whole project without per-view code.
 """
 
 from __future__ import annotations
@@ -21,16 +23,8 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
 
-# Maps an HTTP status code to the stable machine-readable ``error.code`` token.
-# Anything not listed here (any other 5xx) falls back to ``server_error``.
-_STATUS_TO_CODE: dict[int, str] = {
-    status.HTTP_400_BAD_REQUEST: "validation_error",
-    status.HTTP_401_UNAUTHORIZED: "not_authenticated",
-    status.HTTP_403_FORBIDDEN: "permission_denied",
-    status.HTTP_404_NOT_FOUND: "not_found",
-    status.HTTP_409_CONFLICT: "conflict",
-    status.HTTP_429_TOO_MANY_REQUESTS: "throttled",
-}
+# Sentinel field name DRF uses for errors not tied to a single field.
+_NON_FIELD = "non_field_errors"
 
 
 class Conflict(APIException):
@@ -38,7 +32,7 @@ class Conflict(APIException):
 
     Raise this from serializers, services, or views when a request collides with
     existing state (duplicate unique key, version conflict). It renders through
-    the project envelope with ``code == "conflict"`` and ``details == null``.
+    the project envelope as ``{"detail": ...}`` with HTTP 409.
     """
 
     status_code = status.HTTP_409_CONFLICT
@@ -46,13 +40,58 @@ class Conflict(APIException):
     default_code = "conflict"
 
 
-def _human_message(data: Any, fallback: str) -> str:
-    """Return a single human-readable sentence describing the error.
+def _error_item(field: str | None, value: Any) -> dict[str, Any]:
+    """Build one ``{field, code, message}`` entry from a DRF error value.
 
-    DRF packs error detail in several shapes (a bare string, a list of strings,
-    or a ``{field: [msgs]}`` dict). This collapses any of them to one line for
-    the envelope's ``message`` field; the structured field errors are preserved
-    separately in ``details``.
+    The DRF ``ErrorDetail`` is a ``str`` subclass carrying a ``.code``; plain
+    strings fall back to ``"invalid"``.
+
+    Args:
+        field: Field path the error belongs to, or ``None`` for non-field errors.
+        value: A DRF ``ErrorDetail`` or plain string message.
+
+    Returns:
+        A dict with ``field``, ``code`` and ``message`` keys.
+    """
+    code = getattr(value, "code", None) or "invalid"
+    return {"field": field, "code": str(code), "message": str(value)}
+
+
+def _flatten_errors(data: Any, field: str | None = None) -> list[dict[str, Any]]:
+    """Flatten a DRF validation payload into a list of ``{field, code, message}``.
+
+    DRF packs validation detail as nested ``{field: [...]}`` dicts, lists, or bare
+    strings. This walks the structure, dotting nested field paths
+    (``address.zip``) and mapping the ``non_field_errors`` key to ``field: null``.
+
+    Args:
+        data: The ``response.data`` produced by DRF's default handler for a 400.
+        field: Accumulated field path during recursion.
+
+    Returns:
+        A flat list of field-error entries (possibly empty).
+    """
+    items: list[dict[str, Any]] = []
+    if isinstance(data, dict):
+        for key, value in data.items():
+            child = field if key == _NON_FIELD else (key if field is None else f"{field}.{key}")
+            items.extend(_flatten_errors(value, field=child))
+    elif isinstance(data, (list, tuple)):
+        for element in data:
+            if isinstance(element, (dict, list, tuple)):
+                items.extend(_flatten_errors(element, field=field))
+            else:
+                items.append(_error_item(field, element))
+    else:
+        items.append(_error_item(field, data))
+    return items
+
+
+def _detail_message(data: Any, fallback: str) -> str:
+    """Collapse a DRF error payload to one human-readable sentence.
+
+    Used for non-validation responses (401/403/404/409/429/5xx), whose envelope
+    carries only ``detail``.
 
     Args:
         data: The ``response.data`` produced by DRF's default handler.
@@ -78,37 +117,14 @@ def _human_message(data: Any, fallback: str) -> str:
     return fallback
 
 
-def _field_details(data: Any) -> dict[str, Any] | None:
-    """Return field-keyed validation errors for a 400, or ``None`` otherwise.
-
-    Only ``validation_error`` (400) responses expose ``details``. A DRF
-    ``ValidationError`` whose payload is a ``{field: [...]}`` dict is passed
-    through as-is (minus the non-field ``detail`` key); a non-dict 400 payload
-    (a bare string/list) carries no per-field structure, so ``details`` is
-    ``null``.
-
-    Args:
-        data: The ``response.data`` produced by DRF's default handler.
-
-    Returns:
-        The field-error dict, or ``None`` when there is no per-field structure.
-    """
-    if isinstance(data, dict):
-        details = {key: value for key, value in data.items() if key != "detail"}
-        return details or None
-    return None
-
-
 def exception_handler(exc: Exception, context: dict[str, Any]) -> Response | None:
-    """Render every handled DRF exception in the project's error envelope.
+    """Render every handled DRF exception in the contract's error envelope.
 
     Delegates to DRF's default handler to classify the exception and pick the
-    status code, then rewrites the body to
-    ``{"error": {"code", "message", "details"}}``. ``details`` is the field-error
-    dict only for ``400 validation_error``; for ``401/403/404/409/429`` (and any
-    other handled status) it is ``null``. Returns ``None`` for exceptions DRF
-    does not handle (genuine ``500``s), letting Django produce the default
-    server-error response unchanged.
+    status code, then rewrites the body: a ``400`` becomes
+    ``{"errors": [{field, code, message}]}``; every other handled status becomes
+    ``{"detail": <human>}``. Returns ``None`` for exceptions DRF does not handle
+    (genuine ``500``s), letting Django produce the default response unchanged.
 
     Args:
         exc: The exception raised while processing the request.
@@ -121,19 +137,11 @@ def exception_handler(exc: Exception, context: dict[str, Any]) -> Response | Non
     if response is None:
         return None
 
-    code = _STATUS_TO_CODE.get(response.status_code, "server_error")
-    message = _human_message(response.data, fallback=str(exc) or "Error.")
-    details = (
-        _field_details(response.data)
-        if response.status_code == status.HTTP_400_BAD_REQUEST
-        else None
-    )
-
-    response.data = {
-        "error": {
-            "code": code,
-            "message": message,
-            "details": details,
-        }
-    }
+    if response.status_code == status.HTTP_400_BAD_REQUEST:
+        errors = _flatten_errors(response.data)
+        if not errors:
+            errors = [_error_item(None, str(exc) or "Invalid request.")]
+        response.data = {"errors": errors}
+    else:
+        response.data = {"detail": _detail_message(response.data, fallback=str(exc) or "Error.")}
     return response

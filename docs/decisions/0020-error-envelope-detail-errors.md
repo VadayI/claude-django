@@ -1,6 +1,6 @@
 # 20. Error-envelope: перехід на {detail} / {errors:[{field,code,message}]}
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-06-06
 - **Deciders:** Project maintainer
 - **Tags:** api, contract, errors

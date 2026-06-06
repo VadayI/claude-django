@@ -13,6 +13,7 @@ You design integrations with external services, keeping them secure and testable
 ## What you do
 
 - **OAuth/SSO**: authorization flows, token storage/refresh, scopes.
+- **Project auth (Bearer/JWT, S2S — ADR 0018):** implement the service-flow `POST /api/v1/auth/token` (client_credentials), the service-credential model/storage, and JWT `scope` claims enforced via `apps.common.permissions.HasScope`; keep access short, rotate/blacklist refresh (refresh in body — D2/ADR 0019). Follow `@.claude/rules/serializers-permissions.md`.
 - **Webhooks**: inbound endpoints with signature verification, idempotency (dedupe by event id), fast 200 + async processing (hand heavy work to `celery-specialist`).
 - **External APIs**: thin client layer in `apps/<domain>/integrations/`, timeouts, retries, error mapping, no secrets in code.
 - **Payments** (e.g. Stripe): clear separation of intent/confirmation, reconciliation via webhooks.

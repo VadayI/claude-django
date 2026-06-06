@@ -1,6 +1,6 @@
 # 19. Refresh-токен у тілі відповіді (D2) — XSS trade-off
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-06-06
 - **Deciders:** Project maintainer
 - **Tags:** security, auth, contract

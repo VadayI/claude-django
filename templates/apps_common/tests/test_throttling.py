@@ -15,5 +15,5 @@ def test_login_scope_throttles_after_five(api_client):
     blocked = api_client.post("/login/", {}, format="json")
     assert blocked.status_code == 429
     body = blocked.json()
-    assert body["error"]["code"] == "throttled"
-    assert body["error"]["details"] is None
+    assert set(body) == {"detail"}
+    assert isinstance(body["detail"], str) and body["detail"]

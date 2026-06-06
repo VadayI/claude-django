@@ -263,6 +263,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
      INSTALLED_APPS = [
          # ... Django + third-party ...
          "rest_framework",
+         "rest_framework_simplejwt.token_blacklist",  # JWT revocation/rotation (ADR 0018)
          "drf_spectacular",
          "apps.common",        # cross-cutting infra (error envelope) — no domain models
          # ... domain apps ...
@@ -273,6 +274,10 @@ Run AFTER preflight passes but BEFORE any side-effects.
      REST_FRAMEWORK = {
          # OpenAPI schema generator (drf-spectacular) — keep this.
          "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+         # Token auth (Bearer/JWT) — primary client profile is service-to-service (ADR 0018).
+         "DEFAULT_AUTHENTICATION_CLASSES": [
+             "rest_framework_simplejwt.authentication.JWTAuthentication",
+         ],
          # Authenticated-by-default; views opt OUT explicitly (AllowAny) where public.
          "DEFAULT_PERMISSION_CLASSES": [
              "rest_framework.permissions.IsAuthenticated",
@@ -289,11 +294,27 @@ Run AFTER preflight passes but BEFORE any side-effects.
              "anon": "100/hour",
              "user": "1000/hour",
              "login": "5/min",
+             "register": "5/min",
+             "token": "30/min",
          },
-         # Single error envelope: {"error": {"code", "message", "details"}}.
+         # Contract error envelope: {"detail": ...}; 400 -> {"errors": [{field,code,message}]}.
          "EXCEPTION_HANDLER": "apps.common.exceptions.exception_handler",
      }
      ```
+   - Configure **`SIMPLE_JWT`** for short access + refresh rotation/blacklist (ADR 0018); `migrate` then covers the `token_blacklist` tables:
+     ```python
+     from datetime import timedelta
+     SIMPLE_JWT = {
+         "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+         "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+         "ROTATE_REFRESH_TOKENS": True,
+         "BLACKLIST_AFTER_ROTATION": True,
+     }
+     ```
+     > The service-flow `POST /api/v1/auth/token` (client_credentials) + the JWT
+     > `scope` claim are implemented per feature against the external contract —
+     > simplejwt covers the user-flow; the client-credentials view is custom (see
+     > `@.claude/rules/serializers-permissions.md`).
    - Configure **`drf-spectacular`** (see `@.claude/rules/api-docs.md`):
      - `DEFAULT_SCHEMA_CLASS` is already set in `REST_FRAMEWORK` above — do not duplicate it.
      - add `SPECTACULAR_SETTINGS` with the title/version **and** the error-envelope postprocessing hook so the documented contract matches the runtime envelope:
