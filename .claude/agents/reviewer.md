@@ -13,6 +13,7 @@ Independent review of changes before creating a PR. You work in the Quality Gate
 ## What you check
 
 - Compliance with @.claude/rules/architecture.md and code-style.md (thin views, validation in serializers, separation of concerns).
+- **Contract conformance** (@.claude/rules/api-docs.md): the implementation matches the **pinned external contract**; `scripts/check_contract_conformance.sh` passes (schemathesis + django-contract-tester). A PR that diverges from the pinned `docs/api/openapi.yml`, or raises `CONTRACT_VERSION` without an ADR/migration note, is 🔴.
 - Quality and completeness of tests (whether they cover edge/error cases).
 - Readability, naming, no duplication and no "magic numbers".
 - PR-per-layer respected (no mixing backend and mini-frontend in the same PR; full production frontend lives in a separate repo).

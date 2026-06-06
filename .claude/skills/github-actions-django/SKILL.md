@@ -11,8 +11,8 @@ description: "[claude-django] GitHub Actions CI for Django (ruff + pytest with a
 - `ruff check .`; `pytest --cov=apps`.
 - Test/lint failure blocks merge (branch protection requires green CI).
 
-## OpenAPI drift gate (in backend-ci.yml)
-- `bash scripts/check_openapi_drift.sh` — regenerates the schema from code and fails on any diff with `docs/api/openapi.yml`.
+## Contract conformance gate (in backend-ci.yml)
+- `bash scripts/check_contract_conformance.sh` — validates the implementation against the pinned external contract (`docs/api/openapi.yml`, pulled via `scripts/pull_contract.sh`): schemathesis + django-contract-tester. Any divergence fails the PR (ADR 0017).
 
 ## Stub gate (in backend-ci.yml)
 - `bash scripts/check_stubs.sh` — fails on `# STUB:` / `NotImplementedError("STUB: …")` in `backend/apps/` without a row in `docs/STUBS.md`.

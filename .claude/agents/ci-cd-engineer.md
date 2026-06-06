@@ -17,9 +17,9 @@ You set up GitHub Actions for TDD and the PR process.
 3. `ruff check .` — lint.
 4. `pytest --cov=apps` — all tests must pass (otherwise merge is blocked by branch protection).
 
-## OpenAPI drift gate (in backend-ci.yml)
+## Contract conformance gate (in backend-ci.yml)
 
-`bash scripts/check_openapi_drift.sh` — regenerates the schema from live code and compares with committed `docs/api/openapi.yml`. Any drift fails the PR. See `@.claude/rules/api-docs.md`.
+`bash scripts/check_contract_conformance.sh` — validates the implementation against the **pinned external contract** (`docs/api/openapi.yml`, pulled from `claude-api-contract` via `scripts/pull_contract.sh`): schemathesis + django-contract-tester. Any divergence fails the PR. The backend never regenerates the canon. See `@.claude/rules/api-docs.md` (ADR 0017).
 
 ## (Optional) deploy.yml
 

@@ -13,7 +13,7 @@
 | PR1. Доктрина «контракт зовнішній» (rules + ADR, без коду) | in_progress | maintainer |
 | PR2. Скафолдинг споживання контракту (pull_contract.sh, deps, CI gates) | in_progress | maintainer |
 | PR3. Auth під S2S-профіль (Bearer/JWT + service-flow + scopes + envelope-switch) | in_progress | maintainer |
-| PR4. Узгодження агентів / команд / скілів | pending | maintainer |
+| PR4. Узгодження агентів / команд / скілів | in_progress | maintainer |
 | PR5. Наративи (README + CLAUDE.md) | pending | maintainer |
 
 > States: `pending` · `in_progress` · `done` · `blocked`.
@@ -67,6 +67,8 @@
 - 2026-06-06 — PR1 правки внесено у working tree: переписано `rules/api-docs.md` (контракт зовнішній, conformance-gate), оновлено `rules/architecture.md`/`rules/verification.md`/`rules/environment.md`; ADR 0017 → Accepted. Перевірено (0 NUL, без залишкових drift-згадок). Лишилось: гілка/коміт/PR з host-шела. Примітка: стара drift-рамка ще присутня в `rules/{app-readme,user-guides,workflow}.md`, `templates/api_INDEX.md`, скілах — узгодити в PR4.
 - 2026-06-06 — PR2 правки внесено у working tree: додано `templates/scripts/{pull_contract.sh,check_contract_conformance.sh}`; `templates/pyproject.toml` (+schemathesis 4.x, +django-contract-tester 1.6); `backend-ci.yml` (drift step → contract conformance); `.env.example` (+CONTRACT_REPO/CONTRACT_VERSION); `commands/{bootstrap,doctor,verify}.md`. Перевірено (0 NUL, без drift-згадок у редагованих файлах). **Блокер видалення:** `templates/scripts/check_openapi_drift.sh` не видаляється з пісочниці (9p, Operation not permitted) — прибрати через `git rm` з host-шела.
 - 2026-06-06 — PR3 правки внесено у working tree (обсяг (a): доктрина+settings+envelope+scope-base). `apps_common`: envelope переписано під §12 (`{detail}` / `{errors:[{field,code,message}]}`) — exceptions/serializers/schema; нові `permissions.py` (`HasScope`); тести `test_error_envelope.py`/`test_throttling.py`/`test_scope_permission.py`; README. `rules/serializers-permissions.md`: додано секцію Authentication (Bearer/JWT, user+service flow, scopes, short access+revocation, 429+Retry-After), envelope §12. `pyproject.toml` (+djangorestframework-simplejwt). `bootstrap.md`: JWTAuthentication у REST_FRAMEWORK, token_blacklist, SIMPLE_JWT-блок, throttle register/token, envelope-коментар. Агенти `integration-architect`/`security-scanner`. ADR 0018/0019/0020 → Accepted (0018 фіксує вибір simplejwt). AST OK, 0 NUL.
+
+- 2026-06-06 — PR4 внесено у working tree: прибрано решту drift-рамки. rules `app-readme`/`user-guides`/`workflow` → зовнішній контракт; агенти `api-architect` (читає зовнішній контракт), `django-developer` (+conformance крок, @extend_schema лише для Swagger), `reviewer`/`auditor`/`ci-cd-engineer` (conformance gate); скіл `github-actions-django`; шаблони `api_INDEX.md`, `Makefile` (schema→contract target), `PROJECT_README.md`, `WORKLOG.md`. Перевірено: 0 `check_openapi_drift` в активному конфізі, таби Makefile збережені, 0 NUL. Залишилось: PR5 (README + CLAUDE.md).
 
 ## Amendments
 

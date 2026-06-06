@@ -62,12 +62,12 @@ superuser: ## Create a Django superuser
 shell: ## Django shell
 	$(BACKEND) python manage.py shell
 
-schema: ## Regenerate docs/api/openapi.yml from live code (host; see api-docs.md)
-	cd backend && python manage.py spectacular --file ../docs/api/openapi.yml --format openapi-yaml
+contract: ## Pull the external API contract openapi.yml@CONTRACT_VERSION (see api-docs.md)
+	bash scripts/pull_contract.sh
 
-gates: ## Run CI gate scripts locally (stubs, openapi drift, app readmes)
+gates: ## Run CI gate scripts locally (stubs, contract conformance, app readmes)
 	bash scripts/check_stubs.sh
-	bash scripts/check_openapi_drift.sh
+	bash scripts/check_contract_conformance.sh
 	bash scripts/check_app_readmes.sh
 
 check-deploy: ## Django deployment-readiness check against staging settings

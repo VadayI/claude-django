@@ -48,7 +48,7 @@ test -f docs/HANDOFF.md && {
 3. **`main` not protected on GitHub** → `gh api -X PUT ...` (and recommend doing it via UI).
 4. **CI red on the current PR** → `/fix-ci <PR>`.
 5. **Open PR + CI green + no recent `/review-pr`** → `/review-pr <PR>`.
-6. **`backend/apps/` changed AFTER `docs/api/openapi.yml`** → regenerate schema + `bash scripts/check_openapi_drift.sh`; if change touches `permissions.py`/`auth`, also `/security-check`.
+6. **`backend/apps/` changed (endpoints/serializers/permissions)** → `bash scripts/check_contract_conformance.sh` to confirm the implementation still matches the pinned external contract; if change touches `permissions.py`/`auth`, also `/security-check`.
 7. **Unlogged STUBs in `backend/apps/`** (count > 0) → review `docs/STUBS.md`; if any STUB is older than 30 days → escalate.
 8. **No `/preflight` recorded for this project** → `/preflight`.
 9. **No `/doctor` recorded in the last 14 days** → `/doctor`.

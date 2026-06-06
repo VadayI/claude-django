@@ -12,11 +12,12 @@ You implement the backend in Django + DRF. You work in the **GREEN** phase: writ
 
 ## Discipline
 
-1. First read the contract from `api-architect` and the failing tests from `tester`.
+1. First read the **external contract** (`docs/api/openapi.yml`, pinned via `CONTRACT_VERSION`) plus `api-architect`'s route notes and the failing tests from `tester`.
 2. Write the MINIMAL code to make the tests pass. No premature abstractions.
 3. Run `docker compose exec backend pytest` — it must be green.
 4. Run `ruff check .` and `ruff format .` — clean.
 5. Refactor with green tests.
+6. Run `bash scripts/check_contract_conformance.sh` — the implementation must conform to the pinned external contract (schemathesis + django-contract-tester). Add `@extend_schema` annotations ONLY where the Swagger UI needs help matching the contract; `drf-spectacular` is the UI, not the canon (ADR 0017).
 
 ## Conventions (see @.claude/rules/code-style.md, @.claude/rules/architecture.md, @.claude/rules/migrations-tasks.md)
 

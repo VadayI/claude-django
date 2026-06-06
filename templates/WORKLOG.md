@@ -14,8 +14,8 @@ Initial scaffold via `/bootstrap` Mode A from the [`claude-django`](https://gith
 
 - `backend/` skeleton (Django 6, DRF, drf-spectacular wired) with `config/settings/{base,dev,staging}.py` and `DATABASE_URL` via `django-environ`.
 - `docs/` scaffolding: `PROJECT.md` (brief skeleton), `api/INDEX.md`, `api/openapi.yml`, `WORKLOG.md` (this file), `STUBS.md`, `lessons.md`, `decisions/`, `plans/`.
-- `scripts/`: `detect-env.py`, `check_stubs.sh`, `check_openapi_drift.sh`, `check_app_readmes.sh`.
-- `.github/workflows/backend-ci.yml` (ruff + stubs gate + OpenAPI drift gate + per-app README gate + pytest).
+- `scripts/`: `detect-env.py`, `check_stubs.sh`, `pull_contract.sh`, `check_contract_conformance.sh`, `check_app_readmes.sh`.
+- `.github/workflows/backend-ci.yml` (ruff + stubs gate + contract conformance gate + per-app README gate + pytest).
 - `.env.example` (committed) and local `.env` (gitignored).
 - GitHub repo `{OWNER}/{SLUG}` (private), first commit pushed to `main`, `backend-ci` triggered to register the status check.
 

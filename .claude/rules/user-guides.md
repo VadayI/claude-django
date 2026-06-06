@@ -33,7 +33,7 @@ Keep both guides copy-paste runnable and **derived from what the project actuall
 
 The guides reference, never restate, the machine-checked sources:
 
-- **Endpoints / auth** mentioned in `api-consumer.md` MUST exist in `docs/api/openapi.yml` (the re-derived contract) and `.claude/memory/endpoints.json`. The schema is the source of truth; if the guide names an endpoint or auth scheme the schema lacks, the guide is wrong.
+- **Endpoints / auth** mentioned in `api-consumer.md` MUST exist in `docs/api/openapi.yml` (the vendored external contract) and `.claude/memory/endpoints.json`. The contract is the source of truth; if the guide names an endpoint or auth scheme the schema lacks, the guide is wrong.
 - **Management commands / data-loading** in `admin.md` MUST correspond to real commands in `backend/apps/**/management/commands/` or documented fixtures. `guide-writer` verifies these against the code before declaring the guide ready.
 
 This is the same anti-drift discipline as `app-readme.md` and `verification.md`: the human narrative is allowed to add *prose and ordering*, but every concrete command, route, and code it names must trace back to the code or schema.

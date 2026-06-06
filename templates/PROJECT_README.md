@@ -37,7 +37,7 @@ docker compose exec backend python manage.py createsuperuser
 
 ## Process discipline
 
-- **API-first.** Every endpoint: contract → failing test → minimal code → green → OpenAPI schema regenerated and committed in the same PR. CI drift gate enforces parity.
+- **API-first (contract-first).** The REST API contract is authored externally in `claude-api-contract` and pinned via `CONTRACT_VERSION`. Every endpoint: pull contract → failing test → minimal code → green → conformance-validated in the same PR. The CI conformance gate enforces the implementation matches the pinned contract; the backend never regenerates the canon (ADR 0017).
 - **TDD.** No production code without a failing test first. Red → Green → Refactor.
 - **PRs only.** `main` is protected. Branch → commits → PR → review → merge. Conventional Commits (`feat: …`, `fix: …`, `test: …`, `docs: …`, `refactor: …`, `chore: …`). Branch naming: `feat/<slug>`, `fix/<slug>`, etc.
 - **Per-app README.** Every Django app under `backend/apps/<app>/` has a local `README.md` (CI gate `scripts/check_app_readmes.sh`).
@@ -85,7 +85,8 @@ docs/
 scripts/
   detect-env.py             # writes .claude/memory/env-detect.json on SessionStart
   check_stubs.sh            # CI gate: forbids unlogged STUBs
-  check_openapi_drift.sh    # CI gate: forbids code/schema drift
+  pull_contract.sh          # pull external contract openapi.yml@CONTRACT_VERSION
+  check_contract_conformance.sh  # CI gate: validate impl vs pinned contract
   check_app_readmes.sh      # CI gate: forbids apps without README
   check_file_size.sh        # CI gate: forbids files over 800 lines
 .claude/                    # agents, rules, commands, skills, memory, settings
