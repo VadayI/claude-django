@@ -68,7 +68,7 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 1b. **Scenario detection.** Classify the project state into ONE of four:
    - `no-config` — `.claude/`, `CLAUDE.md`, `templates/` missing → recommend the README Quick start.
    - `fresh` — config copied but no `.git/` and no `backend/` → recommend `/bootstrap` (Mode A).
-   - `existing-incomplete` — has `.git/` + GitHub remote BUT one or more of: no drf-spectacular in settings, no `docs/api/openapi.yml`, no branch protection, missing per-app READMEs → recommend `/bootstrap` (Mode B). **Exception:** on a **private repo on the free GitHub plan** branch protection is unavailable (the API returns 403), so its absence there is EXPECTED — do NOT treat it as incomplete or push to enable it; note the free-plan limitation (make the repo public or upgrade to Pro to enable, or keep PR-only by discipline).
+   - `existing-incomplete` — has `.git/` + GitHub remote BUT one or more of: no drf-spectacular in settings, no `CONTRACT_VERSION` pin, no `docs/api/openapi.yml`, no branch protection, missing per-app READMEs → recommend `/bootstrap` (Mode B). **Exception:** on a **private repo on the free GitHub plan** branch protection is unavailable (the API returns 403), so its absence there is EXPECTED — do NOT treat it as incomplete or push to enable it; note the free-plan limitation (make the repo public or upgrade to Pro to enable, or keep PR-only by discipline).
    - `active` — has everything → recommend `/preflight` and start a feature.
 
    Print the detected scenario at the top of the report.

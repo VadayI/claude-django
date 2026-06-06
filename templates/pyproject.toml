@@ -23,6 +23,12 @@ dev = [
     "pytest-cov>=5.0",
     "factory-boy>=3.3",
     "ruff>=0.5",
+    # Contract conformance against the external claude-api-contract (ADR 0017).
+    # schemathesis: property-based checks (pin to 4.x; OpenAPI 3.1 first-class).
+    "schemathesis>=4.0,<5",
+    # django-contract-tester: OpenAPI 3.1-capable fork of drf-openapi-tester;
+    # same SchemaTester / OpenAPIClient API, validates DRF responses in pytest.
+    "django-contract-tester>=1.6",
 ]
 prod = [
     # WSGI server for staging/production. Installed ONLY in the staging image via

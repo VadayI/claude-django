@@ -11,7 +11,7 @@
 |---|---|---|
 | 0. Передумова: `claude-api-contract` доведено до тегу `v0.1.0` (зовнішній репо) | blocked | maintainer (інший репо) |
 | PR1. Доктрина «контракт зовнішній» (rules + ADR, без коду) | in_progress | maintainer |
-| PR2. Скафолдинг споживання контракту (pull_contract.sh, deps, CI gates) | pending | maintainer |
+| PR2. Скафолдинг споживання контракту (pull_contract.sh, deps, CI gates) | in_progress | maintainer |
 | PR3. Auth під S2S-профіль (Bearer/JWT + service-flow + scopes + envelope-switch) | pending | maintainer |
 | PR4. Узгодження агентів / команд / скілів | pending | maintainer |
 | PR5. Наративи (README + CLAUDE.md) | pending | maintainer |
@@ -65,9 +65,12 @@
 
 - 2026-06-06 — plan seeded (orchestrator). Аналіз REQUIREMENTS-claude-api-contract завершено; зафіксовано envelope-switch і формат плану; складено 5-PR розбивку; чернетки ADR 0017–0020 створено.
 - 2026-06-06 — PR1 правки внесено у working tree: переписано `rules/api-docs.md` (контракт зовнішній, conformance-gate), оновлено `rules/architecture.md`/`rules/verification.md`/`rules/environment.md`; ADR 0017 → Accepted. Перевірено (0 NUL, без залишкових drift-згадок). Лишилось: гілка/коміт/PR з host-шела. Примітка: стара drift-рамка ще присутня в `rules/{app-readme,user-guides,workflow}.md`, `templates/api_INDEX.md`, скілах — узгодити в PR4.
+- 2026-06-06 — PR2 правки внесено у working tree: додано `templates/scripts/{pull_contract.sh,check_contract_conformance.sh}`; `templates/pyproject.toml` (+schemathesis 4.x, +django-contract-tester 1.6); `backend-ci.yml` (drift step → contract conformance); `.env.example` (+CONTRACT_REPO/CONTRACT_VERSION); `commands/{bootstrap,doctor,verify}.md`. Перевірено (0 NUL, без drift-згадок у редагованих файлах). **Блокер видалення:** `templates/scripts/check_openapi_drift.sh` не видаляється з пісочниці (9p, Operation not permitted) — прибрати через `git rm` з host-шела.
 
 ## Amendments
 
 > Append-only.
 
-_(none yet)_
+### Amendment #1 — 2026-06-06: django-contract-tester замість drf-openapi-tester
+
+План/ADR 0017 та `rules/api-docs.md` називають level-2 інструмент `drf-openapi-tester` (snok). При пінуванні зʼясувалось: snok-версія (2.3.3) орієнтована на OpenAPI 3.0 без явної 3.1, а контракт — 3.1 (D4). Тож у `pyproject.toml` запінено `django-contract-tester` (≥1.6) — форк із підтримкою 3.1.x і тим самим `SchemaTester`/`OpenAPIClient` API (§13/§14 вимог). Концептуальні згадки «drf-openapi-tester» у rules лишаються чинними (той самий API); конкретний пакет — у `pyproject.toml`. `schemathesis` запінено 4.x (поточний реліз; OpenAPI 3.1 first-class).

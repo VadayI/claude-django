@@ -6,7 +6,8 @@ on:
       - "docs/STUBS.md"
       - "docs/api/openapi.yml"
       - "scripts/check_stubs.sh"
-      - "scripts/check_openapi_drift.sh"
+      - "scripts/pull_contract.sh"
+      - "scripts/check_contract_conformance.sh"
       - "scripts/check_app_readmes.sh"
       - "scripts/check_file_size.sh"
       - ".github/workflows/backend-ci.yml"
@@ -20,7 +21,8 @@ on:
       - "docs/STUBS.md"
       - "docs/api/openapi.yml"
       - "scripts/check_stubs.sh"
-      - "scripts/check_openapi_drift.sh"
+      - "scripts/pull_contract.sh"
+      - "scripts/check_contract_conformance.sh"
       - "scripts/check_app_readmes.sh"
       - "scripts/check_file_size.sh"
       - ".github/workflows/backend-ci.yml"
@@ -67,10 +69,10 @@ jobs:
         id: stub
         working-directory: ${{ github.workspace }}
         run: bash scripts/check_stubs.sh
-      - name: OpenAPI docs drift gate
-        id: openapi
+      - name: Contract conformance gate
+        id: conformance
         working-directory: ${{ github.workspace }}
-        run: bash scripts/check_openapi_drift.sh
+        run: bash scripts/check_contract_conformance.sh
       - name: Per-app README gate
         id: readme
         working-directory: ${{ github.workspace }}
@@ -93,9 +95,9 @@ jobs:
             echo "|------|--------|"
             echo "| ruff | ${{ steps.ruff.outcome }} |"
             echo "| stub ledger | ${{ steps.stub.outcome }} |"
-            echo "| openapi drift | ${{ steps.openapi.outcome }} |"
+            echo "| contract conformance | ${{ steps.conformance.outcome }} |"
             echo "| per-app README | ${{ steps.readme.outcome }} |"
             echo "| file-size (<800) | ${{ steps.filesize.outcome }} |"
             echo "| pytest (+branch cov) | ${{ steps.pytest.outcome }} |"
           } >> "$GITHUB_STEP_SUMMARY"
-# Last reviewed/updated: 2026-06-03 (added concurrency + job summary)
+# Last reviewed/updated: 2026-06-06 (drift gate -> contract conformance, ADR 0017)

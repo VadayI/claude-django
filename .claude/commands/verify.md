@@ -20,7 +20,7 @@ python scripts/log-cmd.py /verify $ARGUMENTS
 ## Preconditions
 
 - `.claude/memory/endpoints.json` exists and is non-empty (the route registry written by `api-architect`). If missing/empty -> STOP: "no recorded endpoints; run the feature pipeline (api-architect records routes) first."
-- `docs/api/openapi.yml` exists (the schema source of truth). If missing -> warn that field shapes can't be verified against the schema and proceed from `endpoints.json` only.
+- `docs/api/openapi.yml` exists (the vendored external contract — source of truth, ADR 0017). If missing -> warn that field shapes can't be verified against the schema and proceed from `endpoints.json` only.
 
 ## Steps
 
