@@ -8,7 +8,7 @@ Quick audit of this project's **Claude configuration** — a thin wrapper over `
 ## Log
 
 ```bash
-python scripts/log-cmd.py /config $ARGUMENTS
+python scripts/log-cmd.py /claude-django-config $ARGUMENTS
 ```
 
 ## Behavior
