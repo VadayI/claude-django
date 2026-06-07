@@ -550,3 +550,27 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 
 **Done:** Restored the truncated WORKLOG tail (Steps 6-7 of plan `0006`: README<->INDEX<->OpenAPI reconciliation + empty per-project `docs/STUBS.md` on bootstrap; `session-start.sh` stale `.git/index.lock` auto-clean) and added the final newline. Normalized the two `output-language.md` working copies to LF (no git diff — index was already LF).
 - Hardened `scripts/session-start.sh` Step 0: when a stale empty `.git/index.lock` survives deletion (host-owned lock on a `/mnt` bind-mount -- WSL2 cannot remove it, "Operation not permitted"), it now prints an actionable hint to clear it from the Windows host shell instead of swallowing the failure and leaving git silently wedged. Hit this exact blocker mid-session.
+
+---
+
+## 2026-06-07 — chore/update-contract-pin-v0.2.0 — Аналіз сумісності claude-django ↔ claude-api-contract + bump CONTRACT_VERSION
+
+**Context:** Сесія з двох частин: (1) аналіз готовності шаблону `claude-django` споживати зовнішній контракт після публікації тегів `claude-api-contract`; (2) адаптація після виправлення контракту.
+
+**Done:**
+- Аналіз: зовнішній репо `claude-api-contract` опублікував теги `v0.1.0`, `v0.1.1`, `v0.2.0` (2026-06-07). Upstream-блокер plan 0011 крок 0 знятий.
+- Аналіз підтвердив: уся машинерія споживання (`pull_contract.sh`, `check_contract_conformance.sh`, `schemathesis` + `django-contract-tester`, CI gate, `.env.example`) готова і закомічена в `main`.
+- Виявлено gap #1: контракт `v0.1.1` мав auth під `/auth/...` без `/api/v1/` — розбіжність з доктриною `claude-django` (`/api/v1/auth/...`). Виправлено в контракті (`v0.2.0`).
+- Підняли пін: `CONTRACT_VERSION=v0.1.0` → `v0.2.0` у `templates/.env.example`.
+- Оновлено `docs/plans/0011-contract-inversion.md`: крок 0 `blocked` → `done`, execution log +запис.
+
+**Decisions:**
+- Gap #1 виправляється в контракті (джерело істини), не в `claude-django` — доктрина була правильною від початку.
+- ADR 0017 лишається без змін (пін — очікувана deliberate PR).
+
+**Status:** `chore/update-contract-pin-v0.2.0` — PR #17 open / not merged (verified via `gh`).
+
+**Next steps:**
+- Замержити PR #17 після review.
+- У похідних проєктах: `bash scripts/pull_contract.sh` підтягне `openapi.yml@v0.2.0` (всі шляхи під `/api/v1/`).
+- Plan 0011 PR1–PR5 залишаються `in_progress` у working tree — завершити через Git branches + PRs з host-шела.
