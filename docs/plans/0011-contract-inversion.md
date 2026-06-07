@@ -9,7 +9,7 @@
 
 | Step | State | Owner |
 |---|---|---|
-| 0. Передумова: `claude-api-contract` доведено до тегу `v0.1.0` (зовнішній репо) | blocked | maintainer (інший репо) |
+| 0. Передумова: `claude-api-contract` доведено до тегу `v0.1.0` (зовнішній репо) | done | maintainer (інший репо) |
 | PR1. Доктрина «контракт зовнішній» (rules + ADR, без коду) | in_progress | maintainer |
 | PR2. Скафолдинг споживання контракту (pull_contract.sh, deps, CI gates) | in_progress | maintainer |
 | PR3. Auth під S2S-профіль (Bearer/JWT + service-flow + scopes + envelope-switch) | in_progress | maintainer |
@@ -67,11 +67,10 @@
 - 2026-06-06 — PR1 правки внесено у working tree: переписано `rules/api-docs.md` (контракт зовнішній, conformance-gate), оновлено `rules/architecture.md`/`rules/verification.md`/`rules/environment.md`; ADR 0017 → Accepted. Перевірено (0 NUL, без залишкових drift-згадок). Лишилось: гілка/коміт/PR з host-шела. Примітка: стара drift-рамка ще присутня в `rules/{app-readme,user-guides,workflow}.md`, `templates/api_INDEX.md`, скілах — узгодити в PR4.
 - 2026-06-06 — PR2 правки внесено у working tree: додано `templates/scripts/{pull_contract.sh,check_contract_conformance.sh}`; `templates/pyproject.toml` (+schemathesis 4.x, +django-contract-tester 1.6); `backend-ci.yml` (drift step → contract conformance); `.env.example` (+CONTRACT_REPO/CONTRACT_VERSION); `commands/{bootstrap,doctor,verify}.md`. Перевірено (0 NUL, без drift-згадок у редагованих файлах). **Блокер видалення:** `templates/scripts/check_openapi_drift.sh` не видаляється з пісочниці (9p, Operation not permitted) — прибрати через `git rm` з host-шела.
 - 2026-06-06 — PR3 правки внесено у working tree (обсяг (a): доктрина+settings+envelope+scope-base). `apps_common`: envelope переписано під §12 (`{detail}` / `{errors:[{field,code,message}]}`) — exceptions/serializers/schema; нові `permissions.py` (`HasScope`); тести `test_error_envelope.py`/`test_throttling.py`/`test_scope_permission.py`; README. `rules/serializers-permissions.md`: додано секцію Authentication (Bearer/JWT, user+service flow, scopes, short access+revocation, 429+Retry-After), envelope §12. `pyproject.toml` (+djangorestframework-simplejwt). `bootstrap.md`: JWTAuthentication у REST_FRAMEWORK, token_blacklist, SIMPLE_JWT-блок, throttle register/token, envelope-коментар. Агенти `integration-architect`/`security-scanner`. ADR 0018/0019/0020 → Accepted (0018 фіксує вибір simplejwt). AST OK, 0 NUL.
-
 - 2026-06-06 — PR4 внесено у working tree: прибрано решту drift-рамки. rules `app-readme`/`user-guides`/`workflow` → зовнішній контракт; агенти `api-architect` (читає зовнішній контракт), `django-developer` (+conformance крок, @extend_schema лише для Swagger), `reviewer`/`auditor`/`ci-cd-engineer` (conformance gate); скіл `github-actions-django`; шаблони `api_INDEX.md`, `Makefile` (schema→contract target), `PROJECT_README.md`, `WORKLOG.md`. Перевірено: 0 `check_openapi_drift` в активному конфізі, таби Makefile збережені, 0 NUL. Залишилось: PR5 (README + CLAUDE.md).
-
 - 2026-06-06 — PR5 внесено у working tree: `CLAUDE.md` (Iron principle #1 contract-first, #4 external contract + conformance gate, #6, Stack) і `README.md` (intro, Stack, principles #1/#3, rules-index, Infrastructure, pipeline-діаграма, quick start, два приклади-стека агентів, docs-writer крок). Repo-wide sweep: 0 stale drift-згадок в активному конфізі; CONTRACT_VERSION/check_contract_conformance у 17 файлах. 0 NUL.
 - 2026-06-06 — **Усі 5 PR завершені на рівні working tree.** Лишилось поза інструментом: (0) довести `claude-api-contract` до `v0.1.0`; git гілки/коміти/PR/мерж кожного PR з host-шела (включно з `git rm templates/scripts/check_openapi_drift.sh` у PR2).
+- 2026-06-07 — **Крок 0 знято.** `claude-api-contract` опублікував теги `v0.1.0`, `v0.1.1`, `v0.2.0`. Gap #1 (auth-шляхи `/auth/...` vs `/api/v1/auth/...`) виправлено в контракті: `v0.2.0` переносить всі auth-шляхи під `/api/v1/auth/...` — повна відповідність доктрині `claude-django`. `templates/.env.example` підняв пін `CONTRACT_VERSION=v0.1.0` → `v0.2.0`.
 
 ## Amendments
 
