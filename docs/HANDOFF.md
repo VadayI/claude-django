@@ -24,10 +24,27 @@
 
 ## Наступні кроки
 
+<<<<<<< HEAD
 1. **п.13** — зробити `ba` явним споживачем `docs/PROJECT.md` (`ba.md`).
 2. (з минулих сесій) Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті (НЕ в цьому репо).
 3. (з минулих сесій) Pre-commit/CI-гард на обрізаний хвіст/NUL файлу.
 4. (опц.) Спостерігати дисципліну живого плану на наступних реальних задачах; якщо тримається — розглянути CI-гард «план оновлено в тому ж PR» (нині поза скоупом v1).
+=======
+1. **Закомітити language-gate + wrap-up правки в `main`** (після лагодження `.git/config` + identity, з хост-шела/PowerShell):
+   ```
+   git add .claude/rules/output-language.md CLAUDE.md docs/HANDOFF.md docs/WORKLOG.md docs/lessons.md
+   git commit -m "docs: wrap-up session — Ukrainian output language, HANDOFF/WORKLOG refresh, /mnt truncation lesson"
+   git push origin main
+   ```
+
+2. **Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті** (НЕ в цьому репо) — головний змістовний крок, бо обидва кошики (A+B) рапорту вичерпано: `pytest` зелений на `config.settings.test`; `ruff check .` чистий (нові `apps/common`); `docker compose -f docker-compose.staging.yml config -q` валідний; `python manage.py check --deploy` на `staging` без критичних ворнінгів; `curl /api/v1/health/` → 200.
+
+3. **Допрацювати похідний `example-service`** (синкнуто вручну, `052ae15`): реєстрація нових агентів у його `CLAUDE.md` + імпорт `@.claude/rules/user-guides.md`, крок file-size-гейту в живому `backend-ci.yml`, запустити `/guides`, переконатись що `bash scripts/check_file_size.sh` проходить перед наступним PR.
+
+4. **Пріоритезувати pre-commit/CI-гард на обрізаний хвіст файлу** — цей інцидент (HANDOFF обрізало, `.git/config` забило NUL) уже втретє за історію кусає на /mnt; перевести з «відкритого питання» в задачу.
+
+5. Після валідації — нова фіча через стандартний пайплайн або наповнення backlog (`templates/todo.md`).
+>>>>>>> origin/docs/anonymize-test-project
 
 ## Відкриті питання
 
