@@ -30,9 +30,14 @@ if git grep --name-only -P '\x00' -- "${SCOPE[@]}" 2>/dev/null | grep -q .; then
 fi
 
 # ── 3. Merge-conflict markers ────────────────────────────────────────────────
+# Match ^<<<<<<< <space+ref> and ^>>>>>>> <space+ref> only — these are
+# unambiguous git conflict markers (git always appends a space + branch/ref).
+# The ======= separator is intentionally omitted: alone on a line it is
+# indistinguishable from a markdown setext heading or horizontal rule, and any
+# real conflict will always contain at least one of the unambiguous arms above.
 echo "Checking for merge-conflict markers in: ${SCOPE[*]}"
 
-conflict_files=$(git grep -lE '^(<{7}|={7}|>{7})' -- "${SCOPE[@]}" 2>/dev/null || true)
+conflict_files=$(git grep -lE '^(<{7} |>{7} )' -- "${SCOPE[@]}" 2>/dev/null || true)
 if [ -n "$conflict_files" ]; then
   while IFS= read -r cf; do
     echo "  ✗ $cf  contains merge-conflict markers"
