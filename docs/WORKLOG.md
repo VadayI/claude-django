@@ -664,3 +664,10 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 - Закомітити `.claude/rules/workflow.md` + `templates/verify_TEMPLATE.md` + `docs/WORKLOG.md` + `docs/HANDOFF.md`.
 - Аналогічний cross-repo note додати в `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
 - Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.
+
+## 2026-06-08 — main (README moderate split)
+
+- Done: README.md 443→332 рядки — видалено 130-рядковий "What's inside" каталог, додано компактне зведення + посилання на новий файл; docs/reference/inventory.md (NEW, 128 рядків) — повний каталог агентів/правил/команд зі оновленими описами (Rules 20→21, project-maturity.md, /preflight 6 блокерів, /synthesize-brief з maturity+DoD); README +принцип 6 (maturity-scaled process), виправлені /preflight one-liner і кроки 5-6 в new-project flow. Обидва файли в коміті e077fb1, запушено.
+- Decisions: moderate split (user choice) — catalog → docs/reference/inventory.md; Development pipeline залишився в README; Troubleshooting і Quick start не чіпали.
+- Status: main — commits e3349f4 + e077fb1 pushed to origin/main (verified: 0 commits ahead).
+- Next steps: перевірити docs/reference/inventory.md посилання рендеряться на GitHub; опціонально — аналогічне cross-repo зауваження в claude-api-contract/templates/verify_TEMPLATE.md (потребує PR у тому репо).

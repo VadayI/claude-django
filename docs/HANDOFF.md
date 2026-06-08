@@ -4,9 +4,7 @@
 
 ## Поточний стан
 
-На `main`, working tree **DIRTY** (uncommitted changes). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `bc9c7c2 docs: wrap-up 2026-06-08 — навігаційне уточнення, WORKLOG + HANDOFF`.
-
-Незакомічено: `.claude/rules/workflow.md`, `templates/verify_TEMPLATE.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md` — результат сесії 2026-06-08 (аудит claude-api-contract ↔ claude-django + виправлення workflow).
+На `main`, working tree **DIRTY** (uncommitted: `docs/WORKLOG.md`, `docs/HANDOFF.md` — wrap-up 2026-06-08). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `e077fb1 docs: README moderate split — add maturity/DoD/inventory, trim catalog 443→332 lines`.
 
 ## Останнє завершене
 
@@ -22,12 +20,12 @@
 
 ```bash
 # з хост-шела (не з sandbox — 9p-правило):
-git add .claude/rules/workflow.md templates/verify_TEMPLATE.md docs/WORKLOG.md docs/HANDOFF.md
-git commit -m "docs: wrap-up 2026-06-08 — аудит claude-api-contract, workflow contract-reading fix"
+git add docs/WORKLOG.md docs/HANDOFF.md
+git commit -m "docs: wrap-up 2026-06-08 — README moderate split, inventory.md"
 ```
 
 Після коміту — наступна черга:
-1. Додати аналогічний cross-repo note у `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
+1. Додати cross-repo зауваження у `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
 2. Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.
 
 ## Відкриті питання
