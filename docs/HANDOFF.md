@@ -7,48 +7,42 @@
 
 ## Поточний стан
 
-На гілці `chore/update-contract-pin-v0.2.0`, PR [#17](https://github.com/VadayI/claude-django/pull/17) відкритий, CI у стані `pending`. 1 коміт попереду `origin/main`. Робоче дерево **DIRTY** — несзакомічені зміни до `docs/WORKLOG.md`, `docs/HANDOFF.md`, `docs/plans/0011-contract-inversion.md` (результат поточного `/wrap-up`).
-
-Попередній коміт: `2b6bbb7 chore: bump CONTRACT_VERSION to v0.2.0`
-
-**Що зроблено в цій сесії:**
-- Проведено аналіз готовності шаблону до споживання `claude-api-contract` → всі компоненти (pull_contract.sh, check_contract_conformance.sh, schemathesis + django-contract-tester, CI gate) присутні й закомічені.
-- Виявлено й виправлено gap #1: auth-шляхи в контракті `v0.1.1` (`/auth/...`) розходилися з доктриною claude-django (`/api/v1/auth/...`). Контракт виправлено (`v0.2.0`), тут підняли пін.
-- Upstream-блокер план 0011 крок 0 знятий — `claude-api-contract` має теги `v0.1.0`, `v0.1.1`, `v0.2.0`.
+На `main`, робоче дерево **чисте**, синхронізовано з `origin/main` (`1669161`).
 
 ## Останнє завершене
 
-- PR [#16](https://github.com/VadayI/claude-django/pull/16): docs/contract inversion readme claude md — merged 2026-06-07
+- **Plan 0011 «Contract Inversion» — закрито (2026-06-08).** Всі 5 PR в `main`: PR1 (`8a80f4e`) доктрина, PR2 (`90e232b`) скафолдинг, PR3 (`dc12cf2`) auth+envelope, PR4 (`31dd498`) агенти/команди, PR5 (`259eabf`) наративи. `check_openapi_drift.sh` видалено; ADRs 0017–0020 Accepted; `CONTRACT_VERSION` пінений на `v0.2.0`.
+- **PR #17** (`chore: bump CONTRACT_VERSION to v0.2.0`) — merged `1669161`.
+- **PR #16** (`docs/contract inversion readme claude md`) — merged.
 
-## В роботі
+## Наступні кроки
 
-- PR [#17](https://github.com/VadayI/claude-django/pull/17): `chore: bump CONTRACT_VERSION to v0.2.0` — open, CI pending
-- `docs/plans/0011-contract-inversion.md` — план інверсії контракту, PR1–PR5 внесено до working tree, але не замержено окремими гілками/PR (крок 0 → `done`, решта `in_progress`)
-
-## Наступний крок
-
-**Закомітити зміни поточного wrap-up і замержити PR #17.**
-
-З host-шела (WSL2):
-```bash
-cd /mnt/d/Dev/My/claude-django
-git add docs/WORKLOG.md docs/HANDOFF.md docs/plans/0011-contract-inversion.md
-git commit -m "docs: wrap-up — bump CONTRACT_VERSION to v0.2.0, refresh HANDOFF/WORKLOG"
-git push origin chore/update-contract-pin-v0.2.0
-# потім: gh pr merge 17 --squash (або через UI)
-```
-
-Після мерджу — `git checkout main && git pull`, потім визначитися з наступним пріоритетом: замержити план 0011 PR1–PR5 або перейти до реальної валідації bootstrap-проєкту.
+1. **п.13** — зробити `ba` явним споживачем `docs/PROJECT.md` (`ba.md`).
+2. **Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті** (НЕ в цьому репо) —
+   обидва кошики (A+B): `pytest` зелений; `ruff check .` чистий; `docker compose -f
+   docker-compose.staging.yml config -q` валідний; `python manage.py check --deploy` без
+   критичних ворнінгів; `curl /api/v1/health/` → 200.
+3. **Допрацювати похідний `example-service`** (синкнуто вручну, `052ae15`): реєстрація
+   нових агентів у його `CLAUDE.md` + імпорт `@.claude/rules/user-guides.md`, крок
+   file-size-гейту в живому `backend-ci.yml`, запустити `/guides`, переконатись що
+   `bash scripts/check_file_size.sh` проходить перед наступним PR.
+4. **Пріоритезувати pre-commit/CI-гард на обрізаний хвіст/NUL файлу** — перевести з
+   «відкритого питання» в задачу; додати `git grep -E '^(<<<<<<<|=======|>>>>>>>)'` у той
+   самий гард.
+5. (опц.) Спостерігати дисципліну живого плану на наступних реальних задачах; розглянути
+   CI-гард «план оновлено в тому ж PR» (поза скоупом v1).
+6. Після валідації — нова фіча через стандартний пайплайн або наповнення backlog
+   (`templates/todo.md`).
 
 ## Відкриті питання
 
 - [ ] `template-sync` — реальний 3-way merge `CLAUDE.md`/`settings.json` чи лишити поточний additive-diff + surface-conflicts? (Поки обрано безпечніший additive.)
 - [ ] Фіксувати версію/SHA шаблону на `/bootstrap` (seed `.claude/memory/template-sync.json`), щоб перший `/update-from-template` мав базу для діффу?
-- [ ] **Pre-commit/CI-гард, що падає на обрізаному хвості/NUL-байтах у файлі** (кусало вже кілька сесій на /mnt-mount).
+- [ ] **Pre-commit/CI-гард, що падає на обрізаному хвості/NUL-байтах у файлі** (кусало вже кілька сесій на /mnt-mount) — крок №4 вище.
 - [ ] При апгрейді проєкту до Pro/Team — віддавати перевагу **rulesets** над класичним branch protection у `/bootstrap` Step 5?
 - [ ] Чи `/wrap-up` сам комітить свої doc-зміни, чи лишити «propose, user commits»?
 - [ ] **«Живий план»: CI-гард «план оновлено в тому ж PR»** (як `check_app_readmes.sh`) — dogfood пройдено (план 0010); лишити рішення після ручної обкатки на кількох реальних задачах (поза скоупом v1).
-- [ ] Plan 0011 PR1–PR5 — внесені до working tree, потребують окремих гілок/PR/мерджів з host-шела.
+- [ ] Plan 0011 open question — точна форма пінування контракту: лише `CONTRACT_VERSION=vX.Y.Z` + raw URL, чи додатково контрольна сума `openapi.yml`?
 
 ## Нотатки середовища
 

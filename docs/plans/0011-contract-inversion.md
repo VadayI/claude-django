@@ -1,6 +1,6 @@
 # Plan 0011 — claude-django: споживання зовнішнього контракту (contract inversion)
 
-> Status: 🟡 IN PROGRESS · seeded 2026-06-06 · Driver: user request — підготовка набору шаблонів до нового `claude-api-contract` (single source of truth для REST API контракту).
+> Status: ✅ DONE · seeded 2026-06-06 · closed 2026-06-08 · Driver: user request — підготовка набору шаблонів до нового `claude-api-contract` (single source of truth для REST API контракту).
 > Type: config-template change. Це шаблон Claude Code config (не продакшн-код Django), тож стандартний feature-pipeline (ba→api-architect→…) НЕ застосовується дослівно — роботу веде сам maintainer через PR-и над `.claude/**`, `templates/**`, `docs/**`.
 >
 > **Living plan** — discipline в `.claude/rules/living-plan.md`. Тіло не переписується на місці; зміни рішень — у **Amendments**.
@@ -10,11 +10,11 @@
 | Step | State | Owner |
 |---|---|---|
 | 0. Передумова: `claude-api-contract` доведено до тегу `v0.1.0` (зовнішній репо) | done | maintainer (інший репо) |
-| PR1. Доктрина «контракт зовнішній» (rules + ADR, без коду) | in_progress | maintainer |
-| PR2. Скафолдинг споживання контракту (pull_contract.sh, deps, CI gates) | in_progress | maintainer |
-| PR3. Auth під S2S-профіль (Bearer/JWT + service-flow + scopes + envelope-switch) | in_progress | maintainer |
-| PR4. Узгодження агентів / команд / скілів | in_progress | maintainer |
-| PR5. Наративи (README + CLAUDE.md) | in_progress | maintainer |
+| PR1. Доктрина «контракт зовнішній» (rules + ADR, без коду) | done | maintainer |
+| PR2. Скафолдинг споживання контракту (pull_contract.sh, deps, CI gates) | done | maintainer |
+| PR3. Auth під S2S-профіль (Bearer/JWT + service-flow + scopes + envelope-switch) | done | maintainer |
+| PR4. Узгодження агентів / команд / скілів | done | maintainer |
+| PR5. Наративи (README + CLAUDE.md) | done | maintainer |
 
 > States: `pending` · `in_progress` · `done` · `blocked`.
 
@@ -71,6 +71,7 @@
 - 2026-06-06 — PR5 внесено у working tree: `CLAUDE.md` (Iron principle #1 contract-first, #4 external contract + conformance gate, #6, Stack) і `README.md` (intro, Stack, principles #1/#3, rules-index, Infrastructure, pipeline-діаграма, quick start, два приклади-стека агентів, docs-writer крок). Repo-wide sweep: 0 stale drift-згадок в активному конфізі; CONTRACT_VERSION/check_contract_conformance у 17 файлах. 0 NUL.
 - 2026-06-06 — **Усі 5 PR завершені на рівні working tree.** Лишилось поза інструментом: (0) довести `claude-api-contract` до `v0.1.0`; git гілки/коміти/PR/мерж кожного PR з host-шела (включно з `git rm templates/scripts/check_openapi_drift.sh` у PR2).
 - 2026-06-07 — **Крок 0 знято.** `claude-api-contract` опублікував теги `v0.1.0`, `v0.1.1`, `v0.2.0`. Gap #1 (auth-шляхи `/auth/...` vs `/api/v1/auth/...`) виправлено в контракті: `v0.2.0` переносить всі auth-шляхи під `/api/v1/auth/...` — повна відповідність доктрині `claude-django`. `templates/.env.example` підняв пін `CONTRACT_VERSION=v0.1.0` → `v0.2.0`.
+- 2026-06-08 — **План ЗАКРИТО.** Верифікація пройдена: PR1–PR5 присутні в `main` (`8a80f4e`/`90e232b`/`dc12cf2`/`31dd498`/`259eabf`); `check_openapi_drift.sh` відсутній; `pyproject.toml` має schemathesis 4.x + django-contract-tester 1.6 + simplejwt; `backend-ci.yml` — pull-contract + conformance-gate без drift; `CONTRACT_VERSION` узгоджено у всіх ключових файлах. ADRs 0017–0020 Accepted. Гілки/PR-и, записані в плані, по суті реалізовані як прямі коміти в main (template-repo-політика). Status PR1–PR5 → done.
 
 ## Amendments
 
