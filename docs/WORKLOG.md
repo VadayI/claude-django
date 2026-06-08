@@ -599,3 +599,28 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 - Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті (НЕ в цьому репо).
 - Допрацювати похідний `example-service` (`052ae15`).
 - Pre-commit/CI-гард на обрізаний хвіст/NUL файлу (підвищити з open-question до задачі).
+
+---
+
+## 2026-06-08 — main — ba explicit PROJECT.md + NUL-guard CI (plans 0012)
+
+**Context:** Продовження сесії. Виконано два завдання з черги `/audit`: п.13 та NUL-guard.
+
+**Done:**
+- **PR #18** (`chore(ba): explicit docs/PROJECT.md read as step 0`) — merged 13:59Z. Додано крок 0 до `ba.md`: агент явно читає `docs/PROJECT.md` першим як первинне джерело контексту; ескалює оркестратору якщо відсутній.
+- **Plan 0012 «NUL-guard у CI»** — сіяний та закрито в одній сесії.
+  - `scripts/check_nul_bytes.sh` — новий скрипт: NUL-байти + conflict-маркери (`<<<<<<< ` / `>>>>>>> `) по `.claude/`, `scripts/`, `templates/`; `exit 1` + recovery-hint.
+  - `templates/.github/workflows/backend-ci.yml` — крок `NUL / conflict-marker guard` доданий першим (до lint).
+  - Reviewer: 2 цикли (1×🟡 regex + 1×🟡 root-workflow scope → виправлено → ✅ pass).
+  - **PR #19** (`chore: NUL-byte + conflict-marker guard`) — merged 14:13Z.
+
+**Decisions:**
+- `=======` виключено з regex conflict-marker guard (false-positive на markdown setext-headings); достатньо `<<<<<<< ` + `>>>>>>> ` — реальний конфлікт завжди містить хоча б один з цих маркерів.
+- Scope guard: `.claude/`, `scripts/`, `templates/`. `backend/` — ruff-парсер вже захищає Python.
+- Root `.github/workflows/backend-ci.yml` у template-репо не потрібен (немає `backend/`); видалено зі скоупу PR.
+
+**Status:** `main` — PR #18 + #19 merged (verified via `gh`). Незакомічений: `docs/plans/0012-nul-guard.md` (untracked).
+
+**Next steps:**
+- Закомітити `docs/plans/0012-nul-guard.md` + `docs/WORKLOG.md` + `docs/HANDOFF.md`.
+- Наступна черга: реальна валідація staging-шаблонів на свіжому bootstrap-проєкті; допрацювати `example-service`.
