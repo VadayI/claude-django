@@ -1,42 +1,34 @@
-# HANDOFF — claude-django template repo
+# HANDOFF — claude-django
 
-> Read this first when joining the project. Updated by `/handoff` at the end of each session.
-> Canonical chronicle → `docs/WORKLOG.md`. Task backlog → `docs/todo.md`.
-
----
+> Каденція оновлення: наприкінці сесії через `/handoff`. `docs/WORKLOG.md` — канонічна хроніка; цей файл — курсор.
 
 ## Поточний стан
 
-На `main`, робоче дерево **DIRTY** (`docs/WORKLOG.md`, `docs/HANDOFF.md` — зміни wrap-up). Синхронізовано з `origin/main`. Останній коміт: `a8c1e4f docs: wrap-up 2026-06-08 — ba explicit PROJECT.md + plan 0012 NUL-guard`.
+На `main`, working tree **DIRTY** (uncommitted changes). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `bc9c7c2 docs: wrap-up 2026-06-08 — навігаційне уточнення, WORKLOG + HANDOFF`.
+
+Незакомічено: `.claude/rules/workflow.md`, `templates/verify_TEMPLATE.md`, `docs/WORKLOG.md`, `docs/HANDOFF.md` — результат сесії 2026-06-08 (аудит claude-api-contract ↔ claude-django + виправлення workflow).
 
 ## Останнє завершене
 
-- PR [#18](https://github.com/VadayI/claude-django/pull/18): `chore(ba): explicit docs/PROJECT.md read as step 0` — merged 2026-06-08.
-- PR [#19](https://github.com/VadayI/claude-django/pull/19): `chore: NUL-byte + conflict-marker guard` — merged 2026-06-08.
+- PR #19: chore: NUL-byte + conflict-marker guard — merged 2026-06-08 ([link](https://github.com/VadayI/claude-django/pull/19))
 
-## В роботі
+## В процесі
 
-- (нічого в польоті — `main` чистий, немає відкритих PR у `claude-django`)
+- (нічого у flight — на `main`, без відкритих PR)
 
 ## Наступний крок
 
-**Закомітити незакомічені зміни wrap-up.** `docs/WORKLOG.md`, `docs/HANDOFF.md` оновлено у поточному wrap-up — треба закомітити:
+**Закомітити незакомічені зміни перед перемиканням контексту.**
 
 ```bash
-git add docs/WORKLOG.md docs/HANDOFF.md
-git commit -m "docs: wrap-up 2026-06-08 — навігаційне уточнення + WORKLOG"
-git push origin main
+# з хост-шела (не з sandbox — 9p-правило):
+git add .claude/rules/workflow.md templates/verify_TEMPLATE.md docs/WORKLOG.md docs/HANDOFF.md
+git commit -m "docs: wrap-up 2026-06-08 — аудит claude-api-contract, workflow contract-reading fix"
 ```
 
-## Наступні кроки (черга)
-
-1. **Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті** (НЕ в цьому репо) —
-   обидва кошики (A+B): `pytest` зелений; `ruff check .` чистий; `docker compose -f
-   docker-compose.staging.yml config -q` валідний; `python manage.py check --deploy` без
-   критичних ворнінгів; `curl /api/v1/health/` → 200.
-2. **Допрацювати похідний `example-service`** (carlsberg-ir-data-service): PR #73 (`chore/nul-guard-guides`) відкритий, CI červený через pre-existing test (`test_base_settings_reads_django_debug_env_key` з `cwd="/app"`). Фікс: `fix/settings-test-cwd` гілка в carlsberg — виправити `cwd` у `test_staging_settings.py`, закомітити, PR, злити, потім злити #73.
-3. (опц.) Спостерігати дисципліну живого плану на наступних реальних задачах; розглянути CI-гард «план оновлено в тому ж PR» (поза скоупом v1).
-4. Після валідації — нова фіча через стандартний пайплайн або наповнення backlog (`templates/todo.md`).
+Після коміту — наступна черга:
+1. Додати аналогічний cross-repo note у `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
+2. Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.
 
 ## Відкриті питання
 

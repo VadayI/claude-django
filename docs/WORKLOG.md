@@ -640,3 +640,27 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 **Next steps:**
 - Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.
 - Допрацювати `example-service` (carlsberg): решта задач з HANDOFF черги (file-size gate вже в #73, guides оновлено).
+
+## 2026-06-08 — main — Аудит claude-api-contract ↔ claude-django + виправлення workflow
+
+**Context:** Аналіз сумісності двох темплейтів перед запуском production-проєкту за схемою «contract-first → паралельний backend + frontend».
+
+**Done:**
+- Повний перехресний аудит `claude-api-contract` vs `claude-django`: прочитано 19 правил, 11 агентів, 20 команд з contract-repo (gh CLI); порівняно з локальними ADR 0017/0018/0020/0007/0001 + workflow.
+- **Виправлено `workflow.md`** (3 хірургічні зміни):
+  - Triage Decision tree item 4: додано явний redirect — "design endpoint / add field / change schema" → `claude-api-contract` first, потім повернутись.
+  - Phase 1 `ba`: "endpoint description" → "implementation scope (which pinned-contract endpoints this PR implements)".
+  - Phase 2: перейменовано "API contract" → "Contract reading"; додано "**Reads** pinned `docs/api/openapi.yml` — does NOT design the contract".
+- **Верифіковано `api-envelope.md` vs ADR 0020:** формати збігаються ✅ (`{"detail"}` + `{"errors":[{field,code,message}]}` + 429/Retry-After).
+- **Оновлено `templates/verify_TEMPLATE.md`:** додано cross-repo scope note — "backend implementation (DRF · Swagger UI · curl); contract-level mock (Prism) → `claude-api-contract/docs/verify/`".
+
+**Decisions:**
+- `api-architect` у `claude-django` є **читачем** пінованого контракту, не проектувальником; все проектування живе в `claude-api-contract`.
+- `docs/verify/` у двох репо мають різне призначення (backend vs Prism mock) — розмежовано через header у шаблоні.
+
+**Status:** `main` — 2 uncommitted files: `.claude/rules/workflow.md`, `templates/verify_TEMPLATE.md`. Контейнер не запущений (template repo, без backend/).
+
+**Next steps:**
+- Закомітити `.claude/rules/workflow.md` + `templates/verify_TEMPLATE.md` + `docs/WORKLOG.md` + `docs/HANDOFF.md`.
+- Аналогічний cross-repo note додати в `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
+- Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.

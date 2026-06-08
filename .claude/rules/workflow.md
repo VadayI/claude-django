@@ -33,7 +33,9 @@ Decision tree:
 1. Trivial? (typo, single config value, obvious one-liner ≤2 config files) → do it yourself.
 2. Bug report? → `debugger` pipeline.
 3. Infra/CI/Docker? → `devops` / `ci-cd-engineer` pipeline.
-4. Feature / code change / "add X" / "change Y"? → feature pipeline, start with `ba`.
+4. Feature / code change / "add X" / "change Y"?
+   - **"design new endpoint" / "add field" / "change schema"** → CONTRACT change → stop; instruct the user to go to `claude-api-contract` first, bump `CONTRACT_VERSION` there, then return here.
+   - **"implement an existing endpoint from the pinned contract"** → feature pipeline, start with `ba`.
 5. Requirements ambiguous? → ONE round of `AskUserQuestion`, then pipeline.
 6. Research question ("how does X work in this codebase?") → `Explore`.
 
@@ -91,8 +93,8 @@ ba → api-architect → tester (RED) → django-developer (GREEN) → tester (R
 
 | Phase | Mode | Agent(s) | Output |
 |------|-------|----------|-------|
-| 1. Requirements | sequential | `ba` | User stories, scope, endpoint description |
-| 2. API contract | sequential | `api-architect` | Method/path/request-response schema/codes/permissions + routes recorded in `.claude/memory/endpoints.json` |
+| 1. Requirements | sequential | `ba` | User stories, implementation scope (which pinned-contract endpoints this PR implements) |
+| 2. Contract reading | sequential | `api-architect` | **Reads** pinned `docs/api/openapi.yml` — does NOT design the contract; records this PR's routes in `.claude/memory/endpoints.json` |
 | 3. RED | sequential | `tester` | Failing pytest tests for the endpoint/logic |
 | 4. GREEN | sequential | `django-developer` | Code that greens the tests + ruff |
 | 5. Quality Gate | **parallel** | `reviewer`, `security-scanner`, `dba` | Independent reports |

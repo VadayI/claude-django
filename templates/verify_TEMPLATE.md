@@ -1,6 +1,8 @@
 # Verify — {FEATURE}
 
 > Generated from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`. Do not hand-edit fields the schema does not have. Regenerate with `/verify {FEATURE}`.
+>
+> **Scope:** backend implementation (DRF · Swagger UI · curl). Contract-level mock validation (Prism) lives in `claude-api-contract/docs/verify/`.
 
 ## Scope
 
