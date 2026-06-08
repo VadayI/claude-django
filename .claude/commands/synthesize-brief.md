@@ -31,7 +31,13 @@ Optional `$ARGUMENTS`:
 
    Any other binary extension (`.xlsx`, `.zip`, `.fig`, ...) is listed under *Source documents* with the note `unprocessed: unsupported format`.
 
-2. **Delegate to `brief-synthesizer`** (`subagent_type: "brief-synthesizer"`). Pass the discovered file list. The agent produces `docs/PROJECT.md` with the fixed 9 sections: Purpose, Domain, Scope (in), Scope (out), Key requirements, Non-functional requirements, Constraints, Stakeholders, Open questions, plus a *Source documents* table.
+2. **Delegate to `brief-synthesizer`** (`subagent_type: "brief-synthesizer"`). Pass the discovered file list. The agent produces `docs/PROJECT.md`. Three fields are **required** — the brief is NOT complete until all three are resolved:
+
+   - **Maturity stage** (`demo / prototype / PoC / MVP / production / other`) — controls pipeline depth and Quality Gate rigour (@.claude/rules/project-maturity.md). If absent from all source documents, it becomes the **first Open Question** and the orchestrator asks the user via `AskUserQuestion` (options: demo / prototype / PoC / MVP / production / other) before the brief is finalized.
+   - **Contract** (`CONTRACT_VERSION=vX.Y.Z`, repo `VadayI/claude-api-contract`) — which `claude-api-contract` tag this backend consumes. Without it `/preflight` will fail. If absent from sources, add as Open Question: "Which claude-api-contract version does this backend consume?".
+   - **Definition of Done §7** — standard Django CI gates (pre-filled) **plus** project-specific criteria agreed with the team. If no source provides project-specific criteria, ask the user explicitly — the section must never remain `{TODO}`. "None beyond standard gates" is a valid explicit answer.
+
+   The fixed 9 sections remain: Purpose, Domain, Scope (in/out), Key requirements, Non-functional requirements, Constraints, Stakeholders, **Definition of Done (§7)**, Open questions, plus a *Source documents* table.
 
 3. **Branch + PR** (orchestrator handles git — agent is forbidden from running git):
    - `git checkout main && git pull`
@@ -42,14 +48,15 @@ Optional `$ARGUMENTS`:
    - `git push -u origin docs/synthesize-brief-$(date +%Y%m%d)`
    - `gh pr create --fill --title "docs: synthesize project brief"`
 
-4. **Log + summary.** Append to `.claude/memory/command-log.jsonl` and print: how many source documents were read, which were `unprocessed`, the PR URL, and the next step (review the PR diff before merging — the agent may have introduced `TODO — source missing` markers that need human-supplied facts).
+4. **Log + summary.** Append to `.claude/memory/command-log.jsonl` and print: how many source documents were read, which were `unprocessed`, the PR URL, whether maturity stage and DoD were resolved or remain as Open Questions, and the next step (review the PR diff before merging).
 
 ## Hard limits
 
 - Never direct-commit or push to `main` — always a feature branch + PR.
-- Never invent facts not in source documents. If a section has no source, the agent writes `TODO — source missing` and the *Source documents* table makes the gap auditable.
+- Never invent facts not in source documents. If a section has no source, the agent writes `TODO — source missing` and the *Source documents* table makes the gap auditable. **Exception:** the standard DoD gates are pre-filled from the template (they are always required, not invented).
 - Never write outside `docs/PROJECT.md` (no edits to source docs, no new files, no `templates/` writes).
+- The brief is incomplete while any of the three required fields (maturity stage, contract, DoD project-specific criteria) remains unresolved — surface them to the user before closing.
 
 > Run AFTER `/bootstrap` Mode A, BEFORE `/preflight` and the first feature pipeline. Re-runnable as briefs evolve — each run opens its own dated PR.
 
-<!-- Last reviewed/updated: 2026-05-29 -->
+<!-- Last reviewed/updated: 2026-06-08 -->

@@ -8,6 +8,7 @@
 @.claude/rules/simplicity-surgical.md
 @.claude/rules/environment.md
 @.claude/rules/preflight.md
+@.claude/rules/project-maturity.md
 @.claude/rules/output-language.md
 @.claude/rules/verification.md
 @.claude/rules/user-guides.md
