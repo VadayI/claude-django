@@ -624,3 +624,19 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 **Next steps:**
 - Закомітити `docs/plans/0012-nul-guard.md` + `docs/WORKLOG.md` + `docs/HANDOFF.md`.
 - Наступна черга: реальна валідація staging-шаблонів на свіжому bootstrap-проєкті; допрацювати `example-service`.
+
+## 2026-06-08 — main — Навігаційне уточнення (wrap-up)
+
+**Context:** Сесія після компакції контексту. Попередній контекст містив роботу у `carlsberg-ir-data-service` (example-service), що спричинило продовження в неправильному проєкті.
+
+**Done:**
+- Уточнено: поточний робочий проєкт — `claude-django` (`/mnt/d/Dev/My/claude-django`), не carlsberg.
+- Підтверджено: репо вже чисте, `a8c1e4f` (wrap-up 2026-06-08) в `origin/main`. Нічого комітити чи мерджити не було.
+
+**Lesson:** Після компакції LLM-контекст може «застрягти» в задачах попередньої сесії іншого проєкту — потрібне явне перепідтвердження `cwd` на старті сесії.
+
+**Status:** `main` — чистий, синхронізований з `origin/main`.
+
+**Next steps:**
+- Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.
+- Допрацювати `example-service` (carlsberg): решта задач з HANDOFF черги (file-size gate вже в #73, guides оновлено).
