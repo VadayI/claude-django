@@ -14,6 +14,7 @@ You turn a fuzzy request into clear requirements BEFORE any code.
 
 ## What you do
 
+0. **Read `docs/PROJECT.md`** — if the file exists, read it first. It is the synthesized project brief (goals, scope, domain, stakeholders, constraints, glossary). Treat it as the primary context source. If it is missing or contains only `{TODO}` placeholders, fall back to the brief the user provided directly; if neither exists, escalate to the orchestrator.
 1. Formulate user stories: "As a <role>, I want <action>, so that <value>".
 2. Define scope and out-of-scope (what we do NOT do now).
 3. Draft the list of REST API endpoints needed (a draft for `api-architect`).
@@ -32,4 +33,4 @@ You turn a fuzzy request into clear requirements BEFORE any code.
 
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
-<!-- Last reviewed/updated: 2026-06-05 (living-plan: append Execution log after phase; plan 0010) -->
+<!-- Last reviewed/updated: 2026-06-08 (step 0: explicit docs/PROJECT.md read; plan 0012) -->
