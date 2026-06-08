@@ -7,15 +7,31 @@
 
 ## Поточний стан
 
-На `main`, робоче дерево **чисте**, синхронізовано з `origin/main` (`1669161`).
+На `main`, робоче дерево **DIRTY** (`docs/WORKLOG.md` незакомічений — результат поточного `/wrap-up`). Синхронізовано з `origin/main`. Останній коміт: `26a7b45 docs(plans): close plan 0011 — contract inversion complete`.
 
 ## Останнє завершене
 
+- PR [#17](https://github.com/VadayI/claude-django/pull/17): `chore: bump CONTRACT_VERSION to v0.2.0` — merged 2026-06-07.
 - **Plan 0011 «Contract Inversion» — закрито (2026-06-08).** Всі 5 PR в `main`: PR1 (`8a80f4e`) доктрина, PR2 (`90e232b`) скафолдинг, PR3 (`dc12cf2`) auth+envelope, PR4 (`31dd498`) агенти/команди, PR5 (`259eabf`) наративи. `check_openapi_drift.sh` видалено; ADRs 0017–0020 Accepted; `CONTRACT_VERSION` пінений на `v0.2.0`.
-- **PR #17** (`chore: bump CONTRACT_VERSION to v0.2.0`) — merged `1669161`.
-- **PR #16** (`docs/contract inversion readme claude md`) — merged.
 
-## Наступні кроки
+## В роботі
+
+- (нічого в польоті — `main` чистий, немає відкритих PR)
+
+## Наступний крок
+
+**Закомітити незакомічені зміни перед перемиканням контексту.** `docs/WORKLOG.md` оновлено у поточному `/wrap-up` — треба закомітити й запушити.
+
+З хост-шела (WSL2):
+```bash
+git add docs/WORKLOG.md docs/HANDOFF.md
+git commit -m "docs: wrap-up 2026-06-08 — close plan 0011, session WORKLOG + HANDOFF"
+git push origin main
+```
+
+Після коміту — наступний пріоритет: **п.13** (зробити `ba` явним споживачем `docs/PROJECT.md`).
+
+## Наступні кроки (черга)
 
 1. **п.13** — зробити `ba` явним споживачем `docs/PROJECT.md` (`ba.md`).
 2. **Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті** (НЕ в цьому репо) —

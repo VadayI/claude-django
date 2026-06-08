@@ -574,3 +574,28 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 - Замержити PR #17 після review.
 - У похідних проєктах: `bash scripts/pull_contract.sh` підтягне `openapi.yml@v0.2.0` (всі шляхи під `/api/v1/`).
 - Plan 0011 PR1–PR5 залишаються `in_progress` у working tree — завершити через Git branches + PRs з host-шела.
+
+---
+
+## 2026-06-08 — main — Аудит + закриття плану 0011 (contract inversion)
+
+**Context:** Сесія розпочалася з `/audit`, який виявив merge-conflict маркери в `docs/HANDOFF.md`, закомічені в `main`. Далі — закриття plan 0011 «Contract Inversion».
+
+**Done:**
+- `/audit` → виявлено закомічені маркери `<<<<<<< HEAD` / `=======` / `>>>>>>>` в `docs/HANDOFF.md` (секція «Наступні кроки»). Сформовано об'єднану версію: HEAD + унікальні кроки з `origin/docs/anonymize-test-project` (застарілий language-gate крок відкинуто).
+- Спроба виправлення HANDOFF: наш патч (`1d3a1d6`) був підготовлений, але push відхилено — PR #17 злився паралельно зі свіжим HANDOFF без маркерів. Наш патч став зайвим → `git reset --hard origin/main`.
+- **Plan 0011 «Contract Inversion» — закрито.** Пройдено верифікаційний чеклист: PR1–PR5 в `main` (`8a80f4e`/`90e232b`/`dc12cf2`/`31dd498`/`259eabf`); `check_openapi_drift.sh` відсутній; `pyproject.toml` має schemathesis 4.x + django-contract-tester 1.6 + simplejwt; `backend-ci.yml` — pull-contract + conformance без drift-gate; `CONTRACT_VERSION` узгоджено; ADRs 0017–0020 Accepted. Status-таблиця PR1–PR5 → done, план → ✅ DONE.
+- Оновлено `docs/HANDOFF.md` (відображає поточний чистий стан main + план 0011 закрито).
+- Коміт `26a7b45` pushed до `main`.
+
+**Decisions:**
+- Plan 0011 PR1–PR5 вважаються виконаними через прямі коміти в main (template-repo-policy дозволяє); окремі feature-гілки/PR для них не відкривалися.
+- Merge-conflict маркери в docs → HANDOFF вирішується fresh-snapshot підходом (wrap-up пише новий снімок, а не мержить дрейфуючі гілки).
+
+**Status:** `main` — зміни в `origin/main` (`26a7b45`), синхронізовано (verified via `git fetch`).
+
+**Next steps:**
+- п.13: зробити `ba` явним споживачем `docs/PROJECT.md`.
+- Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті (НЕ в цьому репо).
+- Допрацювати похідний `example-service` (`052ae15`).
+- Pre-commit/CI-гард на обрізаний хвіст/NUL файлу (підвищити з open-question до задачі).
