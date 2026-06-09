@@ -714,3 +714,69 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 **Next steps:**
 - `/doctor` — аудит середовища (відсутній у command-log).
 - Опційно: cross-repo note у `claude-api-contract/templates/verify_TEMPLATE.md`.
+
+## 2026-06-09d — feat/articles-route-guard
+
+### Done
+
+- **`/audit`** — виявлено 6 незакомічених файлів на `main`, false-green `typecheck` gate, відсутній route guard.
+- **`fix: typecheck → tsc -b`** (PR #25, змерджено) — root tsconfig мав `files:[]`, `tsc --noEmit` нічого не перевіряв. Замінено на `tsc -b` (project references). Однорядкова зміна.
+- **`feat(auth): RequireAuth guard + LoginPage`** (PR #26, відкрито) — повний pipeline:
+  - `ba`: виявлено відсутність `/login` маршруту та `LoginPage`; scope розширено до guard + мінімальна форма входу.
+  - `ui-architect`: контракт — `RequireAuth`, `LoginPage`, `LoginForm`, `useLogin`; схеми типів з `schema.d.ts`.
+  - `tester` RED: `LoginForm.schema.test.ts`, `LoginForm.test.tsx`, `RequireAuth.test.tsx`, `LoginPage.test.tsx`, `e2e/auth.spec.ts` — всі падали з "Cannot find module".
+  - `react-developer` GREEN: 5 нових файлів + `router.tsx` + `routes.json`; нові залежності: `react-hook-form`, `@hookform/resolvers`, `zod`.
+  - **Quality Gate**: знайдено 3 🔴 Critical — open redirect (`?next=` без валідації), сирий error cast в `useLogin`, умовний `role="alert"` (re-announcement gap). Всі виправлено.
+  - `docs-writer`: `src/features/auth/README.md`, `docs/verify/articles.md`, оновлено `src/features/articles/README.md`.
+- **schema.d.ts drift** — регенеровано перед wrap-up (`npm run api:types`).
+- Всього: 81 тест (13 файлів), усі зелені.
+
+### Gate status
+
+- typecheck: ✅ (`tsc -b` — реально перевіряє `src/`)
+- lint: ✅
+- tests: ✅ (81 passed, 13 test files)
+- types-drift: ✅ (регенеровано)
+- stubs: ✅
+- file-size: ✅
+- feature-readmes: ✅ (2 features: articles, auth)
+
+### Open items
+
+- PR #26 відкрито, не змерджено — потребує рев'ю.
+- `logout()` не викликає `queryClient.clear()` — pre-existing gap (shared-device scenario).
+- `check_contract_sync.sh` потребує `CONTRACT_VERSION=v0.2.0` у `.env` для локального проходження.
+- `schema.d.ts` drift (recurring) — `npm run` vs `npx` генерує різний формат; потребує дослідження.
+
+### Next steps
+
+- Змерджити PR #26 (route guard).
+- Розглянути `logout()` + `queryClient.clear()` (окремий PR).
+- Дослідити drift: чому `openapi-typescript` дає різний формат.
+- Наступна фіча — через стандартний пайплайн.
+
+
+## 2026-06-09 — main — Сесія: hygiene + архітектурні рішення
+
+**Context:** Коротка hygiene-сесія після завершення ADR 0021. Ніяких нових фіч чи PR.
+
+**Done:**
+- Очищено 6 merged локальних гілок (`chore/contract-*`, `docs/contract-*`, `docs/anonymize-test-project`, `feat/auth-doctrine-and-contract-envelope`).
+- Вирішено 5 відкритих архітектурних питань із `docs/HANDOFF.md` (всі `[ ]` → `[x]`/`[~]`):
+  1. `template-sync` — лишити additive-diff + surface-conflicts (не переходити на 3-way merge).
+  2. SHA-пін на `/bootstrap` — **ТАК**: seed `.claude/memory/template-sync.json` (реалізація — окрема задача).
+  3. rulesets vs classic branch protection — **classic як дефолт**; rulesets тільки при Public/Pro/Team.
+  4. `/wrap-up` auto-commit — **ні**: «propose, user commits» — поточна поведінка зберігається.
+  5. CI-гард живого плану — **відкладено** до ручної обкатки (поза скоупом v1).
+- Коміт `3952357` pushed до `origin/main`.
+
+**Decisions:**
+- additive-diff у `template-sync` — обраний як безпечніший підхід без ризику затерти локальні кастомізації.
+- `/wrap-up` не авто-комітить — git-операції залишаються свідомими, з хост-шела.
+- SHA-пін на bootstrap — вирішено ТАК, але реалізація відкладена.
+
+**Status:** `main` — working tree clean (після пушу `3952357`). Контейнер не запущений (template repo).
+
+**Next steps:**
+- Реалізувати seed `.claude/memory/template-sync.json` у `/bootstrap` (вирішено вище).
+- `/doctor` — аудит середовища (відсутній у command-log > 14 днів).

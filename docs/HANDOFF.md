@@ -5,13 +5,11 @@
 
 ## Поточний стан
 
-На `main`, working tree DIRTY (uncommitted changes: `docs/WORKLOG.md`, `docs/HANDOFF.md` — незакомічений append після wrap-up). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `898c6aa chore: ADR 0021 — contract pin form (tag + vendored copy + CI drift-gate)`.
+На `main`, working tree DIRTY (uncommitted changes: `docs/WORKLOG.md`, `docs/HANDOFF.md` — wrap-up doc-зміни). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `3952357 docs: resolve 5 open architecture questions + clean merged branches`.
 
 ## Останнє завершене
 
 - PR #22: chore: ADR 0021 — contract pin form (tag + vendored copy + CI drift-gate) — merged 2026-06-09 ([link](https://github.com/VadayI/claude-django/pull/22))
-- Очищено 6 merged локальних гілок — 2026-06-09
-- Вирішено 5 відкритих архітектурних питань — 2026-06-09
 
 ## В процесі
 
