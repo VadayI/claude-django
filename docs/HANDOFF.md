@@ -5,11 +5,13 @@
 
 ## Поточний стан
 
-На `main`, working tree DIRTY (uncommitted changes: `docs/WORKLOG.md` — незакомічений append після wrap-up). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `898c6aa chore: ADR 0021 — contract pin form (tag + vendored copy + CI drift-gate)`.
+На `main`, working tree DIRTY (uncommitted changes: `docs/WORKLOG.md`, `docs/HANDOFF.md` — незакомічений append після wrap-up). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `898c6aa chore: ADR 0021 — contract pin form (tag + vendored copy + CI drift-gate)`.
 
 ## Останнє завершене
 
 - PR #22: chore: ADR 0021 — contract pin form (tag + vendored copy + CI drift-gate) — merged 2026-06-09 ([link](https://github.com/VadayI/claude-django/pull/22))
+- Очищено 6 merged локальних гілок — 2026-06-09
+- Вирішено 5 відкритих архітектурних питань — 2026-06-09
 
 ## В процесі
 
@@ -17,15 +19,17 @@
 
 ## Наступний крок
 
-Закомітити незакомічені doc-зміни (`docs/WORKLOG.md` + `docs/HANDOFF.md`) перед переключенням контексту.
+Закомітити незакомічені doc-зміни (`docs/WORKLOG.md` + `docs/HANDOFF.md`) перед переключенням контексту (з хост-шела WSL2).
 
 ## Відкриті питання
 
-- [ ] `template-sync` — реальний 3-way merge `CLAUDE.md`/`settings.json` чи лишити поточний additive-diff + surface-conflicts? (Поки обрано безпечніший additive.)
-- [ ] Фіксувати версію/SHA шаблону на `/bootstrap` (seed `.claude/memory/template-sync.json`), щоб перший `/update-from-template` мав базу для діффу?
-- [ ] При апгрейді проєкту до Pro/Team — віддавати перевагу **rulesets** над класичним branch protection у `/bootstrap` Step 5?
-- [ ] Чи `/wrap-up` сам комітить свої doc-зміни, чи лишити «propose, user commits»?
-- [ ] **«Живий план»: CI-гард «план оновлено в тому ж PR»** (як `check_app_readmes.sh`) — dogfood пройдено (план 0010); лишити рішення після ручної обкатки на кількох реальних задачах (поза скоупом v1).
+_(всі питання вирішено 2026-06-09)_
+
+- [x] `template-sync` — 3-way merge чи additive-diff? **Рішення: лишити additive-diff + surface-conflicts.** Безпечніший підхід, не ризикує затерти локальні кастомізації.
+- [x] Фіксувати версію/SHA шаблону на `/bootstrap` (seed `.claude/memory/template-sync.json`)? **Рішення: ТАК.** Дає базу для `git diff` при першому `/update-from-template`. _(реалізація — окрема задача)_
+- [x] При апгрейді до Pro/Team — rulesets чи classic branch protection? **Рішення: classic як дефолт; rulesets — тільки коли repo Public або Pro/Team підтверджено в `env-detect.json`. Не міняти поведінку зараз.**
+- [x] Чи `/wrap-up` сам комітить doc-зміни? **Рішення: «propose, user commits» — поточна поведінка зберігається.** Git-операції — з хост-шела, свідомо.
+- [~] **«Живий план»: CI-гард «план оновлено в тому ж PR»** — dogfood пройдено (план 0010); **відкладено** до ручної обкатки на кількох реальних задачах (поза скоупом v1).
 
 ## Нотатки середовища
 
