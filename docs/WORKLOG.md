@@ -780,3 +780,16 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 **Next steps:**
 - Реалізувати seed `.claude/memory/template-sync.json` у `/bootstrap` (вирішено вище).
 - `/doctor` — аудит середовища (відсутній у command-log > 14 днів).
+
+## 2026-06-09 — main (wrap-up #2)
+
+- Done:
+  - `/audit` — виявлено: застарілі remote-гілки + `CONTRACT_VERSION=v0.2.0` стара в `.env.example`.
+  - Git hygiene: `git fetch --prune` прибрав 14 застарілих remote-tracking рефів (GitHub видалив гілки при squash-merge); локальну `chore/update-contract-pin-v0.2.0` (upstream gone, PR #17 merged) видалено `git branch -D`. Лише `main` залишився.
+  - Compatibility audit: перевірено сумісність `claude-api-contract` (v0.4.0) з шаблоном `claude-django` — URL-шаблон, формат тегів, назва файлу, drift-gate — все сумісне без змін.
+  - PR #23 merged 2026-06-09: `templates/.env.example` — `CONTRACT_VERSION=v0.2.0` → `v0.4.0` (один рядок, squash-merged).
+- Decisions: немає нових ADR; зміна — механічний bump дефолтного пінування.
+- Status: `main` — PR #23 merged 2026-06-09T14:11:07Z (verified via gh). Working tree clean.
+- Next steps:
+  - `/doctor` — аудит середовища (відсутній у command-log; рекомендовано auditor'ом).
+  - При наступному релізі `claude-api-contract` — знову bumп `CONTRACT_VERSION` у `.env.example`.
