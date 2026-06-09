@@ -1,15 +1,15 @@
 # HANDOFF — claude-django
 
-> Каденція оновлення: наприкінці сесії через `/handoff`. `docs/WORKLOG.md` — канонічна хроніка; цей файл — курсор.
+> Читай ПЕРШИМ на початку нової сесії. Оновлюється `/handoff` наприкінці кожної сесії.
+> Хроніка — `docs/WORKLOG.md`; беклог — `docs/todo.md`.
 
 ## Поточний стан
 
-На `main`, working tree **DIRTY** (uncommitted: `docs/WORKLOG.md`, `docs/HANDOFF.md` — wrap-up 2026-06-09). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `516ee68 docs: clear todo backlog — move 3 completed items to Done (#21)`.
+На `main`, working tree DIRTY (uncommitted changes: `docs/WORKLOG.md` — незакомічений append після wrap-up). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `898c6aa chore: ADR 0021 — contract pin form (tag + vendored copy + CI drift-gate)`.
 
 ## Останнє завершене
 
-- PR #21: docs: clear todo backlog — 3 пункти → Done — merged 2026-06-09 ([link](https://github.com/VadayI/claude-django/pull/21))
-- PR #20: chore: ignore `.claude/*.lock` runtime lock files — merged 2026-06-09 ([link](https://github.com/VadayI/claude-django/pull/20))
+- PR #22: chore: ADR 0021 — contract pin form (tag + vendored copy + CI drift-gate) — merged 2026-06-09 ([link](https://github.com/VadayI/claude-django/pull/22))
 
 ## В процесі
 
@@ -17,18 +17,7 @@
 
 ## Наступний крок
 
-**Закомітити wrap-up doc-зміни** (template-repo: прямий коміт у `main` дозволено політикою цього репо).
-
-```bash
-# з хост-шела (не з sandbox — 9p-правило):
-git add docs/WORKLOG.md docs/HANDOFF.md
-git commit -m "docs: wrap-up 2026-06-09 — /audit hygiene (.gitignore lock + todo cleanup)"
-```
-
-Після коміту — наступна черга:
-1. `/doctor` — аудит середовища (відсутній у command-log за останні 14 днів).
-2. Опційно: cross-repo note у `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
-3. Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.
+Закомітити незакомічені doc-зміни (`docs/WORKLOG.md` + `docs/HANDOFF.md`) перед переключенням контексту.
 
 ## Відкриті питання
 
@@ -37,7 +26,6 @@ git commit -m "docs: wrap-up 2026-06-09 — /audit hygiene (.gitignore lock + to
 - [ ] При апгрейді проєкту до Pro/Team — віддавати перевагу **rulesets** над класичним branch protection у `/bootstrap` Step 5?
 - [ ] Чи `/wrap-up` сам комітить свої doc-зміни, чи лишити «propose, user commits»?
 - [ ] **«Живий план»: CI-гард «план оновлено в тому ж PR»** (як `check_app_readmes.sh`) — dogfood пройдено (план 0010); лишити рішення після ручної обкатки на кількох реальних задачах (поза скоупом v1).
-- [ ] Plan 0011 open question — точна форма пінування контракту: лише `CONTRACT_VERSION=vX.Y.Z` + raw URL, чи додатково контрольна сума `openapi.yml`?
 
 ## Нотатки середовища
 

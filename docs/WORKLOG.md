@@ -691,3 +691,26 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 **Next steps:**
 - `/doctor` — аудит середовища (відсутній у command-log за 14 днів).
 - Опційно: cross-repo note у `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
+
+
+## 2026-06-09 — main — ADR 0021: форма пінування контракту (contract pin form)
+
+**Context:** Закриття open question Plan 0011 §57, відкритого з 2026-06-08: чи потрібна явна контрольна сума `CONTRACT_SHA256` разом із `CONTRACT_VERSION`.
+
+**Done:**
+- **PR #22** (`898c6aa`): закрито open question Plan 0011 §57 — форма пінування контракту зафіксована як `CONTRACT_VERSION` (git tag + raw URL) без `CONTRACT_SHA256`. Merged 2026-06-09T13:04:27Z (verified via gh).
+  - **ADR 0021** (`docs/decisions/0021-contract-pin-form.md`, Accepted): пін = tag + raw URL; якір цілісності = vendored-копія `docs/api/openapi.yml` + PR-рев'ю; CI drift-gate; відмова від checksum обґрунтована (Simplicity First — drift-gate покриває ту саму загрозу без третього артефакту).
+  - **`templates/scripts/pull_contract.sh`**: новий режим `--check` (re-pull у tmp + diff, без перезапису; exit 1 при розбіжності).
+  - **`templates/.github/workflows/backend-ci.yml`**: крок `drift` після conformance-gate (graceful skip коли `vars.CONTRACT_VERSION` не задано).
+  - **`docs/plans/0011-contract-inversion.md`**: open question §57 закрито `[x]` + Execution log запис.
+  - **`docs/decisions/0017-*.md`**: cross-reference на ADR 0021 у секції Наслідки.
+
+**Decisions:**
+- ADR 0021: форма піна = `CONTRACT_VERSION` + vendored-копія; `CONTRACT_SHA256` відхилено (Simplicity First, ADR 0021).
+- CI drift-gate ловить зсув/force-push тега та ручну правку vendored-копії без нового env-артефакту.
+
+**Status:** `main` — PR #22 merged 2026-06-09 (verified via gh); working tree clean (до wrap-up doc-змін).
+
+**Next steps:**
+- `/doctor` — аудит середовища (відсутній у command-log).
+- Опційно: cross-repo note у `claude-api-contract/templates/verify_TEMPLATE.md`.
