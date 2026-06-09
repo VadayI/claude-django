@@ -4,11 +4,12 @@
 
 ## Поточний стан
 
-На `main`, working tree **DIRTY** (uncommitted: `docs/WORKLOG.md`, `docs/HANDOFF.md` — wrap-up 2026-06-08). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `e077fb1 docs: README moderate split — add maturity/DoD/inventory, trim catalog 443→332 lines`.
+На `main`, working tree **DIRTY** (uncommitted: `docs/WORKLOG.md`, `docs/HANDOFF.md` — wrap-up 2026-06-09). Синхронізовано з `origin/main` (0 ahead / 0 behind). Останній коміт: `516ee68 docs: clear todo backlog — move 3 completed items to Done (#21)`.
 
 ## Останнє завершене
 
-- PR #19: chore: NUL-byte + conflict-marker guard — merged 2026-06-08 ([link](https://github.com/VadayI/claude-django/pull/19))
+- PR #21: docs: clear todo backlog — 3 пункти → Done — merged 2026-06-09 ([link](https://github.com/VadayI/claude-django/pull/21))
+- PR #20: chore: ignore `.claude/*.lock` runtime lock files — merged 2026-06-09 ([link](https://github.com/VadayI/claude-django/pull/20))
 
 ## В процесі
 
@@ -16,17 +17,18 @@
 
 ## Наступний крок
 
-**Закомітити незакомічені зміни перед перемиканням контексту.**
+**Закомітити wrap-up doc-зміни** (template-repo: прямий коміт у `main` дозволено політикою цього репо).
 
 ```bash
 # з хост-шела (не з sandbox — 9p-правило):
 git add docs/WORKLOG.md docs/HANDOFF.md
-git commit -m "docs: wrap-up 2026-06-08 — README moderate split, inventory.md"
+git commit -m "docs: wrap-up 2026-06-09 — /audit hygiene (.gitignore lock + todo cleanup)"
 ```
 
 Після коміту — наступна черга:
-1. Додати cross-repo зауваження у `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
-2. Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.
+1. `/doctor` — аудит середовища (відсутній у command-log за останні 14 днів).
+2. Опційно: cross-repo note у `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
+3. Реальна валідація staging-шаблонів на свіжому bootstrap-проєкті.
 
 ## Відкриті питання
 

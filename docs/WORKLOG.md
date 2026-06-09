@@ -671,3 +671,23 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 - Decisions: moderate split (user choice) — catalog → docs/reference/inventory.md; Development pipeline залишився в README; Troubleshooting і Quick start не чіпали.
 - Status: main — commits e3349f4 + e077fb1 pushed to origin/main (verified: 0 commits ahead).
 - Next steps: перевірити docs/reference/inventory.md посилання рендеряться на GitHub; опціонально — аналогічне cross-repo зауваження в claude-api-contract/templates/verify_TEMPLATE.md (потребує PR у тому репо).
+
+
+## 2026-06-09 — main — /audit hygiene: .gitignore lock + todo backlog cleanup
+
+**Context:** Сесія почалась з `/audit`, який виявив дрейф git-гігієни та застарілий беклог (HANDOFF "Наступний крок" уже був виконаний у `b989510`).
+
+**Done:**
+- Видалено випадковий артефакт `wsl` (0-байтовий untracked-файл).
+- **PR #20** (`b666abf`): `.gitignore` — додано `.claude/*.lock`; runtime-lock `scheduled_tasks.lock` більше не показується в untracked. Merged 2026-06-09 (verified via gh).
+- **PR #21** (`516ee68`): розчистка `docs/todo.md` — 3 відкриті пункти перенесено в Done, кожен підтверджено виконаним проти git: п.13 (`ba` читає `PROJECT.md` — `627da3d`/`a8c1e4f`), план 0010 living-plan (🟢, кроки 1–8 done), `templates/__pycache__` (не відстежується, покрито `.gitignore`). Merged 2026-06-09 (verified via gh).
+
+**Decisions:**
+- `.claude/*.lock` — session-local runtime state, ніколи не трекається (поруч із `env-detect.json` / `command-log.jsonl`).
+- Беклог `docs/todo.md` — секція To-do тепер порожня.
+
+**Status:** `main` — обидва PR merged, working tree clean (до wrap-up doc-змін). Контейнер не запущений (template repo, без `backend/`).
+
+**Next steps:**
+- `/doctor` — аудит середовища (відсутній у command-log за 14 днів).
+- Опційно: cross-repo note у `claude-api-contract/templates/verify_TEMPLATE.md` (PR у тому репо).
