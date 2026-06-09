@@ -79,6 +79,18 @@ jobs:
         id: conformance
         working-directory: ${{ github.workspace }}
         run: bash scripts/check_contract_conformance.sh
+      - name: Contract drift gate (vendored copy matches pinned tag)
+        id: drift
+        working-directory: ${{ github.workspace }}
+        if: vars.CONTRACT_VERSION != ''
+        env:
+          CONTRACT_VERSION: ${{ vars.CONTRACT_VERSION }}
+          CONTRACT_REPO: ${{ vars.CONTRACT_REPO || 'VadayI/claude-api-contract' }}
+        run: |
+          bash scripts/pull_contract.sh --check || {
+            echo "::error ::openapi.yml differs from pinned ${CONTRACT_REPO}@${CONTRACT_VERSION}. Re-run 'bash scripts/pull_contract.sh' and commit."
+            exit 1
+          }
       - name: Per-app README gate
         id: readme
         working-directory: ${{ github.workspace }}
@@ -103,8 +115,9 @@ jobs:
             echo "| ruff | ${{ steps.ruff.outcome }} |"
             echo "| stub ledger | ${{ steps.stub.outcome }} |"
             echo "| contract conformance | ${{ steps.conformance.outcome }} |"
+            echo "| contract drift (vendored = pinned) | ${{ steps.drift.outcome }} |"
             echo "| per-app README | ${{ steps.readme.outcome }} |"
             echo "| file-size (<800) | ${{ steps.filesize.outcome }} |"
             echo "| pytest (+branch cov) | ${{ steps.pytest.outcome }} |"
           } >> "$GITHUB_STEP_SUMMARY"
-# Last reviewed/updated: 2026-06-08 (add NUL-byte + conflict-marker guard)
+# Last reviewed/updated: 2026-06-09 (add contract drift-gate, ADR 0021)
