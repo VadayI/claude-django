@@ -27,3 +27,4 @@
 - (−) Зникає авто-генерація: backend мусить вручну тримати реалізацію в межах контракту (ловиться conformance-gate).
 - Зачіпає: `rules/{api-docs,architecture,verification,environment}.md`, `templates/{pyproject.toml,.github/workflows/backend-ci.yml,scripts/*,.env.example,api_INDEX.md}`, агентів `api-architect`/`django-developer`/`docs-writer`/`ci-cd-engineer`/`reviewer`, команди `bootstrap`/`doctor`/`verify`.
 - Скасовує drift-частину `rules/api-docs.md`; узгоджується з ADR 0007 (frontend окремо).
+- Форму піна (tag + raw URL, без checksum) і CI drift-gate уточнено в ADR 0021.

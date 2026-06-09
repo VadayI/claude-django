@@ -54,7 +54,7 @@
 
 ## Open questions
 
-- [ ] Точна форма пінування контракту: лише `CONTRACT_VERSION=vX.Y.Z` + raw URL, чи додатково контрольна сума `openapi.yml` (дзеркало frontend-підходу з ADR 0007 §2)?
+- [x] Точна форма пінування контракту: лише `CONTRACT_VERSION=vX.Y.Z` + raw URL, чи додатково контрольна сума `openapi.yml` (дзеркало frontend-підходу з ADR 0007 §2)? — **вирішено: тег + vendored-копія + CI drift-gate (ADR 0021)**
 - [x] ~~Бібліотека JWT~~ — **вирішено (PR3):** `djangorestframework-simplejwt` + `token_blacklist`; service-flow `/auth/token` — кастомний view зі `scope`-claim; DOT як upgrade-path (ADR 0018).
 - [ ] Модель зберігання client-credentials сервісів (окремий app `apps/serviceauth` vs розширення users) — **відкладено**: PR3 = доктрина+settings+envelope+scope-base (вибір користувача); конкретний `/auth/token` view + модель реалізуються у похідному проєкті через pipeline проти контракту.
 - [ ] Чи лишати `templates/api_INDEX.md` згадку про drift-gate як історичну, чи повністю переписати під зовнішній контракт (схиляюсь до повного переписування у PR4).
@@ -72,6 +72,7 @@
 - 2026-06-06 — **Усі 5 PR завершені на рівні working tree.** Лишилось поза інструментом: (0) довести `claude-api-contract` до `v0.1.0`; git гілки/коміти/PR/мерж кожного PR з host-шела (включно з `git rm templates/scripts/check_openapi_drift.sh` у PR2).
 - 2026-06-07 — **Крок 0 знято.** `claude-api-contract` опублікував теги `v0.1.0`, `v0.1.1`, `v0.2.0`. Gap #1 (auth-шляхи `/auth/...` vs `/api/v1/auth/...`) виправлено в контракті: `v0.2.0` переносить всі auth-шляхи під `/api/v1/auth/...` — повна відповідність доктрині `claude-django`. `templates/.env.example` підняв пін `CONTRACT_VERSION=v0.1.0` → `v0.2.0`.
 - 2026-06-08 — **План ЗАКРИТО.** Верифікація пройдена: PR1–PR5 присутні в `main` (`8a80f4e`/`90e232b`/`dc12cf2`/`31dd498`/`259eabf`); `check_openapi_drift.sh` відсутній; `pyproject.toml` має schemathesis 4.x + django-contract-tester 1.6 + simplejwt; `backend-ci.yml` — pull-contract + conformance-gate без drift; `CONTRACT_VERSION` узгоджено у всіх ключових файлах. ADRs 0017–0020 Accepted. Гілки/PR-и, записані в плані, по суті реалізовані як прямі коміти в main (template-repo-політика). Status PR1–PR5 → done.
+- 2026-06-09 — Open question §57 (форма пінування контракту) закрито: рішення = `CONTRACT_VERSION` (tag + raw URL) + CI drift-gate; `CONTRACT_SHA256` відхилено (Simplicity First). ADR 0021 Accepted.
 
 ## Amendments
 
