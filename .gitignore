@@ -39,4 +39,7 @@ dist/
 .claude/memory/env-detect.json
 .claude/memory/command-log.jsonl
 
+# Session lock files — runtime only (e.g. scheduled_tasks.lock); never tracked.
+.claude/*.lock
+
 # Last reviewed/updated: 2026-05-30
