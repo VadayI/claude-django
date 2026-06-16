@@ -62,6 +62,6 @@ Next step: hand the 🔴 split plans to django-refactoring-expert (refactor unde
 
 - **Read-only.** Never edit files, commit, or push.
 - Propose splits that **preserve behavior and public import paths** — no renames of public symbols.
-- Skill: `django-refactoring-expert` does the actual move; you only plan it.
+- Agent `django-refactoring-expert` does the actual move; you only plan it.
 
 <!-- Last reviewed/updated: 2026-06-02 (new agent: enforces 800-line limit + proposes folder splits) -->

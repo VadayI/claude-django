@@ -228,6 +228,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/scripts/check_contract_conformance.sh` -> `scripts/` (+ chmod +x)
      - `templates/scripts/check_app_readmes.sh` -> `scripts/` (+ chmod +x)
      - `templates/scripts/check_file_size.sh` -> `scripts/` (+ chmod +x)
+     - `templates/scripts/check_nul_bytes.sh` -> `scripts/` (+ chmod +x)
      - `templates/STUBS.md` -> `docs/STUBS.md`, then **strip the example row** and retitle for this project so it ships as an empty ledger (header + column definitions only), per @.claude/rules/no-stubs.md — never leave the untouched template's example row.
      - `templates/APP_README.md` -> `docs/APP_README.md` (template that `django-developer` copies into each new app folder)
      - `templates/apps_common/` -> `backend/apps/common/` (**recursive**, including `tests/` — the cross-cutting `common` app: error envelope, `Conflict`, OpenAPI envelope hook, plus the test-only convention suite). Copy with `cp -r templates/apps_common backend/apps/common`. See @.claude/rules/serializers-permissions.md and @.claude/rules/architecture.md. This makes the DRF conventions part of every new project's scaffold, not just a written rule.
@@ -241,6 +242,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
        1. `.env.example` (committed; the canonical key list for new clones)
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent)
      - `templates/.github/workflows/backend-ci.yml` -> `.github/workflows/backend-ci.yml`
+     - `templates/.github/workflows/backend-policy.yml` -> `.github/workflows/backend-policy.yml`
      - `templates/docker-compose.yml` -> `docker-compose.yml`
      - `templates/docker-compose.staging.yml` -> `docker-compose.staging.yml` (staging runtime: gunicorn in a container behind a reverse proxy; see `.claude/rules/docker-commands.md` Staging section)
      - `templates/gunicorn.conf.py` -> `backend/gunicorn.conf.py` (gunicorn config the staging compose mounts at `/app/gunicorn.conf.py`)
@@ -372,6 +374,9 @@ Run AFTER preflight passes but BEFORE any side-effects.
      echo "Triggering initial backend-ci run to register the status check..."
      gh workflow run backend-ci.yml --ref main 2>/dev/null \
        || echo "i workflow_dispatch not yet available; the push trigger above will register it"
+     echo "Triggering initial backend-policy run to register the status check..."
+     gh workflow run backend-policy.yml --ref main 2>/dev/null \
+       || echo "i backend-policy will register on the first PR (pull_request trigger)"
      # Give GitHub ~8s to register the run before Step 5 references the check.
      sleep 8
      ```
@@ -392,7 +397,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    OWNER=$(gh api user --jq .login)
    RULE_BODY=$(cat <<'JSON'
    {
-     "required_status_checks": {"strict": true, "checks": [{"context": "backend-ci"}]},
+     "required_status_checks": {"strict": true, "checks": [{"context": "backend-ci"}, {"context": "backend-policy"}]},
      "enforce_admins": true,
      "required_pull_request_reviews": {"required_approving_review_count": 0},
      "restrictions": null,
@@ -411,7 +416,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    set -e
 
    if [ $PROT_CODE -eq 0 ]; then
-     echo "✓ Branch protection enabled on $OWNER/$SLUG (backend-ci required, PR required, no bypass)"
+     echo "✓ Branch protection enabled on $OWNER/$SLUG (backend-ci + backend-policy required, PR required, no bypass)"
    else
      # Parse HTTP status from gh stderr — gh prints lines like:
      #   "HTTP 403: Resource not accessible by personal access token (...)"
@@ -461,7 +466,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    2. Click **Add branch protection rule** (or **Add classic branch protection rule** if the new ruleset UI is shown — both work).
    3. Branch name pattern: `main`.
    4. Enable **Require a pull request before merging** — set "Required approvals" to `0` for solo work, raise it later.
-   5. Enable **Require status checks to pass before merging** and pick `backend-ci` from the list (it appears only after the workflow has run at least once — Step 4 already triggered it via `workflow_dispatch`; wait up to ~30 s if it's still not visible).
+   5. Enable **Require status checks to pass before merging** and pick `backend-ci` and `backend-policy` from the list (it appears only after the workflow has run at least once — Step 4 already triggered it via `workflow_dispatch`; wait up to ~30 s if it's still not visible).
    6. Enable **Do not allow bypassing the above settings**.
    7. Optional: enable **Require linear history** and disable **Allow force pushes** / **Allow deletions** (the API path sets these by default).
    8. Click **Create** / **Save changes**.
@@ -514,8 +519,8 @@ Run each probe; if it fails, that piece is missing.
 
 1. **drf-spectacular in settings.** `grep -q "drf_spectacular" backend/config/settings/base.py` (or wherever settings live).
 2. **OpenAPI schema.** `test -f docs/api/openapi.yml`.
-3. **Backend CI workflow.** `test -f .github/workflows/backend-ci.yml`.
-4. **Gate scripts.** `test -f scripts/check_stubs.sh && test -f scripts/check_contract_conformance.sh && test -f scripts/pull_contract.sh && test -f scripts/check_app_readmes.sh && test -f scripts/check_file_size.sh`.
+3. **Backend CI workflow.** `test -f .github/workflows/backend-ci.yml && test -f .github/workflows/backend-policy.yml`.
+4. **Gate scripts.** `test -f scripts/check_stubs.sh && test -f scripts/check_contract_conformance.sh && test -f scripts/pull_contract.sh && test -f scripts/check_app_readmes.sh && test -f scripts/check_file_size.sh && test -f scripts/check_nul_bytes.sh`.
 5. **Branch protection.** `gh api repos/{owner}/{repo}/branches/main/protection` returns 200.
 6. **Env file (committed key list).** `test -f .env.example`. The `.env` file itself is gitignored and machine-local, so its absence here is **not** a Mode B blocker — `.env.example` is the durable, committed contract. If `.env` is missing locally, print a one-liner for the user: `cp .env.example .env && $EDITOR .env` (fill in secrets).
 7. **Per-app READMEs.** For every directory under `backend/apps/`, `test -f backend/apps/<name>/README.md`.

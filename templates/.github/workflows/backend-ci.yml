@@ -1,36 +1,20 @@
 name: backend-ci
+
+# Backend code-gate CI. Runs on EVERY PR (no path filters) so a required check
+# never hangs Pending on a process-only PR (.claude/**, docs/**) — GitHub's
+# "skipped-but-required" trap. Cost: full gates run on doc-only PRs too
+# (correctness over a few wasted minutes; the sibling claude-api-contract does the
+# same). Lightweight process checks live in the always-on backend-policy.yml.
 on:
   pull_request:
-    paths:
-      - "backend/**"
-      - "docs/STUBS.md"
-      - "docs/api/openapi.yml"
-      - "scripts/check_stubs.sh"
-      - "scripts/check_nul_bytes.sh"
-      - "scripts/pull_contract.sh"
-      - "scripts/check_contract_conformance.sh"
-      - "scripts/check_app_readmes.sh"
-      - "scripts/check_file_size.sh"
-      - ".github/workflows/backend-ci.yml"
-  # Run on push to main so GitHub registers `backend-ci` as a known status
-  # check on the very first push. Without this, branch protection that
-  # requires `backend-ci` blocks every subsequent PR (chicken-and-egg).
+    branches: [main]
   push:
     branches: [main]
-    paths:
-      - "backend/**"
-      - "docs/STUBS.md"
-      - "docs/api/openapi.yml"
-      - "scripts/check_stubs.sh"
-      - "scripts/check_nul_bytes.sh"
-      - "scripts/pull_contract.sh"
-      - "scripts/check_contract_conformance.sh"
-      - "scripts/check_app_readmes.sh"
-      - "scripts/check_file_size.sh"
-      - ".github/workflows/backend-ci.yml"
-  # Manual trigger so /bootstrap can register the status check before the
-  # first PR exists, via `gh workflow run backend-ci.yml --ref main`.
+  # Manual trigger so /bootstrap can register the status check before the first
+  # PR exists, via `gh workflow run backend-ci.yml --ref main`.
   workflow_dispatch:
+  merge_group:
+
 # Cancel superseded runs for the same PR/branch so a new push stops stale runs.
 # Pushes to main are NOT cancelled (we want every main run to complete).
 concurrency:
@@ -67,7 +51,7 @@ jobs:
       - name: NUL / conflict-marker guard
         id: nul
         working-directory: ${{ github.workspace }}
-        run: bash scripts/check_nul_bytes.sh
+        run: bash scripts/check_nul_bytes.sh .claude/ scripts/ backend/
       - name: Ruff lint
         id: ruff
         run: ruff check .

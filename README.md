@@ -209,7 +209,7 @@ It lands as a **PR** (the PR-only rule applies to derived projects); review the 
 | `/simplify [path]` | When a freshly-landed diff feels dense | Occasionally |
 | `/update-docs [scope]` | When `docs/api/`, ADRs, or WORKLOG need refresh; often automated via `/wrap-up` | As needed |
 | `/verify [feature] [--run]` | After a feature is green, to (re)generate or run its manual endpoint checklist | Once per feature; auto at pipeline end |
-| `/config` | Quick check that `.claude/settings.json` / `.mcp.json` / MCP keys / hooks are correct | As needed |
+| `/config-check` | Quick check that `.claude/settings.json` / `.mcp.json` / MCP keys / hooks are correct | As needed |
 | `/plugins` | Check installed vs expected plugins; get the paste-ready install block | Once per machine, as needed |
 
 The `auditor` agent (invoked by `/audit`) reads `.claude/memory/command-log.jsonl` and the live state, then suggests the right one for the moment — you don't need to memorize the table.
