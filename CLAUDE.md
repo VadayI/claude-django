@@ -13,6 +13,7 @@
 @.claude/rules/verification.md
 @.claude/rules/user-guides.md
 @.claude/rules/living-plan.md
+@.claude/rules/deviation-register.md
 
 ## Agent Dispatch (MANDATORY)
 
