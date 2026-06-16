@@ -22,7 +22,7 @@ description: "[claude-django] GitHub Actions CI for Django (ruff + pytest with a
 
 ## Principles
 - CI is a mandatory gate before merge alongside review.
-- Backend-only CI; cache deps for speed; gates run in order: ruff → stub-gate → OpenAPI drift → pytest.
+- Backend-only CI; cache deps for speed. The shipped `backend-ci.yml` runs **8 gates** in order: NUL/conflict guard → ruff → stub-gate → contract conformance → contract drift (vendored==pinned, ADR 0021) → per-app README → file-size (<800) → pytest+cov.
 
 > Ready templates — `templates/.github/workflows/`.
 <!-- Last reviewed/updated: 2026-05-27 -->

@@ -13,16 +13,16 @@ The REST API contract is the primary user-facing artifact this repo serves, but 
 
 ## The gate — `scripts/check_contract_conformance.sh`
 
-Instead of "code → schema, diff = red" (the old drift gate), CI validates the **running implementation against the external contract** and fails the PR on any divergence. Two levels (details in `@.claude/rules/verification.md`):
+Instead of "code → schema, diff = red" (the old drift gate), CI validates the **running implementation against the external contract** and fails the PR on any divergence; a separate **vendored-copy-vs-pinned-tag** drift gate (`pull_contract.sh --check`, ADR 0021) still guards provenance. Two levels (details in `@.claude/rules/verification.md`):
 
 - **schemathesis** — property-based; drives generated requests against the running backend and catches 500s / schema violations / response-conformance failures. Pin the version (3.1 is first-class in current releases).
-- **drf-openapi-tester** (`SchemaTester` / `OpenAPIClient`) — point validation of DRF responses against the external `docs/api/openapi.yml` in pytest.
+- **django-contract-tester** (`SchemaTester` / `OpenAPIClient`) — point validation of DRF responses against the external `docs/api/openapi.yml` in pytest.
 
 Run locally before pushing:
 
 ```bash
 bash scripts/pull_contract.sh                 # fetch openapi.yml@CONTRACT_VERSION
-bash scripts/check_contract_conformance.sh    # schemathesis + drf-openapi-tester
+bash scripts/check_contract_conformance.sh    # schemathesis + django-contract-tester
 ```
 
 > The backend **never** regenerates the canonical schema. `drf-spectacular`'s `spectacular` command is only for sanity-checking the Swagger UI rendering, never for producing the contract.
@@ -32,7 +32,7 @@ bash scripts/check_contract_conformance.sh    # schemathesis + drf-openapi-teste
 1. The contract for the endpoint already exists in `claude-api-contract` (designed there first). `api-architect` reads the pinned contract and records the slice's routes in `.claude/memory/endpoints.json`.
 2. `tester` writes the failing API feature test (DRF `APIClient`) against the contract.
 3. `django-developer` implements until GREEN and conformant — `drf-spectacular` annotations (`@extend_schema`, `@extend_schema_field`) are added only where the Swagger UI needs help matching the contract.
-4. **Before opening the PR** (or in `/wrap-up`): run `scripts/check_contract_conformance.sh` (schemathesis + drf-openapi-tester) against the pinned contract; both must pass.
+4. **Before opening the PR** (or in `/wrap-up`): run `scripts/check_contract_conformance.sh` (schemathesis + django-contract-tester) against the pinned contract; both must pass.
 5. `docs-writer` adds the per-endpoint narrative markdown if needed and includes the endpoint in `docs/api/INDEX.md`, which points at the external contract + `CONTRACT_VERSION`.
 
 ## Required `drf-spectacular` setup (Swagger UI only)
@@ -41,7 +41,7 @@ bash scripts/check_contract_conformance.sh    # schemathesis + drf-openapi-teste
 - In `REST_FRAMEWORK`: `'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'`.
 - `SPECTACULAR_SETTINGS` with `TITLE`, `DESCRIPTION`, `VERSION` set per project.
 - URLs include `SpectacularSwaggerView`, `SpectacularRedocView` (UI). `SpectacularAPIView` may serve a live schema to the UI, but the **committed `docs/api/openapi.yml` is the vendored external contract**, not its output.
-- `pyproject.toml` pins `drf-spectacular>=0.27` (UI), plus `schemathesis` (pinned, 3.1) and `drf-openapi-tester` (conformance).
+- `pyproject.toml` pins `drf-spectacular>=0.27` (UI), plus `schemathesis` (pinned, 3.1) and `django-contract-tester` (conformance).
 
 ## Binds these agents (rule is auto-loaded)
 
