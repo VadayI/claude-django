@@ -6,7 +6,7 @@ The canonical REST API contract is authored externally in `claude-api-contract` 
 
 1. The contract for the endpoint already exists in `claude-api-contract` (designed there first); pull it with `scripts/pull_contract.sh`.
 2. The backend implements the endpoint test-first against that contract: read contract → tests (RED) → models / migrations / serializers / views / routes / permissions (GREEN) → endpoint docs.
-3. The implementation is validated against the pinned `docs/api/openapi.yml` by `scripts/check_contract_conformance.sh` (schemathesis + drf-openapi-tester) in the same PR. The backend **never regenerates** the canonical schema.
+3. The implementation is validated against the pinned `docs/api/openapi.yml` by `scripts/check_contract_conformance.sh` (schemathesis + django-contract-tester) in the same PR. The backend **never regenerates** the canonical schema.
 
 Interactive API testing is via **Swagger UI / Redoc**, served by Django at `/api/schema/swagger/` and `/api/schema/redoc/` via `drf-spectacular` (UI only, not the canon) — no hand-rolled mini-frontend in this repo. The production frontend lives in a **separate repository** (`claude-react-mui`) that consumes the same external contract. Details: `@.claude/rules/api-docs.md`.
 

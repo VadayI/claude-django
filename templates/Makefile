@@ -65,10 +65,13 @@ shell: ## Django shell
 contract: ## Pull the external API contract openapi.yml@CONTRACT_VERSION (see api-docs.md)
 	bash scripts/pull_contract.sh
 
-gates: ## Run CI gate scripts locally (stubs, contract conformance, app readmes)
+gates: ## Run CI gate scripts locally (NUL, ruff, stubs, conformance, app readmes, file-size)
+	bash scripts/check_nul_bytes.sh .claude/ scripts/ backend/
+	$(BACKEND) ruff check .
 	bash scripts/check_stubs.sh
 	bash scripts/check_contract_conformance.sh
 	bash scripts/check_app_readmes.sh
+	bash scripts/check_file_size.sh
 
 check-deploy: ## Django deployment-readiness check against staging settings
 	$(DC) -f docker-compose.staging.yml run --rm backend python manage.py check --deploy
