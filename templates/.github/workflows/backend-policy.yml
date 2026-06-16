@@ -1,0 +1,100 @@
+name: backend-policy
+
+# Always-run process-policy gate (complements the always-run backend-ci code gate).
+# No path filters → EVERY PR (incl. process-only .claude/** / docs/**) reports a
+# status, so a required check never hangs Pending (GitHub skipped-but-required trap).
+# Make THIS a required check alongside backend-ci. workflow_dispatch lets /bootstrap
+# register it before the first PR exists.
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-policy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for base diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute changed files (PR diff vs base)
+        run: |
+          # base_ref: pull_request → github.base_ref; merge_group → event payload
+          # (refs/heads/<branch>); push/workflow_dispatch → none (registration run).
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.base_ref }}"
+          elif [ "${{ github.event_name }}" = "merge_group" ]; then
+            BASE_REF="${{ github.event.merge_group.base_ref }}"
+          else
+            BASE_REF=""
+          fi
+          BASE_REF="${BASE_REF#refs/heads/}"
+          if [ -z "$BASE_REF" ]; then
+            echo "No PR base (event=${{ github.event_name }}) — policy checks skipped (registration run)."
+            : > /tmp/changed.txt
+            echo "BASE_REF=" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "BASE_REF=$BASE_REF" >> "$GITHUB_ENV"
+          git fetch --no-tags origin "$BASE_REF" >/dev/null 2>&1 || true
+          git diff --name-only "origin/${BASE_REF}...HEAD" > /tmp/changed.txt
+          echo "Changed files in this PR:"; sed 's/^/  /' /tmp/changed.txt
+
+      # --- Block: raising the contract pin is deliberate → must be documented ---
+      # Bumping CONTRACT_VERSION in .env.example changes which external API every
+      # consumer implements against. It must carry a review/deviation note in
+      # docs/reviews/ OR an ADR in docs/decisions/ (deviation-register.md, ADR 0021).
+      - name: CONTRACT_VERSION bump requires a review note
+        run: |
+          [ -s /tmp/changed.txt ] || { echo "No PR diff — skip."; exit 0; }
+          if ! grep -qE '(^|/)\.env\.example$' /tmp/changed.txt; then
+            echo ".env.example not changed — skip."; exit 0
+          fi
+          if ! git diff "origin/${BASE_REF}...HEAD" -- '.env.example' '*/.env.example' 2>/dev/null \
+               | grep -qE '^\+CONTRACT_VERSION='; then
+            echo "CONTRACT_VERSION not changed — skip."; exit 0
+          fi
+          if grep -qE '^docs/(reviews|decisions)/.+\.md$' /tmp/changed.txt; then
+            echo "CONTRACT_VERSION bump documented (docs/reviews or docs/decisions present) — OK."
+          else
+            echo "::error::CONTRACT_VERSION changed without a note in docs/reviews/ or an ADR in docs/decisions/. Raising the contract pin is deliberate — record why (deviation-register.md, ADR 0021)."
+            exit 1
+          fi
+
+      # --- Advisory (never blocks): non-trivial backend change should carry a plan ---
+      - name: Advisory — living plan for backend changes
+        run: |
+          [ -s /tmp/changed.txt ] || exit 0
+          if grep -qE '^backend/' /tmp/changed.txt; then
+            if grep -qE '^docs/plans/.+\.md$' /tmp/changed.txt; then
+              echo "Living plan present for this backend change."
+            else
+              echo "::notice::backend/ changed without docs/plans/NNNN-*.md. For non-trivial work add a living plan (living-plan.md). Advisory only — not blocking."
+            fi
+          fi
+
+      # --- Advisory: endpoint-registry change should refresh the verify doc ---
+      - name: Advisory — verify doc for endpoint changes
+        run: |
+          [ -s /tmp/changed.txt ] || exit 0
+          if grep -qE '^\.claude/memory/endpoints\.json$' /tmp/changed.txt; then
+            if grep -qE '^docs/verify/.+\.md$' /tmp/changed.txt; then
+              echo "Verify doc updated alongside the endpoint change."
+            else
+              echo "::notice::.claude/memory/endpoints.json changed without docs/verify/*.md. Regenerate the verification handoff (/verify). Advisory only."
+            fi
+          fi
+
+      - name: Policy summary
+        if: always()
+        run: echo "backend-policy ran (always-on, no path filter) — required-check trap avoided."

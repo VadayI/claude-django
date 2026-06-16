@@ -40,4 +40,4 @@ python scripts/log-cmd.py /plugins $ARGUMENTS
 
 Inherit `/doctor`'s hard limits: no `git commit`/`push`, never print secret values, no application source edits. Never claim a plugin was installed by the agent — installation is a manual UI action.
 
-> Pairs with `/config` (settings/MCP audit) and the full `/doctor`.
+> Pairs with `/config-check` (settings/MCP audit) and the full `/doctor`.
