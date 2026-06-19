@@ -91,7 +91,7 @@ Then check the live system (not via Python):
 >
 > **Never hand-write `env-detect.json`** to skip past this. Its fields drive hard gates; fabricated values silently bypass safety checks. If the script cannot run, the answer is to fix Python / the shell, not to invent the file.
 
-Note: `env.get('platform_supported', True)` — graceful fallback. In PR #1 the field does not yet exist in `env-detect.json`; defaulting to `True` preserves current behaviour. PR #2 adds the field and Windows-native will start failing this probe with `UNSUPPORTED_PLATFORM`.
+Note: `env.get('platform_supported', True)` — graceful fallback. In PR #1 the field does not yet exist in `env-detect.json`; defaulting to `True` preserves current behaviour. Since ADR `0022`, native Windows reports `platform_supported: true` and passes this probe; `UNSUPPORTED_PLATFORM` only fires on a platform that is none of Windows / macOS / Linux / WSL2.
 
 ### GitHub access — manual repo + fine-grained per-repo token (front-loaded)
 
@@ -146,7 +146,7 @@ Decision:
 - `NO_PYTHON` (only when the hook itself failed) -> Install Python 3.10+ and reopen Claude. This is the only flag that cannot be auto-diagnosed from `env-detect.json` because the file does not exist.
 - `REPO_NOT_FOUND` -> `/bootstrap` (Mode A) links to a repo **you** created by hand; the active token cannot see `$OWNER/$SLUG`. Two causes: the empty repo was never created, or the fine-grained token is not scoped to it. Remedy: (1) create the EMPTY repo at https://github.com/new (no README/.gitignore/license); (2) mint a fine-grained token via the template URL in the GitHub-access preflight (Resource owner = your login; Repository access -> Only select repositories -> `$OWNER/$SLUG`; permissions Contents / Pull requests / Workflows / Administration = Read and write); (3) `export GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_...` and re-run `/bootstrap`.
 - `NO_GH_SCOPES` -> **Only applies to a classic PAT.** Fine-grained tokens (recommended, per ADR `0008`) don't expose OAuth scopes and are NOT gated here — use the GitHub-access preflight + the `gh repo view` capability probe instead. For a classic PAT missing scopes: `gh auth refresh -s repo,workflow` (add `admin:repo_hook` for auto branch protection), then re-run `/bootstrap`.
-- `UNSUPPORTED_PLATFORM` -> **Hard STOP — no override.** Windows native shells (PowerShell, cmd, Git Bash / MINGW64) are NOT supported. Install WSL2 Ubuntu and run every command (including `gh`, `git`, `python`, `docker compose`, and `claude` itself) from inside WSL2. See ADR `docs/decisions/0005-drop-windows-native-shell.md`. Do NOT offer the user an `AskUserQuestion` "Proceed anyway" branch — there is no documented Windows-native happy path; bind-mount semantics, bash idioms, and Docker behavior all diverge silently.
+- `UNSUPPORTED_PLATFORM` -> note the detected `platform` and STOP. Since ADR `0022` (amends `0005`) native Windows is a supported runner, `platform_supported` is `true` on Windows, macOS, Linux, and WSL2; this flag now only fires on some *other* platform, not expected on a normal dev machine. Native Windows runs `claude` in PowerShell or Git Bash; WSL2 stays optional (Docker backend).
 - `NO_GH_BIN` -> `gh` is not on PATH in this shell. Install:
   - WSL2 / Linux: `sudo apt update && sudo apt install -y gh` (fallback to the official repo at https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
   - macOS: `brew install gh`.

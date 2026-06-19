@@ -21,7 +21,7 @@ Optional `$ARGUMENTS`: a scope — `brief`, `stack`, `docs`, `github`. Default: 
 
 0. **Runtime gate — run FIRST (hard STOP, before any access check).** Read `.claude/memory/env-detect.json` (written ONLY by the Claude Code CLI `SessionStart` hook). `/preflight` normally runs after `/doctor` and `/bootstrap`, so the file should already exist — but never skip this check.
    - **If MISSING** -> `NO_ENV_DETECT`: STOP. Do NOT dispatch `devops`/`ba`, do NOT run ad-hoc access checks, do NOT report "preflight green". The runtime is unverified — `/preflight` (like `/doctor` and `/bootstrap`) is supported only in **Claude Code CLI on Linux / macOS / WSL2** (see `README.md` "Where this runs"). Causes & fixes: (a) `python` not on PATH so the hook failed -> install Python 3.10+ and relaunch Claude Code CLI; (b) you are in Cowork / Claude API-SDK / a non-CLI shell -> run from Claude Code CLI inside WSL2. Never hand-write or fabricate the file.
-   - **If present but `platform_supported == false`** -> `UNSUPPORTED_PLATFORM`: hard STOP (no override branch). Install WSL2 Ubuntu (ADR `docs/decisions/0005-drop-windows-native-shell.md`) and relaunch `claude` inside WSL2.
+   - **If present but `platform_supported == false`** -> `UNSUPPORTED_PLATFORM`: hard STOP (no override branch). Since ADR `0022` native Windows is supported, this only fires on a platform that is none of Windows / macOS / Linux / WSL2 — note the detected `platform` and STOP.
 
    Proceed to Step 1 only when the file EXISTS **and** `platform_supported == true`. Carry any flag raised here into Step 5.
 

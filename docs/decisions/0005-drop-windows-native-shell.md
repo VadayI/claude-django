@@ -50,4 +50,12 @@ Concretely:
 - **Support only Linux / macOS** (drop Windows entirely). Rejected: Windows users with WSL2 are valid and indistinguishable from native Linux from the project's perspective.
 - **Make PowerShell first-class** (drop Linux/macOS). Rejected: Docker bind-mount performance on Windows-native is poor, and CI gates are bash anyway — picking PS as the canonical shell would force ongoing translation overhead in CI.
 
-<!-- Last reviewed/updated: 2026-05-29 -->
+## Update note — 2026-06-19
+
+Two premises behind this ADR have shifted since it was accepted (2026-05-29). The **decision stands** (WSL2 on Windows); the premises are refreshed here rather than rewritten above.
+
+1. **Claude Code now runs natively on Windows.** The official setup docs list Windows 10+ with "WSL, WSL 2, or Git for Windows", and a native PowerShell tool shipped. So the Context's implicit premise — that a Windows-native runner is not a real option — is weaker: the *runner* works on Windows. What still makes WSL2 mandatory is the *toolchain*, not the runner: the bash SessionStart/policy hooks (which have documented Windows-native bugs — `bash` can resolve to the WSL stub `C:\Windows\System32\bash.exe` and hang: anthropics/claude-code#37634, #18610), the `.sh` gate scripts, and `detect-env.py` hard-gating `platform_supported=false` on Windows. A full runner-vs-toolchain analysis and a Git-Bash path assessment live in `docs/reviews/2026-06-19-template-windows-wsl2-audit.md`.
+
+2. **`check_openapi_drift.sh` was removed** (ADR 0017, contract-as-external-source-of-truth, 2026-06-06). The line-20 reference to it as a CI gate is therefore historical. The current bash gate scripts are `check_stubs.sh`, `check_app_readmes.sh`, `check_file_size.sh`, `check_nul_bytes.sh`, `check_contract_conformance.sh`, and `pull_contract.sh`.
+
+<!-- Last reviewed/updated: 2026-06-19 (Update note: native Windows runner now real; check_openapi_drift.sh removed per ADR 0017) -->
