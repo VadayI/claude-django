@@ -6,60 +6,48 @@ This file defines the **expected local environment** for a `claude-django` proje
 
 ## Scope 1 — System tools
 
-The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands. Windows native PowerShell/cmd is NOT supported — on Windows, install WSL2 Ubuntu and run every command (including `gh`, `git`, `python`, `docker compose`) from inside WSL2. See ADR `docs/decisions/0005-drop-windows-native-shell.md`. The shell is auto-detected by `scripts/detect-env.py` on every session start and stored in `.claude/memory/env-detect.json`.
+The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Windows use the PowerShell or Git Bash equivalents. Native Windows is supported — the per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`). The shell is auto-detected by `scripts/detect-env.py` on every session start and stored in `.claude/memory/env-detect.json`.
 
 | Requirement | Expected | Check (bash) |
 |---|---|---|
 | **Python (HARD REQUIREMENT)** | 3.10+ on PATH as `python` | `python --version`. On Ubuntu, if only `python3` is installed: `sudo apt install -y python-is-python3`. Without Python the SessionStart hook (`scripts/detect-env.py`) cannot run. |
-| OS shell | WSL2 (Ubuntu) on Windows is REQUIRED — PowerShell/cmd not supported. Linux / macOS bash or zsh are fine natively. | `uname -a` should report Linux (or Darwin on macOS); if `platform_supported: false` in `.claude/memory/env-detect.json` — STOP and instruct user to switch to WSL2. |
+| OS shell | Native Windows (PowerShell / Git Bash) OR WSL2 (Ubuntu); Linux / macOS bash or zsh. Per-session hooks are cross-platform Python (ADR `0022`). | `python --version` must work; `env-detect.json` shows `platform_supported: true` (it is `false` only on a platform that is neither Windows, Linux, macOS, nor WSL2). |
 | Working dir | Any path, **including `/mnt/c`/`/mnt/d` (Windows drive) — fully supported (ADR `0009`); `/doctor` must NOT suggest moving**. Informational `/mnt` caveats only: slower Docker bind-mounts, CRLF, `git index.lock` (run git from the host shell). `~/projects/<slug>` is optional (max bind-mount speed), never required. | `pwd` |
 | Docker Desktop | running, with WSL2 integration enabled if WSL2 is used | `docker info` |
 | docker compose | v2 available | `docker compose version` |
 | Python in container | 3.13.x (separate from the host Python above) | `docker compose exec -T backend python --version` |
-| **Node.js (HARD REQUIREMENT)** | 18+ on PATH | `node --version`. Required to install the WSL2-native Claude Code CLI (`npm install -g @anthropic-ai/claude-code`). `detect-env.py` records the derived `node_supported` flag; `/doctor` reports `NO_NODE` if node is absent or < 18. Install via `nvm` if missing. |
+| **Node.js (HARD REQUIREMENT)** | 18+ on PATH | `node --version`. Needed only to install the Claude Code CLI via npm (`npm install -g @anthropic-ai/claude-code`); the native Windows installer needs no Node. `detect-env.py` records the derived `node_supported` flag; `/doctor` reports `NO_NODE` if node is absent or < 18. Install via `nvm` if missing. |
 | git | present | `git --version` |
 | GitHub CLI | present in WSL2 (a Windows `gh.exe` from `winget` is NOT visible inside WSL2; install via `apt` or the GitHub CLI Linux instructions) | `gh --version` |
-| **Claude Code CLI (WSL2-native)** | `claude` installed via npm, resolving to a Linux path | `which claude` -> `/home/...` or `/usr/...`, NEVER `/mnt/c/...`. Install: `npm install -g @anthropic-ai/claude-code` (needs Node 18+). If `which claude` shows `/mnt/c/...`, the Windows `claude.exe` shadows it -- prepend the npm bin to PATH (see the runner-trap section below). |
+| **Claude Code CLI** | `claude` on PATH (native Windows installer, or `npm install -g @anthropic-ai/claude-code`) | `claude --version` works. On native Windows, PowerShell / Git Bash are fine. On WSL2, install the Linux-native CLI inside Ubuntu so `which claude` is a `/home/...` or `/usr/...` path (not `/mnt/c/...`). |
 
-### Windows: launch the WSL2-native `claude`, not the Windows one (the common trap)
+### Windows: native or WSL2 (both supported)
 
-The single most common Windows failure is typing `claude` inside a WSL2 shell while only the **Windows** CLI is installed. PATH interop resolves `claude` to `claude.exe`, the `SessionStart` hook then runs Windows-Python, and `env-detect.json` records `platform: windows`, `platform_supported: false`, **`wrong_runner_suspected: true`**. Telltale signs in the file: `python.executable` is a `C:\...` path and `cwd` uses backslashes. `/doctor` will HARD STOP with `UNSUPPORTED_PLATFORM` — correctly: the config is running on the wrong runner.
+Native Windows is a first-class runner (ADR `0022`). Launch `claude` from
+PowerShell or Git Bash in the project directory; the `SessionStart` hook runs
+`python scripts/session-start.py` (cross-platform — no bash), writes
+`.claude/memory/env-detect.json` with `platform_supported: true`,
+`platform: windows`, and `shell: powershell` (or `git-bash`), and `/doctor`
+passes the platform gate.
 
-**Spot it before `/doctor` even runs — read the startup banner.** A WSL2-native launch prints a Linux-style path (`/home/...`, or `/mnt/d/...` with forward slashes) and `Using ... (from .claude/settings.json)`. The Windows binary prints the project path with **backslashes** (`D:\Dev\...`) and `(from .claude\settings.json)`. Backslashes in the banner = you launched `claude.exe`; stop and fix the runner before doing anything else.
+Requirements on native Windows:
 
-The fix is NOT to reinstall WSL2. It is to install and launch the **Linux-native** CLI from inside WSL2:
+- `python` must resolve on PATH (`python --version` in PowerShell) — NOT the
+  Microsoft Store alias. The hooks invoke `python …` directly.
+- `git`, `gh`, Node 18+ (only if installing the CLI via npm — the native
+  installer needs no Node), and Docker Desktop, as on any platform. Docker
+  Desktop needs a backend: WSL2 or Hyper-V — so WSL2 may still be installed
+  purely as Docker's backend, without ever being used as a shell.
+- The `.sh` CI gate scripts (`make gates`) run under Git Bash locally and on the
+  Linux CI runner; they are not on the per-session hot path.
 
-```bash
-# inside a real WSL2 Ubuntu shell (prompt like vadym@HOST, not a Windows path)
-node --version                              # need Node 18+ (install via nvm if missing)
-npm install -g @anthropic-ai/claude-code
-hash -r                                     # forget the cached Windows `claude`
-which claude                                # must be /home/... or /usr/..., NOT /mnt/c/...
-```
-
-If `which claude` still resolves to `/mnt/c/...`, the Windows interop path precedes your npm-global bin. Make the WSL2 CLI win by prepending the npm bin in `~/.bashrc`:
-
-```bash
-echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
-```
-
-> **Run these commands in the bash shell — NOT inside the `claude` session.** The `❯` prompt is Claude's chat input, not a terminal; pasting `npm install ...` there just sends a message to Claude. `/exit` first (or open a second WSL2 tab), run the fix in bash, then relaunch `claude`. (And it is `wsl`, not `wsl2`, to enter WSL from PowerShell.)
-
-**Still `/mnt/c/...` after the PATH fix? Your `npm` is the Windows one.** A common WSL2 state is a Linux `node` (`/usr/bin/node`) but **no Linux `npm`** — so `npm` falls through PATH interop to `/mnt/c/Program Files/nodejs/npm`, `npm config get prefix` returns a `C:\...` path, and `npm install -g @anthropic-ai/claude-code` therefore installs `claude` into the **Windows** npm prefix (the `/mnt/c/...` binary you keep seeing). The `$(npm config get prefix)/bin` trick can't fix this — that prefix is a Windows path. Confirm with `which node npm`, then let `nvm` own a matching node+npm pair inside WSL2:
-
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-nvm install --lts                 # node + npm both under ~/.nvm, first on PATH
-hash -r && which node npm         # both must be /home/...  — NOT /mnt/c/...
-npm install -g @anthropic-ai/claude-code
-hash -r && which claude           # /home/...  — NOT /mnt/c/...
-```
-
-`scripts/setup-wsl.sh` automates exactly this (nvm + node + the CLI + the PATH fix), idempotently.
-
-The project living on `/mnt/d` (or any `/mnt/...`) is **not** what triggers `UNSUPPORTED_PLATFORM`: a WSL2-native `claude` launched from `/mnt/d` reports `platform: linux, is_wsl2: true, platform_supported: true` and passes the gate. Working from `/mnt/...` is a fully supported setup (ADR `0009`) — the only caveats are slower Docker bind-mounts and occasional CRLF/`git index.lock` quirks (run git from the host shell); none require moving, and `/doctor` must not suggest it.
-
+WSL2 (Ubuntu) remains fully supported and is the right choice if you prefer a
+POSIX shell or faster Docker bind-mounts: install the toolchain inside Ubuntu
+(`sudo apt install -y git curl gh python-is-python3 python3-pip`) and the CLI
+(`npm install -g @anthropic-ai/claude-code`), then launch `claude` from there.
+The earlier "wrong runner" trap (the Windows `claude.exe` shadowing a WSL2 CLI)
+no longer applies — both runners are supported and `wrong_runner_suspected` is
+retired.
 
 ## Scope 2 — Claude config & access
 

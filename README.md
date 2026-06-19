@@ -9,11 +9,11 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 ## Where this runs (supported runtime)
 
-This config runs in **Claude Code CLI** (the terminal `claude` command) inside **WSL2 Ubuntu** on Windows (mandatory — ADR `0005`), **Linux**, or **macOS**. That is the only supported runner.
+This config runs in **Claude Code CLI** (the terminal `claude` command) on **native Windows** (PowerShell or Git Bash), **WSL2 Ubuntu**, **Linux**, or **macOS**. The per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`), so `platform_supported` is `true` on all four.
 
-**Not supported:** Claude Desktop / Cowork / Code mode, Windows-native shells (PowerShell, cmd, Git Bash), and the Claude API/SDK standalone. All three lack the `SessionStart` hook that writes `.claude/memory/env-detect.json` and never load the `.claude/agents/` pipeline — so the methodology this repo is built around isn't there, and the `/doctor` / `/bootstrap` gates can't fire honestly. You *can* use Claude Desktop as a **companion** (read/edit files, discuss architecture, review a diff), but run `/bootstrap`, the feature pipelines, TDD, and PRs in **Claude Code CLI inside WSL2**.
+**Not supported:** Claude Desktop / Cowork / Code mode and the Claude API/SDK — these do not run the `SessionStart` hook, so `.claude/memory/env-detect.json` is never written and the gates cannot evaluate. On native Windows, ensure `python` resolves on PATH (not the Microsoft Store alias); Docker Desktop still needs a WSL2 or Hyper-V backend.
 
-The two most common runner failures — the Windows `claude.exe` shadowing the WSL2-native CLI, and a genuinely Windows-native shell — and their fixes live in **[Troubleshooting](#troubleshooting-startup--doctor-hard-stops)** below.
+Startup and `/doctor` hard-stops (e.g. `python` not on PATH, missing `gh` or PAT) and their fixes live in **[Troubleshooting](#troubleshooting-startup--doctor-hard-stops)** below.
 
 ---
 
@@ -33,7 +33,7 @@ which claude                         # MUST be /home/... or /usr/...  — NOT /m
 
 **2. Where to put the project.** Working from `/mnt/c` or `/mnt/d` (a Windows drive) is **fully supported** (ADR `0009`); `/doctor` won't ask you to move it. The only caveats are slower Docker bind-mounts and occasional CRLF / `git index.lock` quirks (run `git` from the host shell). `~/projects/<slug>` in the WSL2 FS is optional — for faster bind-mounts only.
 
-**3. Launch and verify the runner.** From the project root, check the startup banner: forward-slash paths and `(from .claude/settings.json)` mean a correct WSL2 launch; **backslashes** (`D:\Dev\...`, `.claude\settings.json`) mean you launched `claude.exe` — `/exit` and fix the runner. On start the `SessionStart` hook writes `.claude/memory/env-detect.json` (`platform_supported: true`, `is_wsl2: true`, `shell: bash`) — exactly what `/doctor` needs to pass the platform gate.
+**3. Launch and verify the runner.** From the project root, launch `claude` — on native Windows that is `claude` in PowerShell or Git Bash; on WSL2 / Linux / macOS it is `claude` in your shell. Both are correct (ADR `0022`). On start the `SessionStart` hook runs `python scripts/session-start.py` and writes `.claude/memory/env-detect.json` with `platform_supported: true` and the detected `platform` / `shell` — exactly what `/doctor` needs to pass the platform gate. (Backslash paths in the banner are normal on native Windows and no longer signal a "wrong runner".)
 
 > Run shell fixes in the **bash terminal**, not Claude's `❯` prompt. When `/doctor` says to run `npm install …`, that goes in the terminal — pasting it into the `❯` chat just sends Claude a message.
 
@@ -57,8 +57,7 @@ Short version: **install the CLI in WSL2 → clone the repo (Windows drive is fi
 
 | Symptom (what you see) | What it actually means | Fix (run in a **bash shell**, not the `❯` prompt) |
 |---|---|---|
-| `🔴 UNSUPPORTED_PLATFORM` with **`wrong_runner_suspected: true`**, banner shows **backslash** paths (`D:\Dev\...`, `.claude\settings.json`), `python.executable` is `C:\…\python.exe` | You typed `claude` inside WSL2 but PATH interop launched the **Windows `claude.exe`** — the Linux CLI was never installed (or is shadowed on PATH). **WSL2 is present; this is not a "WSL2 missing" error.** | `npm install -g @anthropic-ai/claude-code` → `hash -r` → `which claude` (must be `/home/…` or `/usr/…`). If still `/mnt/c/…`: `echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc`. Relaunch `claude`. Project staying on `/mnt/d` is fine — not the cause. |
-| `🔴 UNSUPPORTED_PLATFORM` with `wrong_runner_suspected: false`, `is_wsl2: false`, and a PowerShell/cmd/Git-Bash prompt (or Claude Desktop) | You are genuinely on a **Windows-native shell** with no WSL2 — bash idioms and Docker bind-mounts won't behave. | `wsl --install -d Ubuntu` (PowerShell) → `wsl --set-default Ubuntu` → inside Ubuntu install the toolchain (`sudo apt install -y git curl gh python-is-python3 python3-pip`) and the CLI (step 1), then launch `claude` from Ubuntu. |
+| `🔴 UNSUPPORTED_PLATFORM` (now rare) | `platform_supported: false` only occurs on a platform that is **not** Windows, macOS, Linux, or WSL2 — ADR `0022` made native Windows a supported runner, so all four pass. | Note the detected `platform` in `env-detect.json`; if it is one of the supported four, re-run `python scripts/detect-env.py`. `wrong_runner_suspected` is retired. |
 | `🔴 NO_ENV_DETECT` — `.claude/memory/env-detect.json` is missing | The `SessionStart` hook didn't run — usually `scripts/` wasn't copied during Quick start, or Python isn't on PATH. The hook **fails silently** without `scripts/detect-env.py`. | Confirm `scripts/detect-env.py` exists in the project; run `python scripts/detect-env.py` once by hand. If it errors, fix the cause (install Python 3.10+). **Never hand-write this file** — fabricated values bypass the safety gates. |
 | `🔴 NO_PYTHON_OR_HOOK` — only `python3` exists, no `python` | The hook calls `python`; Ubuntu ships it as `python3`. | `sudo apt install -y python-is-python3`, then reopen `claude`. |
 | `✗ REPO_NOT_FOUND` — `/bootstrap` can't see the repo | Per ADR `0008` you create the GitHub repo **by hand**; either the empty repo wasn't created or your fine-grained token isn't scoped to it. (`FINE_GRAINED_PAT_NOT_SUPPORTED` is retired — fine-grained tokens are now the recommended credential.) | Create the empty repo at https://github.com/new, mint a fine-grained token via the template URL `/bootstrap` prints (Only select repositories → your repo; Contents/Pull requests/Workflows/Administration = RW), `export GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_…`, re-run. |
@@ -68,7 +67,7 @@ Short version: **install the CLI in WSL2 → clone the repo (Windows drive is fi
 | `which claude` stays `/mnt/c/...` even after the `$(npm config get prefix)/bin` PATH fix | Your `npm` is the **Windows** npm (Linux `node` is present but Linux `npm` is missing), so `npm install -g` put `claude` in the Windows prefix — the PATH trick can't help because that prefix is itself a `C:\...` path. | Confirm with `which node npm`. Let `nvm` own node+npm in WSL2: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh \| bash` → `nvm install --lts` → `npm install -g @anthropic-ai/claude-code`; `which node npm claude` must all be `/home/…`. Or just run `bash scripts/setup-wsl.sh`. |
 | Tests slow, `rm` fails, CRLF↔LF flips, `git index.lock` — project under `/mnt/c` or `/mnt/d` | The repo lives on a Windows drive (9p mount). **Fully supported (ADR `0009`)** — these are inherent `/mnt` caveats, not an error, and `/doctor` won't ask you to move. | No action required. Run `git` from the host shell (PowerShell/Git Bash) to avoid `index.lock`. Moving to `~/projects/<slug>` is optional (faster bind-mounts), never required. |
 
-After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites `env-detect.json` on each launch, so a corrected runner/PAT shows up immediately. Full rationale for the runner trap: `.claude/rules/environment.md` → *"launch the WSL2-native `claude`"*.
+After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites `env-detect.json` on each launch, so a corrected runner/PAT shows up immediately. Full runtime guidance (native Windows vs WSL2): `.claude/rules/environment.md` → *"Windows: native or WSL2"*.
 
 ---
 
@@ -114,7 +113,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 - Docker Desktop with WSL2 backend
 - **Shell:** bash in WSL2 Ubuntu (Windows), bash/zsh (Linux/macOS). PowerShell native NOT supported.
 - WSL2 (Ubuntu) — **mandatory on Windows**. The project can live on your Windows drive (`/mnt/...`, fully supported — ADR `0009`); `~/projects/<slug>` in the WSL2 FS is optional for faster Docker bind-mounts
-- **Node.js 18+ (required, via `nvm`)** — needed to install the WSL2-native Claude Code CLI (`npm install -g @anthropic-ai/claude-code`) and for `npx`-based skills (e.g. the Context7 MCP). `/doctor` reports `NO_NODE` if it is missing or below 18
+- **Node.js 18+ (via `nvm`; the native Windows installer needs none)** — needed to install the Claude Code CLI via `npm install -g @anthropic-ai/claude-code` and for `npx`-based skills (e.g. the Context7 MCP). `/doctor` reports `NO_NODE` if it is missing or below 18
 - A GitHub account
 
 ## Quick start (attach the config to an existing project)
