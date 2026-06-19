@@ -41,20 +41,17 @@ gate on OAuth scopes for fine-grained tokens and must NOT treat
 ``pat_kind == "fine-grained"`` as a blocker; capability is verified by probing
 the target repo (``gh repo view``) and by per-operation errors, not by headers.
 
-``platform_supported`` is ``true`` on Linux / macOS / WSL2 and ``false`` on
-Windows-native shells (PowerShell / cmd). Windows-native shells are NOT
-supported — see ADR ``docs/decisions/0005-drop-windows-native-shell.md``. On
-Windows the user must install WSL2 Ubuntu and run every command (including
-``gh``, ``git``, ``python``, ``docker compose``) from inside WSL2.
+``platform_supported`` is ``true`` on Linux, macOS, and Windows (native or
+WSL2). Native Windows is a supported runner now that the SessionStart and policy
+hooks are cross-platform Python — see ADR
+``docs/decisions/0022-support-native-windows-runner.md`` (amends ADR 0005). On
+native Windows, WSL2 is optional and only needed as a Docker Desktop backend;
+``claude`` and the toolchain run in PowerShell or Git Bash.
 
-``wrong_runner_suspected`` is ``true`` when ``platform == "windows"`` AND the
-``wsl`` executable is present. That combination almost always means the user
-typed ``claude`` inside a WSL2 shell but PATH interop resolved it to the
-Windows ``claude.exe`` (the Linux-native CLI was never installed in Ubuntu), so
-the hook ran Windows-Python and recorded ``platform: windows``. ``/doctor`` uses
-this flag to give a targeted fix (install / launch the WSL2-native ``claude``)
-instead of the generic "install WSL2" message — reinstalling WSL2 would not
-help here.
+``wrong_runner_suspected`` is retained for backward compatibility and is always
+``false`` now: native Windows is a supported runner (ADR 0022), so launching the
+Windows ``claude`` is no longer a misconfiguration. ``/doctor`` no longer
+branches on this flag.
 
 ``node_supported`` is ``true`` when Node.js is on PATH and its major version is
 >= 18. Node is a HARD REQUIREMENT, not optional: the supported runner -- the
@@ -66,7 +63,7 @@ exist. ``/doctor`` reads this derived boolean (the same pattern as the ``gh``
 supported so a parse quirk never falsely blocks the user.
 
 Commands and agents consult this file at the start of every session and pick
-bash-appropriate syntax (Linux / macOS / WSL2).
+shell-appropriate syntax for the detected platform and shell.
 """
 from __future__ import annotations
 
@@ -81,13 +78,32 @@ from datetime import datetime, timezone
 
 
 def detect_shell() -> str:
-    """Detect active shell. Bash family only (Windows-native shells unsupported)."""
+    """Detect the active shell (informational; the runtime no longer needs bash).
+
+    Recognizes the bash family on Linux / macOS / WSL2, plus Git Bash,
+    PowerShell, and cmd on native Windows. Hooks run via ``python`` regardless,
+    so ``/doctor`` reports this value but never gates on it.
+    """
+    if os.environ.get("MSYSTEM"):
+        return "git-bash"
     sh = os.environ.get("SHELL", "")
     if sh.endswith("zsh"):
         return "zsh"
     if sh.endswith("bash"):
         return "bash"
+    if platform.system() == "Windows":
+        return "powershell" if os.environ.get("PSModulePath") else "cmd"
     return "unknown"
+
+
+def _platform_supported() -> bool:
+    """Return whether the current OS is a supported claude-django runner.
+
+    Linux, macOS, and Windows (native or WSL2) are all supported now that the
+    SessionStart and policy hooks are cross-platform Python (ADR 0022). On
+    Windows, WSL2 is optional — needed only as a Docker Desktop backend.
+    """
+    return platform.system() in ("Linux", "Darwin", "Windows")
 
 
 def is_wsl2() -> bool:
@@ -208,17 +224,11 @@ def _gh_scopes() -> list[str]:
 
 def main() -> int:
     """Detect the environment and write ``.claude/memory/env-detect.json``."""
-    platform_supported = (
-        platform.system() in ("Linux", "Darwin")
-        or is_wsl2()
-    )
-    # A Windows-native run while WSL2 exists almost always means the user typed
-    # `claude` in a WSL2 shell but PATH interop resolved it to the Windows binary
-    # (no Linux-native CLI installed in Ubuntu). Flag it so /doctor can give a
-    # targeted fix instead of the generic "install WSL2" message.
-    wrong_runner_suspected = (
-        platform.system() == "Windows" and shutil.which("wsl") is not None
-    )
+    platform_supported = _platform_supported()
+    # Native Windows is a supported runner now (Python hooks, ADR 0022), so
+    # running the Windows `claude` is no longer "wrong". Kept (always False) for
+    # backward-compatible consumers; /doctor no longer branches on it.
+    wrong_runner_suspected = False
     scopes = _gh_scopes()
     pat_kind = _gh_pat_kind()
     node_supported = _node_supported()
@@ -275,18 +285,6 @@ def main() -> int:
         f"env: {info['platform']} | shell: {shell_label} "
         f"| python {info['python']['version']}"
     )
-    if wrong_runner_suspected:
-        print(
-            "WRONG RUNNER: platform=windows but WSL2 is installed -- you launched "
-            "the Windows `claude`, not the WSL2-native one.",
-            file=sys.stderr,
-        )
-        print(
-            "Fix: in a WSL2 Ubuntu shell run `npm install -g @anthropic-ai/claude-code`, "
-            "then `hash -r` and relaunch `claude` from there "
-            "(see README -> 'Where this runs').",
-            file=sys.stderr,
-        )
     if not node_supported:
         node_ver = info["tool_versions"]["node"]
         detail = f"found {node_ver}" if node_ver else "node not on PATH"

@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/policy/block_protected_edits.sh",
+            "command": "python scripts/policy/block_protected_edits.py",
             "statusMessage": "Checking protected-file edit policy..."
           }
         ]
@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/policy/check_command_gate.sh",
+            "command": "python scripts/policy/check_command_gate.py",
             "statusMessage": "Checking command preconditions..."
           }
         ]
@@ -86,7 +86,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/policy/check_plan_execution_log.sh",
+            "command": "python scripts/policy/check_plan_execution_log.py",
             "statusMessage": "Checking living-plan execution log..."
           }
         ]
@@ -97,12 +97,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "docker compose exec -T backend ruff format . 2>/dev/null || true",
+            "command": "python scripts/policy/auto_format.py format",
             "statusMessage": "Formatting Python (ruff format)..."
           },
           {
             "type": "command",
-            "command": "docker compose exec -T backend ruff check --fix . 2>/dev/null || true",
+            "command": "python scripts/policy/auto_format.py check",
             "statusMessage": "Auto-fixing lint (ruff --fix)..."
           }
         ]
@@ -113,7 +113,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/session-start.sh",
+            "command": "python scripts/session-start.py",
             "statusMessage": "Detecting environment..."
           }
         ]
