@@ -129,7 +129,14 @@ bash <(curl -fsSL https://raw.githubusercontent.com/VadayI/claude-django/main/sc
 # optional args:  install.sh [TARGET_DIR] [--ref GIT_REF] [--url FORK_URL] [--force]
 ```
 
-> **Git Bash on a corporate network?** If `curl` / `git` fail with `CRYPT_E_NO_REVOCATION_CHECK` (schannel cannot reach the revocation server), disable revocation checking: `git config --global http.schannelCheckRevoke false`, and add `--ssl-no-revoke` to the `curl` above. This skips CRL/OCSP only — the certificate is still validated.
+**On a corporate network (Git Bash) and hitting `CRYPT_E_NO_REVOCATION_CHECK`?** schannel can't reach the revocation server. Turn off revocation checking for **both** git and curl — the certificate is still validated, only the CRL/OCSP step is skipped (`git config` covers the `git clone` inside `install.sh`; the `curl` flag covers fetching the script):
+
+```bash
+git config --global http.schannelCheckRevoke false
+bash <(curl -fsSL --ssl-no-revoke https://raw.githubusercontent.com/VadayI/claude-django/main/scripts/install.sh)
+```
+
+If deep TLS inspection still blocks it, seed from **WSL2** instead (it uses OpenSSL, not schannel): `wsl` → `cd /mnt/d/...your-project` → run the plain one-liner above (no flag) → `exit`, then launch `claude` natively in Git Bash / PowerShell.
 
 Then launch `claude` → `/doctor` → `/bootstrap`. To upgrade an *already-seeded* project use `/update-from-template` instead (it preserves your edits, ADR `0014`).
 
