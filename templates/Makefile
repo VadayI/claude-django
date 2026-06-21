@@ -13,10 +13,13 @@ BACKEND ?= $(DC) exec backend
 ARGS ?=
 
 .DEFAULT_GOAL := help
-.PHONY: help setup up dev down ps logs build test cov lint fmt migrate makemigrations superuser shell schema gates doctor-deps check-deploy
+.PHONY: help cc setup up dev down ps logs build test cov lint fmt migrate makemigrations superuser shell schema gates doctor-deps check-deploy
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN{FS=":.*?## "} {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
+
+cc: ## launch Claude Code with .env sourced (scripts/claude.sh)
+	@bash scripts/claude.sh
 
 setup: ## One-shot host toolchain install (python/node/claude/gh) — WSL2/Debian
 	bash scripts/setup-wsl.sh
