@@ -13,6 +13,7 @@
 | PR2. /doctor · /bootstrap · /preflight gate prose de-WSL2'd | done (working tree) | orchestrator |
 | PR3. environment.md · docker-commands.md · CLAUDE.md · README.md | done (working tree) | orchestrator |
 | PR4. ADR 0022 (amends 0005) + audit-doc update | done (working tree) | orchestrator |
+| PR5. install.sh — Git Bash / native Windows bootstrap | done (working tree) | orchestrator |
 | V. Empirical validation on native Windows (claude in PowerShell, no WSL) | blocked | user |
 
 ## Goal
@@ -51,6 +52,7 @@ A project derived from this template can be driven by `claude` running natively 
 - 2026-06-19 — plan seeded.
 - 2026-06-19 — PR1 (working tree): detect-env.py platform gate → Windows supported, wrong_runner retired; session-start + 3 policy hooks + auto_format ported to Python; settings.json hook commands → python. py_compile / NUL / CR / JSON + mock Windows-branch proof green. Old .sh removal + git deferred to host (9p blocks rm + git).
 - 2026-06-19 — PR2/PR3/PR4 (working tree): doctor/bootstrap/preflight gate prose de-WSL2'd; environment.md + docker-commands.md + CLAUDE.md + README.md rewritten for native Windows; ADR 0022 added (amends 0005); audit doc updated. All 0 NUL/CR. Git + old-`.sh` `git rm` + HANDOFF/WORKLOG refresh deferred to host /wrap-up.
+- 2026-06-19 — PR5 (working tree): install.sh detects MINGW/MSYS/CYGWIN (Git Bash) as supported + native-Windows runner-check & next-steps; closes the last WSL2-only bootstrap gap. `bash -n` OK. Surfaced by a real carlsberg-ir bootstrap in Git Bash (corporate net also needs schannel revocation disabled for curl/git).
 
 ## Amendments
 

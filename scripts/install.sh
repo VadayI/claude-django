@@ -5,14 +5,17 @@
 # the template to a temp dir and copies the config + scaffolding inputs into the
 # target folder, then wipes transient state the SessionStart hook regenerates.
 #
-# After it finishes you still: launch the WSL2-native `claude` from the folder and
+# After it finishes you still: launch `claude` from the folder (native Windows via
+# PowerShell/Git Bash, or WSL2/Linux/macOS) and
 # run /doctor -> /bootstrap. This script ONLY seeds files; it never runs git,
 # never pushes, never touches secrets.
 #
-# SUPPORTED: WSL2 Ubuntu (on Windows) and native Debian/Ubuntu/macOS bash -- the
-# single supported runner per ADR 0005. Windows PowerShell/cmd are NOT supported.
+# SUPPORTED: native Windows (Git Bash / MINGW64), WSL2 Ubuntu, and native
+# Debian/Ubuntu/macOS bash. Per-session hooks are cross-platform Python (ADR 0022,
+# which amends ADR 0005). Windows PowerShell/cmd cannot run this bash seeder --
+# use Git Bash there.
 #
-# Usage (inside a real WSL2 shell, from the root of your project folder):
+# Usage (Git Bash on Windows, or a WSL2/Linux/macOS shell, from your project root):
 #   bash <(curl -fsSL https://raw.githubusercontent.com/VadayI/claude-django/main/scripts/install.sh)
 # or, if you already have the file:
 #   bash scripts/install.sh [TARGET_DIR] [--ref GIT_REF] [--url REPO_URL] [--force]
@@ -52,10 +55,12 @@ while [ $# -gt 0 ]; do
 done
 
 # --- 1. Platform + tool guards ------------------------------------------------
-case "$(uname -s)" in
+OS="$(uname -s)"
+case "$OS" in
   Linux)  grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null && ok "running inside WSL2" || warn "not WSL2 -- assuming native Linux. Continuing." ;;
   Darwin) ok "running on macOS (native bash)" ;;
-  *)      die "Unsupported platform '$(uname -s)'. On Windows install WSL2 Ubuntu and run this from inside it (ADR 0005)." ;;
+  MINGW*|MSYS*|CYGWIN*) ok "running in Git Bash on native Windows (ADR 0022)" ;;
+  *)      die "Unsupported platform '$OS'. Use Git Bash or WSL2 on Windows, or native Linux/macOS bash." ;;
 esac
 have git || die "git not found. Install it first (WSL2: sudo apt install -y git)."
 
@@ -111,15 +116,27 @@ ok "wiped transient memory"
 # --- 6. Runner check + next steps ---------------------------------------------
 echo
 claude_path="$(command -v claude || true)"
-case "$claude_path" in
-  /mnt/c/*|*.exe) warn "\`claude\` resolves to the Windows binary ($claude_path). Install the WSL2-native CLI first: bash scripts/setup-wsl.sh" ;;
-  "")             warn "\`claude\` not on PATH yet. Install it: bash scripts/setup-wsl.sh (then open a new shell)." ;;
-  *)              ok "\`claude\` resolves to a Linux path: $claude_path" ;;
+case "$OS" in
+  MINGW*|MSYS*|CYGWIN*)
+    [ -n "$claude_path" ] && ok "\`claude\` on PATH: $claude_path (native Windows runner, ADR 0022)" \
+      || warn "\`claude\` not on PATH yet. Install Claude Code for Windows (native installer) or via npm, then reopen the shell." ;;
+  *)
+    case "$claude_path" in
+      /mnt/c/*|*.exe) warn "\`claude\` is the Windows binary ($claude_path) but you are in WSL2/Linux. Install the Linux-native CLI: bash scripts/setup-wsl.sh" ;;
+      "")             warn "\`claude\` not on PATH yet. Install it: bash scripts/setup-wsl.sh (then open a new shell)." ;;
+      *)              ok "\`claude\` resolves to: $claude_path" ;;
+    esac ;;
 esac
 
 echo
 log "Seeded. Next steps:"
 echo "  1) cd $TARGET"
-echo "  2) (first time on this machine) bash scripts/setup-wsl.sh   # Python/Node/claude/gh"
-echo "  3) launch:  claude"
+case "$OS" in
+  MINGW*|MSYS*|CYGWIN*)
+    echo "  2) (first time) install Python 3.10+, Node 18+, git, gh, Docker Desktop; ensure 'python --version' works"
+    echo "  3) launch:  claude        # native Windows: PowerShell or Git Bash" ;;
+  *)
+    echo "  2) (first time on this machine) bash scripts/setup-wsl.sh   # Python/Node/claude/gh"
+    echo "  3) launch:  claude" ;;
+esac
 echo "  4) in the session:  /doctor   ->   /bootstrap   ->   /preflight"
