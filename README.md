@@ -3,7 +3,7 @@
 A ready-made Claude Code configuration for **Django REST Framework** backend projects with **Test-Driven Development** discipline, an **API-first (contract-first)** process, an **external API contract** (authored in `claude-api-contract`, consumed here and validated by a CI conformance gate), and work done **exclusively through Pull Requests**. A real production frontend, if needed, lives in a separate repository. This config turns Claude Code into a development team: an orchestrator delegates tasks to specialized agents through a clear pipeline.
 
 **Stack:** Python 3.13 · Django 6 · Django REST Framework · PostgreSQL 18 · Docker · pytest + pytest-django · ruff · drf-spectacular (Swagger UI) · schemathesis + django-contract-tester (contract conformance) · djangorestframework-simplejwt (auth). REST API contract authored externally in `claude-api-contract`, pinned via `CONTRACT_VERSION`.
-**Environment:** Windows + WSL2 + Docker Desktop (on Windows: WSL2 mandatory) · Staging — Debian VPS · GitHub as the source of truth
+**Environment:** native Windows (PowerShell / Git Bash) or WSL2, + Docker Desktop · Linux / macOS · Staging — Debian VPS · GitHub as the source of truth
 
 ---
 
@@ -19,9 +19,9 @@ Startup and `/doctor` hard-stops (e.g. `python` not on PATH, missing `gh` or PAT
 
 ## Using Claude Code CLI (the only supported runner)
 
-Everything here — agents, slash-commands, environment gates — runs in **Claude Code CLI**, started by typing `claude`. On Windows that terminal must be **WSL2 Ubuntu**, not PowerShell/cmd/Git Bash and not the Desktop app.
+Everything here — agents, slash-commands, environment gates — runs in **Claude Code CLI**, started by typing `claude`. On Windows that means **PowerShell or Git Bash** (native) or **WSL2 Ubuntu** — all supported since ADR `0022`; not the Desktop app.
 
-**1. Install the CLI inside WSL2** (one-time). In a real Ubuntu shell:
+**1. Install the CLI** (one-time). On **native Windows**, use the Claude Code Windows installer (or `npm install -g @anthropic-ai/claude-code`) and confirm `claude --version` works in PowerShell or Git Bash. On **WSL2 / Linux / macOS**, install inside that shell:
 
 ```bash
 node --version                       # need Node 18+ (install via nvm if missing)
@@ -29,7 +29,7 @@ npm install -g @anthropic-ai/claude-code
 which claude                         # MUST be /home/... or /usr/...  — NOT /mnt/c/...
 ```
 
-> Installing the CLI on the Windows side does **not** give you a WSL2 `claude`. If `which claude` shows `/mnt/c/...`, the Windows binary is shadowing it on PATH — fix per [Troubleshooting](#troubleshooting-startup--doctor-hard-stops). One-shot alternative for the whole toolchain (Python / Node / `claude` / `gh` + the PATH fix): `bash scripts/setup-wsl.sh` (idempotent; never touches secrets or git).
+> **WSL2 only:** installing the CLI on the Windows side does **not** give you a WSL2 `claude`; if `which claude` shows `/mnt/c/...` the Windows binary is shadowing it on PATH — fix per [Troubleshooting](#troubleshooting-startup--doctor-hard-stops), or run `bash scripts/setup-wsl.sh` (whole toolchain: Python / Node / `claude` / `gh` + PATH fix; idempotent, never touches secrets or git). On **native Windows** there is no shadowing — a `C:\...\claude.exe` on PATH is the correct runner.
 
 **2. Where to put the project.** Working from `/mnt/c` or `/mnt/d` (a Windows drive) is **fully supported** (ADR `0009`); `/doctor` won't ask you to move it. The only caveats are slower Docker bind-mounts and occasional CRLF / `git index.lock` quirks (run `git` from the host shell). `~/projects/<slug>` in the WSL2 FS is optional — for faster bind-mounts only.
 
@@ -47,13 +47,13 @@ export GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_xxxxxxxx
 
 Minimal permissions: **Contents** RW, **Metadata** RO (auto), **Pull requests** RW, **Workflows** RW, **Administration** RW (the last enables auto branch protection; omit it and protection becomes a manual UI step). A classic PAT works too but grants whole-account access.
 
-Short version: **install the CLI in WSL2 → clone the repo (Windows drive is fine) → `claude` → `/doctor` → `/bootstrap` → `/preflight` → first feature.** If you must use Claude Desktop, treat it as an editor / chat companion **after** running these from the CLI.
+Short version: **install the CLI (native Windows or WSL2) → seed the config → `claude` → `/doctor` → `/bootstrap` → `/preflight` → first feature.** If you must use Claude Desktop, treat it as an editor / chat companion **after** running these from the CLI.
 
 ---
 
 ## Troubleshooting startup & /doctor hard-stops
 
-**The golden path (memorize this):** *install the CLI inside WSL2 → `which claude` shows `/home/...` (not `/mnt/c/...`) → launch `claude` from the project → `/doctor` → `/bootstrap`.* Almost every "it doesn't work" is one of the runner / PAT issues below. `/doctor` is doing its job when it HARD-STOPs — the message tells you exactly which gate failed; match the symptom here.
+**The golden path (memorize this):** *install the CLI (native Windows installer / npm, or inside WSL2) → `claude --version` works → launch `claude` from the project → `/doctor` → `/bootstrap`.* Almost every "it doesn't work" is one of the runner / PAT issues below. `/doctor` is doing its job when it HARD-STOPs — the message tells you exactly which gate failed; match the symptom here.
 
 | Symptom (what you see) | What it actually means | Fix (run in a **bash shell**, not the `❯` prompt) |
 |---|---|---|
@@ -110,31 +110,33 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 
 - [Claude Code](https://code.claude.com) CLI
 - **Python 3.10+ on PATH as `python`** (hard requirement; the `SessionStart` hook runs `scripts/detect-env.py`). On Ubuntu install `python-is-python3` if only `python3` is present.
-- Docker Desktop with WSL2 backend
-- **Shell:** bash in WSL2 Ubuntu (Windows), bash/zsh (Linux/macOS). PowerShell native NOT supported.
-- WSL2 (Ubuntu) — **mandatory on Windows**. The project can live on your Windows drive (`/mnt/...`, fully supported — ADR `0009`); `~/projects/<slug>` in the WSL2 FS is optional for faster Docker bind-mounts
+- Docker Desktop (WSL2 or Hyper-V backend)
+- **Shell:** PowerShell or Git Bash on native Windows, bash in WSL2 Ubuntu, or bash/zsh on Linux/macOS — all supported (ADR `0022`).
+- WSL2 (Ubuntu) — **optional on Windows** (one of two runners; the other is native PowerShell / Git Bash). Docker Desktop still needs a WSL2 or Hyper-V backend. The project can live on your Windows drive (`/mnt/...` from WSL2, `D:\...` natively — fully supported, ADR `0009`); `~/projects/<slug>` in the WSL2 FS is optional for faster bind-mounts
 - **Node.js 18+ (via `nvm`; the native Windows installer needs none)** — needed to install the Claude Code CLI via `npm install -g @anthropic-ai/claude-code` and for `npx`-based skills (e.g. the Context7 MCP). `/doctor` reports `NO_NODE` if it is missing or below 18
 - A GitHub account
 
 ## Quick start (attach the config to an existing project)
 
-> **First time on this Windows machine?** From PowerShell, `wsl --list --verbose` — if you only see `docker-desktop` (Docker's internal BusyBox distro, not for user work), install Ubuntu: `wsl --install -d Ubuntu` then `wsl --set-default Ubuntu`. On first launch set a Unix username/password, then install the toolchain: `sudo apt update && sudo apt install -y git curl gh python-is-python3 python3-pip`. Verify `ID=ubuntu` in `/etc/os-release` (tested on 24.04+).
+> **First time on this Windows machine?** Two options. **(a) Native Windows:** install Python 3.10+ (make sure `python --version` works — not the Microsoft Store alias), Node 18+ (only if installing the CLI via npm), `git`, `gh`, and Docker Desktop; run everything from PowerShell or Git Bash. **(b) WSL2:** from PowerShell `wsl --install -d Ubuntu` then `wsl --set-default Ubuntu`, set a Unix user/password, and install the toolchain: `sudo apt update && sudo apt install -y git curl gh python-is-python3 python3-pip` (verify `ID=ubuntu` in `/etc/os-release`, 24.04+).
 >
-> Then enter WSL with `wsl` (not PowerShell) and `cd` to your project — a `/mnt/c` or `/mnt/d` path is fine (ADR `0009`), no need to move into `~/projects`. The one thing that matters: `which claude` resolves to `/home/...`, not `/mnt/c/...`.
+> Then open your shell at the project: PowerShell or Git Bash at `D:\...` (native), or `wsl` and `cd /mnt/d/...` (WSL2) — a Windows-drive path is fine either way (ADR `0009`). On WSL2 the one thing that matters is `which claude` resolving to `/home/...` (not `/mnt/c/...`); on native Windows a `claude.exe` on PATH is correct.
 
-**Fastest — one-line seed.** From the root of your project folder in WSL2, this clones the template and copies the config in one go (idempotent; refuses to clobber an already-seeded folder unless `--force`):
+**Fastest — one-line seed.** From the root of your project folder in **Git Bash or WSL2**, this clones the template and copies the config in one go (idempotent; refuses to clobber an already-seeded folder unless `--force`):
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/VadayI/claude-django/main/scripts/install.sh)
 # optional args:  install.sh [TARGET_DIR] [--ref GIT_REF] [--url FORK_URL] [--force]
 ```
 
+> **Git Bash on a corporate network?** If `curl` / `git` fail with `CRYPT_E_NO_REVOCATION_CHECK` (schannel cannot reach the revocation server), disable revocation checking: `git config --global http.schannelCheckRevoke false`, and add `--ssl-no-revoke` to the `curl` above. This skips CRL/OCSP only — the certificate is still validated.
+
 Then launch `claude` → `/doctor` → `/bootstrap`. To upgrade an *already-seeded* project use `/update-from-template` instead (it preserves your edits, ADR `0014`).
 
 **Manual equivalent** (what `install.sh` does, if you prefer to run it by hand):
 
 ```bash
-# in WSL2, from the root of your project (a /mnt/d/... Windows-drive path is fine — ADR 0009)
+# Git Bash or WSL2, from the root of your project (a Windows-drive path is fine — ADR 0009)
 rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
 cp -r /tmp/claude-django/.claude ./
 cp /tmp/claude-django/CLAUDE.md ./
@@ -150,8 +152,8 @@ mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/
 # Wipe transient state from the template clone (these are regenerated by the SessionStart hook):
 rm -f .claude/memory/env-detect.json .claude/memory/command-log.jsonl
 
-# Before launching `claude`: confirm it is the WSL2-native CLI, not Windows `claude.exe`.
-which claude    # expect /home/... or /usr/...  — if it prints /mnt/c/..., see step 1 / step 5 above
+# WSL2 only: confirm `claude` is the Linux-native CLI, not the Windows `claude.exe` (no shadowing on native Windows).
+which claude    # WSL2/Linux/macOS: expect /home/... or /usr/...  (if /mnt/c/..., see step 1 / step 5 above)
 ```
 
 Then install the plugins (see below) and adjust `CLAUDE.md` for the project name. Then run **`/doctor`** inside `claude` — it detects the scenario and recommends the next command. If `/doctor` HARD-STOPs, jump to **[Troubleshooting startup](#troubleshooting-startup--doctor-hard-stops)** below.
@@ -160,7 +162,7 @@ Then install the plugins (see below) and adjust `CLAUDE.md` for the project name
 
 ## Step-by-step: a NEW project from scratch
 
-1. **Quick start** (above) — copy `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `scripts/`, `templates/` into the new project folder under `~/projects/<slug>` in WSL2.
+1. **Quick start** (above) — copy `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `scripts/`, `templates/` into the new project folder (a Windows-drive path like `D:\...` is fine; `~/projects/<slug>` in WSL2 is optional).
 2. `claude` → `/doctor` — verifies environment and detects scenario `fresh`; recommends `/bootstrap`.
 3. `claude` → `/bootstrap` — runs the hard preflight (Python / `gh` / `docker` / templates + GitHub access), then scaffolds the project: links `origin` to the empty repo you created (Mode A never runs `gh repo create`), builds the skeleton + drf-spectacular config, brings Docker up, migrates, pulls the external contract to `docs/api/openapi.yml` (when published), makes the first commit + push to `main`, and enables branch protection. Each step has a `⏸ Checkpoint — Resume` marker; Mode B resumes a failed run. This is the only command that direct-pushes to `main` (documented exception in `.claude/rules/git-operations.md`). Full behaviour: the `/bootstrap` entry under *Commands* above.
 4. (manual) Drop your input documents into `docs/` — briefs, ТЗ, PDFs, .docx, screenshots — keeping `docs/api/`, `docs/decisions/`, `docs/plans/` for their existing purpose.
@@ -177,7 +179,7 @@ For an existing project from a second machine: skip step 1 (clone instead), run 
 A project bootstrapped from `claude-django` carries a **pinned copy** of the config from the moment it was forked (ADR `0002`) — there is no automatic upgrade channel. When the template gains new agents, rules, commands, skills, or CI gates, pull them in deliberately with **`/update-from-template`** — by default it syncs from the canonical upstream **`https://github.com/VadayI/claude-django`**:
 
 ```bash
-# in WSL2, from the root of the DERIVED project
+# Git Bash or WSL2, from the root of the DERIVED project
 claude
 > /update-from-template --dry-run     # preview: what would change, what stays
 > /update-from-template                # branch chore/sync-template-<date>, sync, open a PR
@@ -220,7 +222,7 @@ The `auditor` agent (invoked by `/audit`) reads `.claude/memory/command-log.json
 The environment lives entirely in Git, so the second machine picks up everything with a single clone:
 
 ```bash
-# one-time on the new machine: WSL2 + Docker Desktop + Claude Code CLI (+ nvm if you use npx skills)
+# one-time on the new machine: Claude Code CLI + Docker Desktop (native Windows, or WSL2) (+ nvm if you use npx skills)
 cd ~/projects
 git clone https://github.com/<your-username>/my-project.git
 cd my-project
