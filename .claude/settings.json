@@ -46,7 +46,8 @@
     ]
   },
   "env": {
-    "DJANGO_SETTINGS_MODULE": "config.settings.dev"
+    "DJANGO_SETTINGS_MODULE": "config.settings.dev",
+    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1"
   },
   "enabledPlugins": {
     "superpowers@superpowers-marketplace": true,
