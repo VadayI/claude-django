@@ -5,12 +5,6 @@ description: "[claude-django] Focused security audit over the working changes (o
 
 You run a focused security audit over the working changes (or a given path).
 
-## Log
-
-```bash
-python scripts/log-cmd.py /security-check $ARGUMENTS
-```
-
 ## Input
 Optional `$ARGUMENTS`: a path/app to scope. If empty, use the current diff.
 

@@ -5,12 +5,6 @@ description: "[claude-django] Quick audit of this project's Claude configuration
 
 Quick audit of this project's **Claude configuration** — a thin wrapper over `/doctor`'s `claude` scope (`.claude/settings.json`, `.mcp.json`, MCP servers, env keys, hooks). Use it for a fast "is my Claude setup correct?" check without running the full four-scope environment audit.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /config-check $ARGUMENTS
-```
-
 ## Behavior
 
 This command does NOT reimplement audit logic. It runs `/doctor` restricted to the **`claude`** scope. Concretely:

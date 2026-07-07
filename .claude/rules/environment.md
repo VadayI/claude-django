@@ -46,8 +46,8 @@ POSIX shell or faster Docker bind-mounts: install the toolchain inside Ubuntu
 (`sudo apt install -y git curl gh python-is-python3 python3-pip`) and the CLI
 (`npm install -g @anthropic-ai/claude-code`), then launch `claude` from there.
 The earlier "wrong runner" trap (the Windows `claude.exe` shadowing a WSL2 CLI)
-no longer applies — both runners are supported and `wrong_runner_suspected` is
-retired.
+no longer applies — both runners are supported (the `wrong_runner_suspected` field was removed
+in env-detect schema v6).
 
 ## Scope 2 — Claude config & access
 

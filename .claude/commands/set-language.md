@@ -5,12 +5,6 @@ description: "[claude-django] Change the project's output language after bootstr
 
 Change the output language for this project after bootstrap. Idempotent — running it twice with the same answer leaves the repo unchanged.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /set-language $ARGUMENTS
-```
-
 ## Input
 
 Optional `$ARGUMENTS`: language code (`en`, `uk`, `pl`) or native name (`українська`, …). If empty, ask via `AskUserQuestion`.

@@ -10,12 +10,6 @@ Bootstrap a Django backend project from this template config. Two modes:
 
 You orchestrate; you do not write code yourself. Every implementation step is delegated to an agent (`devops`, `ci-cd-engineer`, ...).
 
-## Log
-
-```bash
-python scripts/log-cmd.py /bootstrap $ARGUMENTS
-```
-
 ## Input
 
 Optional `$ARGUMENTS`: `--dry-run` (sandbox preview, no side effects) and/or project slug. If slug empty, ask via `AskUserQuestion`.
@@ -61,15 +55,12 @@ Read `.claude/memory/env-detect.json` first (the `SessionStart` hook keeps it fr
 ### Blockers (STOP if any are present)
 
 ```bash
+python scripts/policy/runtime_gate.py   # NO_ENV_DETECT / UNSUPPORTED_PLATFORM <platform> / RUNTIME_OK — shared gate (canonical prose: /doctor Step 0.5)
+# Only on RUNTIME_OK, check the bootstrap-specific blockers:
 python -c "
-import json, pathlib, sys
-envf = pathlib.Path('.claude/memory/env-detect.json')
-if not envf.is_file():
-    print('NO_ENV_DETECT'); sys.exit(0)
-env = json.loads(envf.read_text())
+import json, pathlib
+env = json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())
 flags = []
-if not env.get('platform_supported', True):
-    flags.append('UNSUPPORTED_PLATFORM')
 if not env['tools'].get('gh'):     flags.append('NO_GH_BIN')
 if not env['tools'].get('docker'): flags.append('NO_DOCKER')
 if not (pathlib.Path('.claude').is_dir() and pathlib.Path('CLAUDE.md').is_file() and pathlib.Path('templates').is_dir()):
@@ -91,7 +82,7 @@ Then check the live system (not via Python):
 >
 > **Never hand-write `env-detect.json`** to skip past this. Its fields drive hard gates; fabricated values silently bypass safety checks. If the script cannot run, the answer is to fix Python / the shell, not to invent the file.
 
-Note: `env.get('platform_supported', True)` — graceful fallback. In PR #1 the field does not yet exist in `env-detect.json`; defaulting to `True` preserves current behaviour. Since ADR `0022`, native Windows reports `platform_supported: true` and passes this probe; `UNSUPPORTED_PLATFORM` only fires on a platform that is none of Windows / macOS / Linux / WSL2.
+Note: the platform probe lives in the shared `scripts/policy/runtime_gate.py`. Since ADR `0022`, native Windows reports `platform_supported: true` and passes; `UNSUPPORTED_PLATFORM` only fires on a platform that is none of Windows / macOS / Linux / WSL2.
 
 ### GitHub access — manual repo + fine-grained per-repo token (front-loaded)
 
@@ -507,7 +498,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
 
 7. **Verify** — run `/doctor` (environment), then `/preflight` (build inputs). Both must report green before the first feature.
 
-8. **Log + final summary** — `python scripts/log-cmd.py /bootstrap ...` (Mode A complete). Print: what was created, what the user still must do (fill `.env` secrets, decide on `createsuperuser`, paste plugin install lines, run `/synthesize-brief` if briefs are present in `docs/`), and the suggested first feature command using the pipeline.
+8. **Final summary** — (the invocation is logged automatically by the `UserPromptExpansion` hook, `scripts/policy/log_command.py`). Print: what was created, what the user still must do (fill `.env` secrets, decide on `createsuperuser`, paste plugin install lines, run `/synthesize-brief` if briefs are present in `docs/`), and the suggested first feature command using the pipeline.
 
 ## Mode B — resume (every fix goes via PR)
 

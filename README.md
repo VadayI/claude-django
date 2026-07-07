@@ -58,7 +58,7 @@ Short version: **install the CLI (native Windows or WSL2) → seed the config �
 
 | Symptom (what you see) | What it actually means | Fix (run in a **bash shell**, not the `❯` prompt) |
 |---|---|---|
-| `🔴 UNSUPPORTED_PLATFORM` (now rare) | `platform_supported: false` only occurs on a platform that is **not** Windows, macOS, Linux, or WSL2 — ADR `0022` made native Windows a supported runner, so all four pass. | Note the detected `platform` in `env-detect.json`; if it is one of the supported four, re-run `python scripts/detect-env.py`. `wrong_runner_suspected` is retired. |
+| `🔴 UNSUPPORTED_PLATFORM` (now rare) | `platform_supported: false` only occurs on a platform that is **not** Windows, macOS, Linux, or WSL2 — ADR `0022` made native Windows a supported runner, so all four pass. | Note the detected `platform` in `env-detect.json`; if it is one of the supported four, re-run `python scripts/detect-env.py`. |
 | `🔴 NO_ENV_DETECT` — `.claude/memory/env-detect.json` is missing | The `SessionStart` hook didn't run — usually `scripts/` wasn't copied during Quick start, or Python isn't on PATH. The hook **fails silently** without `scripts/detect-env.py`. | Confirm `scripts/detect-env.py` exists in the project; run `python scripts/detect-env.py` once by hand. If it errors, fix the cause (install Python 3.10+). **Never hand-write this file** — fabricated values bypass the safety gates. |
 | `🔴 NO_PYTHON_OR_HOOK` — only `python3` exists, no `python` | The hook calls `python`; Ubuntu ships it as `python3`. | `sudo apt install -y python-is-python3`, then reopen `claude`. |
 | `✗ REPO_NOT_FOUND` — `/bootstrap` can't see the repo | Per ADR `0008` you create the GitHub repo **by hand**; either the empty repo wasn't created or your fine-grained token isn't scoped to it. (`FINE_GRAINED_PAT_NOT_SUPPORTED` is retired — fine-grained tokens are now the recommended credential.) | Create the empty repo at https://github.com/new, mint a fine-grained token via the template URL `/bootstrap` prints (Only select repositories → your repo; Contents/Pull requests/Workflows/Administration = RW), put it in `.env` as `GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_…` and relaunch via `scripts/claude.sh` / `make cc` (ADR `0023`), re-run. |
@@ -151,7 +151,7 @@ cp /tmp/claude-django/CLAUDE.md ./
 cp /tmp/claude-django/.mcp.json ./
 cp /tmp/claude-django/.gitignore ./
 cp /tmp/claude-django/.gitattributes ./
-cp -r /tmp/claude-django/scripts ./          # detect-env.py (SessionStart hook) + log-cmd.py — REQUIRED; the hook fails SILENTLY without it and /doctor will STOP with NO_ENV_DETECT
+cp -r /tmp/claude-django/scripts ./          # detect-env.py (SessionStart hook) + policy/ hook scripts — REQUIRED; the hook fails SILENTLY without it and /doctor will STOP with NO_ENV_DETECT
 cp -r /tmp/claude-django/templates ./        # FULL templates/ — /bootstrap Mode A needs all of it
 cp /tmp/claude-django/templates/docker-compose.yml ./   # also at repo root (devcontainer entrypoint)
 cp /tmp/claude-django/templates/Makefile ./          # dev-loop command shortcuts (make help/test/up/...)

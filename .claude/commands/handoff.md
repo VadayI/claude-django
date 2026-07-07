@@ -7,12 +7,6 @@ Regenerate `docs/HANDOFF.md` — the rolling snapshot read by every new session 
 
 Pairs with `/wrap-up` (which still owns `docs/WORKLOG.md` append + `docs/lessons.md` + lint/tests + commit suggestion). `/handoff` ONLY touches `docs/HANDOFF.md`; nothing else, no commits, no pushes. Run it whenever the project state has shifted enough that the snapshot is stale — typically at session end after `/wrap-up`, after merging a PR, or before context-switching to a different branch.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /handoff $ARGUMENTS
-```
-
 ## Input
 
 Optional `$ARGUMENTS`:

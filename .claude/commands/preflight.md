@@ -5,12 +5,6 @@ description: "[claude-django] Project-kickoff preflight — hard gate verifying 
 
 You run the **project kickoff preflight** — a hard gate that verifies agents have the inputs and access to build correctly, BEFORE any feature work. Spec: `@.claude/rules/preflight.md`. Invoke at the start of a new project, or whenever access/inputs are in doubt.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /preflight $ARGUMENTS
-```
-
 ## Contract
 Hard gate: if a CRITICAL item is missing, STOP — do not start the feature pipeline. Report a checklist and ask the user or fix access. Never print secret values.
 
@@ -19,11 +13,11 @@ Optional `$ARGUMENTS`: a scope — `brief`, `stack`, `docs`, `github`. Default: 
 
 ## Steps
 
-0. **Runtime gate — run FIRST (hard STOP, before any access check).** Read `.claude/memory/env-detect.json` (written ONLY by the Claude Code CLI `SessionStart` hook). `/preflight` normally runs after `/doctor` and `/bootstrap`, so the file should already exist — but never skip this check.
-   - **If MISSING** -> `NO_ENV_DETECT`: STOP. Do NOT dispatch `devops`/`ba`, do NOT run ad-hoc access checks, do NOT report "preflight green". The runtime is unverified — `/preflight` (like `/doctor` and `/bootstrap`) is supported only in **Claude Code CLI on Linux / macOS / WSL2** (see `README.md` "Where this runs"). Causes & fixes: (a) `python` not on PATH so the hook failed -> install Python 3.10+ and relaunch Claude Code CLI; (b) you are in Cowork / Claude API-SDK / a non-CLI shell -> run from Claude Code CLI inside WSL2. Never hand-write or fabricate the file.
-   - **If present but `platform_supported == false`** -> `UNSUPPORTED_PLATFORM`: hard STOP (no override branch). Since ADR `0022` native Windows is supported, this only fires on a platform that is none of Windows / macOS / Linux / WSL2 — note the detected `platform` and STOP.
+0. **Runtime gate — run FIRST (hard STOP, before any access check).** Run `python scripts/policy/runtime_gate.py` — the shared gate (canonical prose + remediation live in `/doctor` Step 0.5). `/preflight` normally runs after `/doctor` and `/bootstrap`, so expect `RUNTIME_OK` — but never skip the check.
+   - `NO_ENV_DETECT` -> STOP. Do NOT dispatch `devops`/`ba`, do NOT run ad-hoc access checks, do NOT report "preflight green"; never hand-write or fabricate the file. Remediation: `/doctor` Step 0.5.
+   - `UNSUPPORTED_PLATFORM <platform>` -> hard STOP (no override branch); note the detected platform.
 
-   Proceed to Step 1 only when the file EXISTS **and** `platform_supported == true`. Carry any flag raised here into Step 5.
+   Proceed to Step 1 only on `RUNTIME_OK`. Carry any flag raised here into Step 5.
 
 1. **Access checks** — dispatch `devops` (`subagent_type: "devops"`) to verify, read-only:
    - `context7` MCP reachable (`resolve-library-id` for "django"); `CONTEXT7_API_KEY` set (report set/unset, never the value);

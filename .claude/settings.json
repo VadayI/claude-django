@@ -71,6 +71,16 @@
     ],
     "UserPromptExpansion": [
       {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/policy/log_command.py",
+            "statusMessage": "Logging command..."
+          }
+        ]
+      },
+      {
         "matcher": "create-pr",
         "hooks": [
           {

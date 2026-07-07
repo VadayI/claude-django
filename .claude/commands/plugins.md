@@ -5,12 +5,6 @@ description: "[claude-django] Quick plugin setup + status — wrapper over /doct
 
 Quick **plugin** setup + status for this project — a thin wrapper over `/doctor`'s plugin checks plus the paste-ready install block from `/bootstrap` Step 6. Plugin installation can NOT be automated by an agent (it runs inside the Claude UI), so this command's job is to (a) report what is installed vs expected and (b) hand you the exact lines to paste.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /plugins $ARGUMENTS
-```
-
 ## Behavior
 
 1. **Runtime gate** as `/doctor` Step 0.5 (read `.claude/memory/env-detect.json`; hard-STOP on `NO_ENV_DETECT` / `UNSUPPORTED_PLATFORM`).

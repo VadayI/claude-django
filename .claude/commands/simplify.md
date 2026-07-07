@@ -5,12 +5,6 @@ description: "[claude-django] Simplify the most recent changes without altering 
 
 You simplify the most recent changes without altering behavior (Code Simplifier). Tests must stay green.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /simplify $ARGUMENTS
-```
-
 ## Input
 Optional `$ARGUMENTS`: a path/glob to limit scope. If empty, use the current diff.
 

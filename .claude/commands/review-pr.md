@@ -12,12 +12,6 @@ CRITICAL RULES:
 
 > **Prereq:** Linux `gh` installed in **this WSL2 shell** and authenticated (`gh auth status`). A Windows `gh.exe` from `winget` does NOT count. If anything below errors with `gh: command not found` or auth failure — run `/doctor` first.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /review-pr $ARGUMENTS
-```
-
 ## Input
 
 The user provided: `$ARGUMENTS`

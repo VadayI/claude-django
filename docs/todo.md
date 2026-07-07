@@ -4,7 +4,7 @@ Long-term, cross-session backlog for this template repo — items that survive b
 
 ## To do
 
-_(порожньо — усі пункти закрито; нові додавати сюди)_
+- [ ] **Верифікувати log-hook у Claude Code CLI** — батч D переніс логування команд з 20 `## Log`-блоків у `UserPromptExpansion`-hook (`scripts/policy/log_command.py`, matcher `.*`). У першій CLI-сесії: запустити `/doctor` і перевірити, що `.claude/memory/command-log.jsonl` отримав рівно один запис `{ts, cmd: "/doctor", args}`. 0 записів = hook/matcher не спрацював → повернути Log-блоки (git revert) або поправити matcher; порожній `args` при переданих аргументах = у payload інша назва поля — розширити список у `log_command.py`. Додано 2026-07-07 (аудит, батч D)
 
 ## Done
 

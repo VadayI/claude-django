@@ -5,12 +5,6 @@ description: "[claude-django] Audit the 800-line file-size limit and propose fol
 
 Audit the codebase against the **800-line file limit** and propose concrete folder-splits for oversized files. Dispatches `code-structure-auditor` (read-only). Spec: `@.claude/rules/code-style.md` ("File size limit").
 
-## Log
-
-```bash
-python scripts/log-cmd.py /structure-audit $ARGUMENTS
-```
-
 ## Input
 
 `$ARGUMENTS` (optional): a path scope (e.g. `apps/billing`) to narrow the audit. Empty = whole `backend/`.

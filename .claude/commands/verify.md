@@ -5,12 +5,6 @@ description: "[claude-django] Generate (and optionally run) the human-facing end
 
 Generate (and optionally run) the **human-facing endpoint verification guide** for a feature — the manual, copy-paste smoke test described in `@.claude/rules/verification.md`. This is the on-demand twin of the automatic block `docs-writer` emits at the end of the feature pipeline.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /verify $ARGUMENTS
-```
-
 ## Input
 
 `$ARGUMENTS`:

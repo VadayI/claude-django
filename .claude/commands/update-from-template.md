@@ -5,12 +5,6 @@ description: "[claude-django] Sync a derived project to a newer claude-django te
 
 Update a **derived project** (one bootstrapped from `claude-django`) to a newer version of the template config — agents, commands, skills, rules, and CI gate scripts — overwriting only template-owned files and preserving everything the project owns. Dispatches `template-sync`, then opens a **PR** (derived projects are PR-only, `@.claude/rules/git-operations.md`). Background: ADR `0014`; derived projects carry a pinned copy with no automatic upgrade channel (ADR `0002`).
 
-## Log
-
-```bash
-python scripts/log-cmd.py /update-from-template $ARGUMENTS
-```
-
 ## Input
 
 `$ARGUMENTS` (all optional):

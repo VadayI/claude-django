@@ -5,12 +5,6 @@ description: "[claude-django] Synthesize/update docs/PROJECT.md from docs/** inp
 
 Recursively synthesize/update `docs/PROJECT.md` from input documents in `docs/**`. Always commits via feature branch + PR — NEVER direct push to `main`.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /synthesize-brief $ARGUMENTS
-```
-
 ## Input
 
 Optional `$ARGUMENTS`:

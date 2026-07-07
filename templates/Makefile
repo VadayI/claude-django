@@ -68,11 +68,14 @@ shell: ## Django shell
 contract: ## Pull the external API contract openapi.yml@CONTRACT_VERSION (see api-docs.md)
 	bash scripts/pull_contract.sh
 
-gates: ## Run CI gate scripts locally (NUL, ruff, stubs, conformance, app readmes, file-size)
+gates: ## Run CI gate scripts locally — CI parity except pytest (that is `make test`)
 	bash scripts/check_nul_bytes.sh .claude/ scripts/ backend/
 	$(BACKEND) ruff check .
 	bash scripts/check_stubs.sh
 	bash scripts/check_contract_conformance.sh
+	@if grep -qs '^CONTRACT_VERSION=' .env; then \
+	  bash scripts/pull_contract.sh --check; \
+	else echo "gates: CONTRACT_VERSION not set in .env -- contract drift gate skipped (CI skips it too when unset)"; fi
 	bash scripts/check_app_readmes.sh
 	bash scripts/check_file_size.sh
 

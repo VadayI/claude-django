@@ -5,12 +5,6 @@ description: "[claude-django] Update project documentation to match the latest c
 
 You update project documentation to match the latest changes.
 
-## Log
-
-```bash
-python scripts/log-cmd.py /update-docs $ARGUMENTS
-```
-
 ## Input
 Optional `$ARGUMENTS`: a domain/feature to scope. If empty, infer from the current diff.
 

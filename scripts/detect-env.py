@@ -12,12 +12,11 @@ itself fails and the user is told to install Python 3.10+.
 Output schema (``.claude/memory/env-detect.json``)::
 
     {
-      "schema_version": 5,
+      "schema_version": 6,
       "detected_at": "<ISO 8601 UTC>",
       "platform": "windows" | "linux" | "darwin",
       "platform_release": "<uname -r equivalent>",
       "platform_supported": true | false,
-      "wrong_runner_suspected": true | false,
       "node_supported": true | false,
       "is_wsl2": true | false,
       "shell": "bash" | "zsh" | "unknown",
@@ -48,10 +47,8 @@ hooks are cross-platform Python — see ADR
 native Windows, WSL2 is optional and only needed as a Docker Desktop backend;
 ``claude`` and the toolchain run in PowerShell or Git Bash.
 
-``wrong_runner_suspected`` is retained for backward compatibility and is always
-``false`` now: native Windows is a supported runner (ADR 0022), so launching the
-Windows ``claude`` is no longer a misconfiguration. ``/doctor`` no longer
-branches on this flag.
+The ``wrong_runner_suspected`` field was removed in schema v6 (2026-07-07
+audit): it had been hardcoded ``false`` since ADR 0022 and nothing consumed it.
 
 ``node_supported`` is ``true`` when Node.js is on PATH and its major version is
 >= 18. Node is a HARD REQUIREMENT, not optional: the supported runner -- the
@@ -203,6 +200,9 @@ def _gh_scopes() -> list[str]:
     authenticated. Used by ``/bootstrap`` and ``/doctor`` to verify that the
     active PAT carries ``repo``, ``workflow``, and ``admin:repo_hook`` before
     attempting automated repo creation and branch protection.
+
+    Skipped by ``main()`` for fine-grained PATs (schema v6): they never expose
+    header scopes, so the per-session network round-trip would be wasted.
     """
     if not shutil.which("gh"):
         return []
@@ -225,20 +225,18 @@ def _gh_scopes() -> list[str]:
 def main() -> int:
     """Detect the environment and write ``.claude/memory/env-detect.json``."""
     platform_supported = _platform_supported()
-    # Native Windows is a supported runner now (Python hooks, ADR 0022), so
-    # running the Windows `claude` is no longer "wrong". Kept (always False) for
-    # backward-compatible consumers; /doctor no longer branches on it.
-    wrong_runner_suspected = False
-    scopes = _gh_scopes()
     pat_kind = _gh_pat_kind()
+    # Fine-grained PATs (the recommended credential, ADR 0008) never expose
+    # OAuth scopes via response headers, so skip the per-session `gh api /user`
+    # network round-trip for them; consumers do not gate on scopes there.
+    scopes = [] if pat_kind == "fine-grained" else _gh_scopes()
     node_supported = _node_supported()
     info = {
-        "schema_version": 5,
+        "schema_version": 6,
         "detected_at": datetime.now(timezone.utc).isoformat(),
         "platform": platform.system().lower(),  # 'windows' | 'linux' | 'darwin'
         "platform_release": platform.release(),
         "platform_supported": platform_supported,
-        "wrong_runner_suspected": wrong_runner_suspected,
         "node_supported": node_supported,
         "is_wsl2": is_wsl2(),
         "shell": detect_shell(),

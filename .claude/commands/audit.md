@@ -10,19 +10,14 @@ Optional `$ARGUMENTS`: a focus area — `git`, `ci`, `docs`, `gates`, or empty (
 
 ## Steps
 
-1. **Log this invocation:**
-   ```bash
-   python scripts/log-cmd.py /audit $ARGUMENTS
-   ```
+1. **Dispatch `auditor`** (`subagent_type: "auditor"`) with the focus from `$ARGUMENTS`. It reads `.claude/memory/command-log.jsonl` + live state and produces a primary suggestion + up to 3 secondaries + a recent-activity table.
 
-2. **Dispatch `auditor`** (`subagent_type: "auditor"`) with the focus from `$ARGUMENTS`. It reads `.claude/memory/command-log.jsonl` + live state and produces a primary suggestion + up to 3 secondaries + a recent-activity table.
-
-3. **Relay** the auditor's report verbatim and finish with one line: `next: <primary command>`.
+2. **Relay** the auditor's report verbatim and finish with one line: `next: <primary command>`.
 
 ## Hard limits
 - Read-only — no commits, no edits, no secrets in output.
 - Suggestions, not auto-actions — the user decides.
 
-> Pairs with all other commands; they all write to the same log so this can see them.
+> Pairs with all other commands; the `UserPromptExpansion` log hook (`scripts/policy/log_command.py`) records every invocation into the same log, so this can see them.
 
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-07-07 (Log step removed — UserPromptExpansion hook logs; audit batch D) -->

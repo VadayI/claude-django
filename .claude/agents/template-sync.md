@@ -25,7 +25,7 @@ Classify every candidate file before touching it:
 - `.claude/commands/*.md`
 - `.claude/skills/**`
 - `.claude/rules/*.md` — **EXCEPT `output-language.md`** (project-local; never overwrite)
-- `scripts/detect-env.py`, `scripts/log-cmd.py`, `scripts/session-start.py`, `scripts/setup-wsl.sh`
+- `scripts/detect-env.py`, `scripts/session-start.py`, `scripts/setup-wsl.sh`, `scripts/policy/*.py` (hook scripts: runtime_gate, log_command, block_protected_edits, check_command_gate, check_plan_execution_log, auto_format)
 - `templates/**` — only if the project still keeps it (most derived projects `rm -rf templates/` after bootstrap; see "New gate scripts" below for that case)
 
 Copy these straight from `$UPSTREAM`. Report each as `updated` (content changed) or `added` (new file) or `unchanged`.
@@ -93,4 +93,4 @@ Next: open a PR (hand to docs-writer / /create-pr). Do NOT push to main.
 - If `--dry-run` was requested, do all the comparison and produce the report, but make NO file changes.
 
 > Goal: a derived project can adopt newer agents, rules, commands, skills, and gates with one command — gaining template improvements while keeping every project-specific customization intact.
-<!-- Last reviewed/updated: 2026-06-04 (added stale-scan: report template-owned files removed/renamed upstream; never auto-delete) -->
+<!-- Last reviewed/updated: 2026-07-07 (session-start.py (batch A); log-cmd.py -> policy/ hooks (batch D)) -->
