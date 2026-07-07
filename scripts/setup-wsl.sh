@@ -22,6 +22,8 @@ set -euo pipefail
 NVM_VERSION="v0.40.1"
 NODE_MIN_MAJOR=18
 
+# NOTE: helpers duplicated in scripts/install.sh BY DESIGN (it runs standalone
+# via curl-pipe and cannot source a shared lib). Keep the two blocks in sync.
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m  ok\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m  !!\033[0m %s\n' "$*" >&2; }

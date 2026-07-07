@@ -36,6 +36,9 @@ REF=""
 TARGET="."
 FORCE=0
 
+# NOTE: helpers duplicated in scripts/setup-wsl.sh BY DESIGN -- install.sh runs
+# standalone via curl-pipe before the repo exists, so it cannot source a shared
+# lib. Keep the two blocks in sync.
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m  ok\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m  !!\033[0m %s\n' "$*" >&2; }
@@ -108,6 +111,8 @@ ok "copied"
 # Mirror /bootstrap's dual-destination for env: ship the committed key list at the
 # project root and create a local .env from it (placeholders only -- fill real
 # secrets before running services). Never clobbers an existing .env (may hold secrets).
+# NOTE: session-start.py re-seeds a missing .env on every launch -- this early copy
+# is a UX convenience so secrets can be filled before the first `claude` launch.
 ENV_SRC="$CLONE/templates/.env.example"
 if [ -f "$ENV_SRC" ]; then
   [ -f "$TARGET/.env.example" ] || cp "$ENV_SRC" "$TARGET/.env.example"

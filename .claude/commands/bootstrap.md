@@ -48,7 +48,7 @@ else:
 
 ## Hard preflight (refuse to start if any blocker is true)
 
-> **Runtime policy.** `/bootstrap` is supported only in **Claude Code CLI** running on Linux / macOS / WSL2 (see `README.md` "Where this runs"). In any other environment the `SessionStart` hook does not run and `.claude/memory/env-detect.json` does not exist. **Do NOT hand-write or "fake" `env-detect.json` to get past this section** — its fields drive the hard gates (`UNSUPPORTED_PLATFORM`, `NO_GH_BIN`, `NO_GH_AUTH`); fabricated values silently bypass safety checks and produce a bootstrap that looks fine while having unverified PAT permissions and a mis-detected shell. If the file is missing, the only allowed action is to run `python scripts/detect-env.py` manually once and let it write the file honestly; if that itself fails, STOP with `NO_PYTHON` and ask the user to install Python 3.10+.
+> **Runtime policy.** `/bootstrap` is supported only in **Claude Code CLI** running on Linux / macOS / native Windows / WSL2 (ADR `0022`; see `README.md` "Where this runs"). In any other environment the `SessionStart` hook does not run and `.claude/memory/env-detect.json` does not exist. **Do NOT hand-write or "fake" `env-detect.json` to get past this section** — its fields drive the hard gates (`UNSUPPORTED_PLATFORM`, `NO_GH_BIN`, `NO_GH_AUTH`); fabricated values silently bypass safety checks and produce a bootstrap that looks fine while having unverified PAT permissions and a mis-detected shell. If the file is missing, the only allowed action is to run `python scripts/detect-env.py` manually once and let it write the file honestly; if that itself fails, STOP with `NO_PYTHON` and ask the user to install Python 3.10+.
 
 Read `.claude/memory/env-detect.json` first (the `SessionStart` hook keeps it fresh).
 
@@ -74,13 +74,7 @@ Then check the live system (not via Python):
 - `gh auth status` succeeds -> `NO_GH_AUTH` if it fails.
 - `docker info` succeeds -> `NO_DOCKER` if it fails (already flagged above via PATH, but verify the daemon actually answers).
 
-> If `.claude/memory/env-detect.json` is missing, **STOP**. Two possible causes:
-> 1. The `SessionStart` hook failed because `python` is not on PATH. **Python 3.10+ is a hard requirement.** Install:
->    - Ubuntu/Debian (WSL2): `sudo apt install -y python-is-python3` (so `python` resolves to `python3`)
->    - macOS: `brew install python@3.13`
-> 2. You are NOT inside Claude Code CLI (e.g. running from Cowork, Claude API/SDK, or a fresh shell where hooks haven't fired). In that case run `python scripts/detect-env.py` manually once and re-invoke `/bootstrap`. If you cannot run a SessionStart hook in your environment, this config is the wrong tool for that environment — see `README.md` "Where this runs".
->
-> **Never hand-write `env-detect.json`** to skip past this. Its fields drive hard gates; fabricated values silently bypass safety checks. If the script cannot run, the answer is to fix Python / the shell, not to invent the file.
+> `NO_ENV_DETECT` from the gate above -> **STOP.** Causes, fixes, and the never-fabricate rule: *Runtime policy* above + `NO_ENV_DETECT` under *Per-flag remediation* below (single canonical copies).
 
 Note: the platform probe lives in the shared `scripts/policy/runtime_gate.py`. Since ADR `0022`, native Windows reports `platform_supported: true` and passes; `UNSUPPORTED_PLATFORM` only fires on a platform that is none of Windows / macOS / Linux / WSL2.
 
@@ -133,7 +127,7 @@ Decision:
 
 ### Per-flag remediation
 
-- `NO_ENV_DETECT` -> `.claude/memory/env-detect.json` does not exist, so the platform / PAT-kind / scope gates cannot be evaluated. **STOP — do NOT fabricate the file.** Two causes: (a) `python` is not on PATH and the `SessionStart` hook failed -> install Python 3.10+ and relaunch Claude Code CLI; (b) you are NOT in Claude Code CLI (Cowork / Claude API-SDK / a non-CLI shell) -> run `/bootstrap` from Claude Code CLI inside WSL2 (see `README.md` "Where this runs"). Running `python scripts/detect-env.py` by hand inside the Cowork sandbox reports the *sandbox* OS, not your real machine, so it cannot be trusted to clear this gate.
+- `NO_ENV_DETECT` -> `.claude/memory/env-detect.json` does not exist, so the platform / PAT-kind / scope gates cannot be evaluated. **STOP — do NOT fabricate the file.** Two causes: (a) `python` is not on PATH and the `SessionStart` hook failed -> install Python 3.10+ and relaunch Claude Code CLI; (b) you are NOT in Claude Code CLI (Cowork / Claude API-SDK / a non-CLI shell) -> run `/bootstrap` from Claude Code CLI (see `README.md` "Where this runs"). Running `python scripts/detect-env.py` by hand inside the Cowork sandbox reports the *sandbox* OS, not your real machine, so it cannot be trusted to clear this gate.
 - `NO_PYTHON` (only when the hook itself failed) -> Install Python 3.10+ and reopen Claude. This is the only flag that cannot be auto-diagnosed from `env-detect.json` because the file does not exist.
 - `REPO_NOT_FOUND` -> `/bootstrap` (Mode A) links to a repo **you** created by hand; the active token cannot see `$OWNER/$SLUG`. Two causes: the empty repo was never created, or the fine-grained token is not scoped to it. Remedy: (1) create the EMPTY repo at https://github.com/new (no README/.gitignore/license); (2) mint a fine-grained token via the template URL in the GitHub-access preflight (Resource owner = your login; Repository access -> Only select repositories -> `$OWNER/$SLUG`; permissions Contents / Pull requests / Workflows / Administration = Read and write); (3) add the token to `.env` as `GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_...` (sourced by `scripts/claude.sh` / `make cc`; see ADR `0023`) and re-run `/bootstrap`.
 - `NO_GH_SCOPES` -> **Only applies to a classic PAT.** Fine-grained tokens (recommended, per ADR `0008`) don't expose OAuth scopes and are NOT gated here — use the GitHub-access preflight + the `gh repo view` capability probe instead. For a classic PAT missing scopes: `gh auth refresh -s repo,workflow` (add `admin:repo_hook` for auto branch protection), then re-run `/bootstrap`.
@@ -231,7 +225,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/guides_api_consumer.md` -> `docs/guides/api-consumer.md` (REST API consumer onboarding guide; replace `{SLUG}`, keep `{TODO}` markers)
      - `templates/.env.example` -> **TWO destinations**:
        1. `.env.example` (committed; the canonical key list for new clones)
-       2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent)
+       2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent; fallback: `scripts/session-start.py` re-seeds a missing `.env` on every launch)
      - `templates/.github/workflows/backend-ci.yml` -> `.github/workflows/backend-ci.yml`
      - `templates/.github/workflows/backend-policy.yml` -> `.github/workflows/backend-policy.yml`
      - `templates/docker-compose.yml` -> `docker-compose.yml`

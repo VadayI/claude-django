@@ -68,7 +68,11 @@ def _detect_env(root: pathlib.Path) -> None:
 
 
 def _seed_env(root: pathlib.Path) -> None:
-    """Seed ``.env`` from ``.env.example`` when missing (placeholders, not secrets)."""
+    """Seed ``.env`` from ``.env.example`` when missing (placeholders, not secrets).
+
+    The runtime last-resort seed: ``install.sh`` and ``/bootstrap`` Mode A also
+    seed earlier for UX; this hook guarantees it regardless of the entry path.
+    """
     env = root / ".env"
     example = root / ".env.example"
     if not env.exists() and example.exists():

@@ -260,7 +260,7 @@ Session driven by a live bring-up on `example-service`: the maintainer kept hitt
 
 **Зміна.** Розширено `permissions.deny` у `.claude/settings.json`: додано блокування читання вкладених `.env` (`**/.env`, `**/.env.*`), приватних ключів/сховищ (`*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.kdbx`), SSH-ключів (`id_rsa`, `id_ed25519`), `credentials*`, теки `secrets/**` і локальних дампів `*.sqlite3`. Раніше deny покривав лише кореневі `.env`/`.env.*` і `settings.local.json`. Уточнення: `.claudeignore` у Claude Code не існує як фіча — правильний механізм це `permissions.deny`, тому файл не створювався. `_last_reviewed` оновлено на 2026-06-01.
 
-**Документ.** `docs/reviews/lesson-youtube-2-audit.md` — повна таблиця відповідності, закритий пробіл, свідомі розбіжності (Playwright MCP / output-language / QA-модель), відкрите питання про React+MUI (monorepo vs окремий стек-шаблон) як кандидат на ADR.
+**Документ.** `docs/reviews/2026-06-01-lesson-youtube-2-audit.md` — повна таблиця відповідності, закритий пробіл, свідомі розбіжності (Playwright MCP / output-language / QA-модель), відкрите питання про React+MUI (monorepo vs окремий стек-шаблон) як кандидат на ADR.
 
 **Verification:** `settings.json` ревалідовано як JSON (17 deny-записів); зміни в `.claude/**` застосовано через python pathlib з anchor-assert (Cowork mount-truncation guard з `docs/lessons.md`). Push + PR — за межами пісочниці (gh/PAT недоступні), виконує maintainer зі свого терміналу.
 
@@ -523,7 +523,7 @@ Real-run audit of `/bootstrap` on `example-service` (Windows Git Bash + fine-gra
 
 **Context:** Audited `example-service` (first real bring-up of the template: `/bootstrap` -> `/synthesize-brief` -> `/preflight` -> product-import feature -> `/wrap-up`) to judge how well the template + agent pipeline performed. Two passes: a broad inventory and a skeptical, evidence-based review (ran `manage.py check`, the OpenAPI drift gate, ruff, Python repros).
 
-**Findings (full report: `docs/reviews/quality-audit-example-20260601.md`):**
+**Findings (full report: `docs/reviews/2026-06-01-quality-audit-example.md`):**
 - Strengths: TDD order honored (RED test commit precedes GREEN impl), Conventional Commits, OpenAPI drift gate passes, ruff clean, Google docstrings, DB-state assertions + real triangulation.
 - Delivery (RED): PR #4 never merged - feature stranded on the branch; `/wrap-up` left `HANDOFF.md` 100% `{TODO}` and the tree dirty; WORKLOG overstated merge status.
 - Feature code (RED): broad `except Exception` per row -> corruption returns HTTP 200; `format=csv` + JSON body silently creates a junk product; non-atomic 409 -> 500 under concurrency.
