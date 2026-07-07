@@ -23,7 +23,7 @@ Our adaptation of Harry Percival's *Test-Driven Development with Python* ("Obey 
 
 Flow per feature: **outer API test RED → run the inner unit loop (RED→GREEN→REFACTOR) until the outer test is GREEN → refactor.** This maps directly onto the pipeline below (`api-architect` sets the contract → `tester` writes the failing outer test → `django-developer` greens it via inner loops).
 
-Why not the literal browser-driven double-loop here: browser/E2E tests are slow and flaky, so they make a poor tight RED driver — especially for an automated agent that iterates on test output and needs fast, deterministic signals; the backend ships before the frontend (separate PRs), so a browser FT cannot even go red first; and the endpoint, not the rendered page, is the real contract boundary. Browser E2E (`qa` / `playwright-e2e`) stays a **thin top layer** for genuine cross-stack journeys and post-deploy smoke on staging — never the inner-loop driver. Rationale recorded in `docs/decisions/0001-tdd-outside-in-at-api-boundary.md`.
+Why not the literal browser-driven double-loop here: browser/E2E tests are slow and flaky, so they make a poor tight RED driver — especially for an automated agent that iterates on test output and needs fast, deterministic signals; the backend ships before the frontend (separate PRs), so a browser FT cannot even go red first; and the endpoint, not the rendered page, is the real contract boundary. Browser E2E (`qa`, tooling from the `playwright` plugin) stays a **thin top layer** for genuine cross-stack journeys and post-deploy smoke on staging — never the inner-loop driver. Rationale recorded in `docs/decisions/0001-tdd-outside-in-at-api-boundary.md`.
 
 ## Order for a backend feature
 
@@ -41,13 +41,14 @@ Why not the literal browser-driven double-loop here: browser/E2E tests are slow 
 
 **Always test:**
 - custom business logic, model methods, serializer validators;
-- every endpoint: all response codes, access rights, pagination/filters;
+- every endpoint: all response codes, access rights (incl. IDOR — user A cannot touch user B's object), pagination/filters/throttling;
 - edge cases and errors (400/401/403/404/409);
 - signals, celery tasks, complex queries.
 
 **Can skip:**
 - trivial CRUD fully covered by standard DRF with no customization;
-- auto-generated migrations without data logic.
+- auto-generated migrations without data logic;
+- trivial `__str__`.
 
 ## Triangulation
 

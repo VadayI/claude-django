@@ -87,7 +87,7 @@ After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites
 
 - **Agents (22)** — 11 core (`ba`, `api-architect`, `django-developer`, `tester`, `dba`, `reviewer`, `security-scanner`, `debugger`, `devops`, `ci-cd-engineer`, `docs-writer`) + 11 optional opt-in (`auditor`, `brief-synthesizer`, `qa`, `celery-specialist`, `integration-architect`, `devil`, `django-refactoring-expert`, `domain-architect`, `guide-writer`, `code-structure-auditor`, `template-sync`)
 - **Rules (22)** — `workflow.md` (pipeline), `tdd.md`, `no-stubs.md`, `api-docs.md`, `project-maturity.md` (maturity stage scales process depth; never relaxes TDD/gates), `preflight.md` (6-blocker kickoff gate), `architecture.md`, `code-style.md`, `simplicity-surgical.md`, `testing.md`, `git-operations.md`, `docker-commands.md`, `serializers-permissions.md`, `migrations-tasks.md`, `mcp-stack.md`, `output-language.md`, `environment.md`, and 5 more.
-- **Skills (12)** — 6 core + 6 review/strategy in `.claude/skills/`.
+- **Skills (7)** — 5 core + 2 strategy in `.claude/skills/` (review/security methodology lives in the `reviewer`/`security-scanner` agents; browser tooling in the playwright plugin).
 - **Commands (20)** — `/bootstrap`, `/doctor`, `/preflight`, `/audit`, `/wrap-up`, `/synthesize-brief`, `/handoff`, `/verify`, `/guides`, and 11 more in `.claude/commands/`.
 - **Templates** — Docker, CI, pyproject.toml with linting + test deps, docs seeds, scaffolding with `{SLUG}` tokens.
 - **Plugins** — `superpowers`, `engineering`, `playwright`, `github`, `context7` (auto-enabled via `.claude/settings.json`).

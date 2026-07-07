@@ -34,10 +34,11 @@ Only when there is a real UI or a full user flow worth verifying. For pure API l
 
 ```bash
 # Run from the separate production-frontend repo, or point baseURL at the staging subdomain.
+# playwright.config: use.baseURL from env; mobile project via devices['Pixel 7'].
 # This backend repo has no frontend/ dir.
 npx playwright test
 npx playwright test --project=mobile-chrome
 ```
 
-> Optional agent — not part of every feature. Skill: `playwright-e2e`; browser automation tools come from the `playwright@claude-plugins-official` plugin (committed baseline, ADR `0011`) — prefer its MCP browser tools over hand-rolled drivers.
-<!-- Last reviewed/updated: 2026-06-01 (uses playwright plugin tools) -->
+> Optional agent — not part of every feature. Browser automation tools come from the `playwright@claude-plugins-official` plugin (committed baseline, ADR `0011`) — prefer its MCP browser tools over hand-rolled drivers.
+<!-- Last reviewed/updated: 2026-07-07 (playwright-e2e skill folded (plugin provides tooling) — audit batch B) -->

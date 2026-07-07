@@ -34,10 +34,10 @@ def test_register_rejects_duplicate_email():
 ```
 
 ## What to cover
-success, 400, 401, 403, 404, conflicts, edge cases, model/serializer business logic.
+Owned by @.claude/rules/tdd.md ("What to test / what to skip") — do not re-copy the list here.
 
 ## Commands
 ```bash
 docker compose exec backend pytest --cov=apps --cov-report=term-missing
 ```
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-07-07 (what-to-cover delegated to tdd.md — audit batch B) -->

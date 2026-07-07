@@ -35,8 +35,8 @@ After reading the contract, **record each route in `.claude/memory/endpoints.jso
 
 A table/list of endpoints with full contracts + request/response examples. Pass it down the pipeline.
 
-> You do not write the implementation. Activate the `drf-api-design` skill (local) — it covers REST API design principles in DRF: resources, methods, status codes, versioning, request/response schemas. For structural shaping — layering, module boundaries, where logic belongs — activate the `architecture-designer` skill. Verify current DRF/Django APIs via context7 before mapping the contract (@.claude/rules/mcp-stack.md).
+> You do not write the implementation. Activate the `drf-api-design` skill (local) — it covers REST API design principles in DRF: resources, methods, status codes, versioning, request/response schemas. For structural shaping — layering, module boundaries, where logic belongs — follow @.claude/rules/architecture.md (incl. its Design questions). Verify current DRF/Django APIs via context7 before mapping the contract (@.claude/rules/mcp-stack.md).
 
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
-<!-- Last reviewed/updated: 2026-07-07 (frontmatter aligned with consumer role — ADR 0017) -->
+<!-- Last reviewed/updated: 2026-07-07 (consumer frontmatter (ADR 0017); architecture.md replaces architecture-designer skill — batch B) -->

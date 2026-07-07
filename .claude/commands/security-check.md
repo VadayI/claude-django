@@ -19,7 +19,7 @@ Optional `$ARGUMENTS`: a path/app to scope. If empty, use the current diff.
    ```bash
    git diff --stat
    ```
-2. Dispatch the `security-scanner` agent (`subagent_type: "security-scanner"`) with the changed files, instructing it to use the `security-reviewer` skill and check:
+2. Dispatch the `security-scanner` agent (`subagent_type: "security-scanner"`) with the changed files, instructing it to check:
    - `permission_classes` on every endpoint; anon→401, other-user→403; no IDOR;
    - input validated in serializers; no mass assignment; no sensitive fields exposed;
    - no secrets in code; env-only; no raw SQL without params;

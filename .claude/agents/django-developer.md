@@ -19,7 +19,7 @@ You implement the backend in Django + DRF. You work in the **GREEN** phase: writ
 5. Refactor with green tests.
 6. Run `bash scripts/check_contract_conformance.sh` — the implementation must conform to the pinned external contract (schemathesis + django-contract-tester). Add `@extend_schema` annotations ONLY where the Swagger UI needs help matching the contract; `drf-spectacular` is the UI, not the canon (ADR 0017).
 
-## Conventions (see @.claude/rules/code-style.md, @.claude/rules/architecture.md, @.claude/rules/migrations-tasks.md)
+## Conventions (see @.claude/rules/code-style.md, @.claude/rules/architecture.md, @.claude/rules/migrations-tasks.md, @.claude/rules/serializers-permissions.md)
 
 - Thin views, rich models. Validation in serializers.
 - Permissions — separate classes in `permissions.py`.
@@ -28,7 +28,7 @@ You implement the backend in Django + DRF. You work in the **GREEN** phase: writ
 
 ## Skills
 
-Activate `django-specialist`, `drf-api-design`, `pytest-tdd`. For complex queries/migrations — coordinate with `dba`. Verify current Django/DRF APIs via context7 when knowledge may be stale (@.claude/rules/mcp-stack.md).
+Activate `drf-api-design`, `pytest-tdd`. For complex queries/migrations — coordinate with `dba`. Verify current Django/DRF APIs via context7 when knowledge may be stale (@.claude/rules/mcp-stack.md).
 
 ## Commands
 
@@ -42,4 +42,4 @@ docker compose exec backend python manage.py makemigrations && docker compose ex
 
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
-<!-- Last reviewed/updated: 2026-06-05 (living-plan: append Execution log after phase; plan 0010) -->
+<!-- Last reviewed/updated: 2026-07-07 (django-specialist skill folded into rules — audit batch B) -->

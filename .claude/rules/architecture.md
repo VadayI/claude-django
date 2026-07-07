@@ -55,4 +55,12 @@ backend/
 - **Simplicity first.** Do not introduce abstractions ahead of time.
 - **Thin views, rich models.**
 - **Every endpoint — with a test and an entry in `docs/api/`.**
-<!-- Last reviewed/updated: 2026-05-27 -->
+
+## Design questions (ask before adding structure)
+
+- Does this logic belong on the model, in a serializer, or a service? (Prefer model, then service; never the view.)
+- Is a new Django app warranted, or does it fit an existing domain?
+- Is an abstraction earning its keep, or is it premature? (Simplicity First.)
+- Where must integrity live — DB constraint vs application check? (Prefer DB for hard invariants.)
+- Does the API contract stay backward-compatible, or is this a new `/api/vN/`?
+<!-- Last reviewed/updated: 2026-07-07 (Design questions ported from architecture-designer skill — audit batch B) -->

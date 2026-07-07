@@ -13,18 +13,9 @@
 - Factories instead of manual `Model.objects.create(...)`.
 - Separate tests for: success, validation (400), authentication (401), authorization (403), not found (404), conflict (409).
 
-## What is MANDATORY to test
+## What to test / what to skip
 
-- custom model logic, serializer validators, permissions;
-- every endpoint: codes, response shape, DB state after the request;
-- pagination, filters, sorting, throttling where present;
-- edge and error cases.
-
-## What can be skipped
-
-- standard CRUD with no customization;
-- auto-migrations without data logic;
-- trivial `__str__`.
+Single owner of the list: @.claude/rules/tdd.md ("What to test / what to skip") — follow it, do not re-copy it here.
 
 ## Order (TDD)
 
@@ -37,4 +28,4 @@ docker compose exec backend pytest
 docker compose exec backend pytest --cov=apps --cov-report=term-missing
 docker compose exec backend ruff check .
 ```
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-07-07 (what-to-test delegated to tdd.md — audit batch B) -->
