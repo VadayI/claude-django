@@ -25,7 +25,7 @@ Classify every candidate file before touching it:
 - `.claude/commands/*.md`
 - `.claude/skills/**`
 - `.claude/rules/*.md` — **EXCEPT `output-language.md`** (project-local; never overwrite)
-- `scripts/detect-env.py`, `scripts/log-cmd.py`, `scripts/session-start.sh`, `scripts/setup-wsl.sh`
+- `scripts/detect-env.py`, `scripts/log-cmd.py`, `scripts/session-start.py`, `scripts/setup-wsl.sh`
 - `templates/**` — only if the project still keeps it (most derived projects `rm -rf templates/` after bootstrap; see "New gate scripts" below for that case)
 
 Copy these straight from `$UPSTREAM`. Report each as `updated` (content changed) or `added` (new file) or `unchanged`.

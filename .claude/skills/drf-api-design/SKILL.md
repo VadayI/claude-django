@@ -22,5 +22,5 @@ description: "[claude-django] REST API design principles in DRF — resources, m
 - Incompatible changes → a new version. Do not change the contract silently.
 
 ## OpenAPI
-- Generate the schema (drf-spectacular) and keep `docs/api/` in sync.
-<!-- Last reviewed/updated: 2026-05-27 -->
+- The contract is external and vendored: `docs/api/openapi.yml` comes from `claude-api-contract` @ `CONTRACT_VERSION` via `scripts/pull_contract.sh` (ADR 0017). Never generate or regenerate it from code — a needed change is raised in the contract repo. drf-spectacular serves Swagger UI only.
+<!-- Last reviewed/updated: 2026-07-07 (contract consumed, not generated — ADR 0017) -->

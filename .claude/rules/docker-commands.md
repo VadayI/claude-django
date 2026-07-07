@@ -28,7 +28,7 @@ docker compose down             # stop
 
 ## SessionStart conveniences
 
-The `SessionStart` hook runs `scripts/session-start.sh`, which (in order): writes `.claude/memory/env-detect.json` via `scripts/detect-env.py` (mandatory — the gates depend on it); seeds `.env` from `.env.example` if `.env` is missing (placeholders only — fill real secrets yourself); and brings services up **only** when you opt in:
+The `SessionStart` hook runs `scripts/session-start.py`, which (in order): writes `.claude/memory/env-detect.json` via `scripts/detect-env.py` (mandatory — the gates depend on it); seeds `.env` from `.env.example` if `.env` is missing (placeholders only — fill real secrets yourself); and brings services up **only** when you opt in:
 
 ```bash
 export CLAUDE_DJANGO_AUTO_UP=1   # before launching `claude`: auto `docker compose up -d` on session start

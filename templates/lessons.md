@@ -16,7 +16,7 @@ What happened, why it surprised us, what we will do differently next time. Link 
 
 ## {DATE_ISO} — Bootstrap completed
 
-Initial scaffold from [`claude-django`](https://github.com/VadayI/claude-django) — Django/DRF stack, drf-spectacular wired, CI gates (ruff + stubs + OpenAPI drift + per-app README) live. No business logic yet; first feature should follow the standard pipeline (`ba` → `api-architect` → `tester` → `django-developer`).
+Initial scaffold from [`claude-django`](https://github.com/VadayI/claude-django) — Django/DRF stack, drf-spectacular wired (Swagger UI only), CI gates (ruff + stubs + contract drift/conformance + per-app README) live. No business logic yet; first feature should follow the standard pipeline (`ba` → `api-architect` → `tester` → `django-developer`).
 
 > This is a seed entry showing the expected format. Newer entries go below, one per session / lesson / surprise.
 

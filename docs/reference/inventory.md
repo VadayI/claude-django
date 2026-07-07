@@ -53,11 +53,11 @@ Review & strategy: `code-reviewer`, `security-reviewer`, `playwright-e2e`, `test
 These are standalone skills, not vendored into the repo — enable them in your environment (Cowork → "Add", or `/plugin`/skills install) rather than copying their content here:
 
 - `brainstorming` (Superpowers) — structured ideation for ambiguous tasks. Used during Plan Mode by the orchestrator and `ba` / `api-architect` before locking the contract. Highly recommended.
-- `plan-writing` (Superpowers) — disciplined plan format (scope · sub-tasks · affected files · risks · open questions). Pairs with the Plan Mode rule in `workflow.md`. Highly recommended.
+- `writing-plans` (Superpowers) — disciplined plan format (scope · sub-tasks · affected files · risks · open questions). Pairs with the Plan Mode rule in `workflow.md`. Highly recommended.
 - `mcp-builder` — building MCP servers (Python/FastMCP or Node SDK). Useful when extending `.mcp.json` with a project-specific server.
 - `web-artifacts-builder` — elaborate React/Tailwind/shadcn HTML artifacts. Optional — this repo is backend-only; the interactive API client is Swagger UI / Redoc (drf-spectacular), not a hand-rolled frontend.
 
-> Superpowers marketplace is already enabled via `.claude/settings.json` (`enabledPlugins.superpowers@superpowers-marketplace`), so `brainstorming` and `plan-writing` are available without extra setup — just confirm with `/plugin` if they show as installed.
+> Superpowers marketplace is already enabled via `.claude/settings.json` (`enabledPlugins.superpowers@superpowers-marketplace`), so `brainstorming` and `writing-plans` are available without extra setup — just confirm with `/plugin` if they show as installed.
 
 ## Templates — `templates/`
 
@@ -102,7 +102,7 @@ Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands 
 
 ## Plugins (recommended baseline)
 
-Auto-enabled per-project via `.claude/settings.json` `enabledPlugins` (ADR `0011`, derived from the maintainer's proven setup): `superpowers@superpowers-marketplace` (brainstorming/plan-writing), `engineering@knowledge-work-plugins`, `playwright@claude-plugins-official` (browser tools used by the `qa` agent / E2E), and `github@claude-plugins-official` + `context7@claude-plugins-official` (which provide the GitHub + Context7 MCP — see below). `claude-hud@claude-hud` is recommended too but stays a **personal/global** HUD install, not committed per-project. `code-review` and `code-simplifier` are intentionally **not** in the baseline — their project-agnostic skills duplicate the project-tuned `reviewer` / `security-scanner` / `django-refactoring-expert` agents, so the canonical paths stay `/review-pr`, `/security-check`, `/simplify`. Install lines are printed by `/bootstrap` Step 6 and `/plugins` (plugin install is a manual UI action).
+Auto-enabled per-project via `.claude/settings.json` `enabledPlugins` (ADR `0011`, derived from the maintainer's proven setup): `superpowers@superpowers-marketplace` (brainstorming/writing-plans), `engineering@knowledge-work-plugins`, `playwright@claude-plugins-official` (browser tools used by the `qa` agent / E2E), and `github@claude-plugins-official` + `context7@claude-plugins-official` (which provide the GitHub + Context7 MCP — see below). `claude-hud@claude-hud` is recommended too but stays a **personal/global** HUD install, not committed per-project. `code-review` and `code-simplifier` are intentionally **not** in the baseline — their project-agnostic skills duplicate the project-tuned `reviewer` / `security-scanner` / `django-refactoring-expert` agents, so the canonical paths stay `/review-pr`, `/security-check`, `/simplify`. Install lines are printed by `/bootstrap` Step 6 and `/plugins` (plugin install is a manual UI action).
 
 ## MCP servers — official plugins (recommended) or `.mcp.json` (fallback)
 

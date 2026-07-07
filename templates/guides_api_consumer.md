@@ -11,7 +11,7 @@
 - Dev base URL: `http://localhost:8000`
 - Interactive (Swagger UI): `http://localhost:8000/api/schema/swagger/`
 - Redoc: `http://localhost:8000/api/schema/redoc/`
-- Authoritative contract: `docs/api/openapi.yml` (auto-generated from code; never hand-edited)
+- Authoritative contract: `docs/api/openapi.yml` (vendored from the external contract repo @ CONTRACT_VERSION; never hand-edited)
 
 ## Authentication
 

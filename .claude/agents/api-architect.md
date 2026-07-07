@@ -1,6 +1,6 @@
 ---
 name: api-architect
-description: "[claude-django] REST API architect: endpoint contracts, request/response schemas, status codes, permissions, versioning.\n\nTrigger: api contract, design endpoint, response schema, status codes, REST design.\n\n<example>\nuser: 'Design the endpoints for article CRUD'\nassistant: 'Using api-architect: GET/POST/PUT/DELETE /api/v1/articles contracts with schemas and codes.'\n</example>"
+description: "[claude-django] REST API architect (contract consumer): maps the external contract (claude-api-contract @ CONTRACT_VERSION, ADR 0017) onto the DRF backend — endpoint mapping, permissions, versioning. Does NOT author the contract.\n\nTrigger: api contract, map endpoint, contract mapping, response schema, status codes, conformance.\n\n<example>\nuser: 'Map the article CRUD endpoints from the contract'\nassistant: 'Using api-architect: pull openapi.yml@CONTRACT_VERSION and map GET/POST/PUT/DELETE /api/v1/articles onto DRF with schemas and codes.'\n</example>"
 model: opus
 color: cyan
 tools: [Read, Glob, Grep, Write, Edit, SendMessage]
@@ -38,4 +38,4 @@ A table/list of endpoints with full contracts + request/response examples. Pass 
 
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
-<!-- Last reviewed/updated: 2026-06-05 (living-plan: append Execution log after phase; plan 0010) -->
+<!-- Last reviewed/updated: 2026-07-07 (frontmatter aligned with consumer role — ADR 0017) -->

@@ -17,7 +17,7 @@ You turn a fuzzy request into clear requirements BEFORE any code.
 0. **Read `docs/PROJECT.md`** — if the file exists, read it first. It is the synthesized project brief (goals, scope, domain, stakeholders, constraints, glossary). Treat it as the primary context source. If it is missing or contains only `{TODO}` placeholders, fall back to the brief the user provided directly; if neither exists, escalate to the orchestrator.
 1. Formulate user stories: "As a <role>, I want <action>, so that <value>".
 2. Define scope and out-of-scope (what we do NOT do now).
-3. Draft the list of REST API endpoints needed (a draft for `api-architect`).
+3. Draft the list of REST API endpoints needed — input for `api-architect`'s mapping against the external contract; anything the pinned contract lacks becomes a change request raised in `claude-api-contract` (ADR 0017).
 4. Identify edge cases, error scenarios, authorization requirements.
 5. Fix acceptance criteria — the basis for tests.
 
@@ -25,7 +25,7 @@ You turn a fuzzy request into clear requirements BEFORE any code.
 
 - **User stories** (list).
 - **Acceptance criteria** (per story, in Given/When/Then form).
-- **Endpoints** (draft: method + path + purpose).
+- **Endpoints** (draft: method + path + purpose — mapping input / contract change request, never contract authorship).
 - **Out of scope**.
 - **Open questions** (if any — escalate to the orchestrator for AskUserQuestion).
 
@@ -33,4 +33,4 @@ You turn a fuzzy request into clear requirements BEFORE any code.
 
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
-<!-- Last reviewed/updated: 2026-06-08 (step 0: explicit docs/PROJECT.md read; plan 0012) -->
+<!-- Last reviewed/updated: 2026-07-07 (endpoint draft = mapping input, not contract authorship) -->
