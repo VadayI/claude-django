@@ -21,7 +21,7 @@ Optional `$ARGUMENTS`: a scope — `brief`, `stack`, `docs`, `github`. Default: 
 
 1. **Access checks** — dispatch `devops` (`subagent_type: "devops"`) to verify, read-only:
    - `context7` MCP reachable (`resolve-library-id` for "django"); `CONTEXT7_API_KEY` set (report set/unset, never the value);
-   - `gh auth status` authenticated (via `GITHUB_PERSONAL_ACCESS_TOKEN` env OR stored creds — either is fine) and `gh repo view` succeeds for the project repo. NOTE: if the env var is set, `gh auth login` will refuse to store separate creds — that is EXPECTED, not a failure; auth is green as long as `gh auth status` succeeds. Also verify that `gh` here means **Linux `gh` in WSL2**, not a Windows `gh.exe` from `winget`.
+   - `gh auth status` authenticated (via `GITHUB_PERSONAL_ACCESS_TOKEN` env OR stored creds — either is fine) and `gh repo view` succeeds for the project repo. NOTE: if the env var is set, `gh auth login` will refuse to store separate creds — that is EXPECTED, not a failure; auth is green as long as `gh auth status` succeeds. Also verify `gh` matches the runner (ADR `0022`): on native Windows a `gh.exe` on PATH is valid; inside WSL2 it must be the Linux `gh` (a Windows `gh.exe` is not visible there).
    - tech stack declared (CLAUDE.md / README) and `backend/pyproject.toml` deps resolvable.
    - **never fabricate** tool presence/versions or auth state: derive tool facts from `env-detect.json` where it carries them (`tools`, `gh`), confirm liveness only with read-only commands (`gh auth status`, a `context7` probe), and report anything not verifiable as `unknown` rather than guessing.
 

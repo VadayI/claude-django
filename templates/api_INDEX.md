@@ -27,9 +27,9 @@ All endpoints live under `/api/v1/`. Contract-breaking changes get a new version
 
 ## Conventions
 
-- **Resource naming:** lower-case, plural noun (`/api/v1/users/`, `/api/v1/invoices/`).
+- **Resource naming:** lower-case, plural noun, **no trailing slash** (`/api/v1/users`, `/api/v1/invoices`) — matches the external contract; DRF routers use `DefaultRouter(trailing_slash=False)` (ADR `0025`).
 - **Identifiers:** integer or UUID — declared per resource in the OpenAPI schema.
-- **Errors:** RFC 7807-style problem details when relevant; field-keyed messages for validation (400); 401 anonymous; 403 authenticated-but-forbidden; 404 not found; 409 conflict.
+- **Errors:** the contract error envelope (ADR 0020): `{"detail": "<human>"}` for simple errors, `{"errors": [{"field","code","message"}]}` for validation (400); 401 anonymous; 403 authenticated-but-forbidden; 404 not found; 409 conflict.
 - **Pagination:** DRF default `PageNumberPagination` unless a resource declares otherwise in its serializer.
 - **Throttling:** sensitive endpoints (login, registration, password reset) declare `throttle_classes` on the view and are noted in the per-endpoint markdown.
 

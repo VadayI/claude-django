@@ -48,6 +48,7 @@ backend/
 ## API versioning
 
 - All endpoints under the `/api/v1/` prefix.
+- **Paths match the external contract exactly — no trailing slash.** The contract publishes `/api/v1/articles`; DRF routers are therefore declared with `DefaultRouter(trailing_slash=False)` — schemathesis drives requests straight from the contract, and a slash mismatch turns every hit into 301/404 (ADR `0025`). (The local system probe `GET /api/v1/health/` is not part of the contract and keeps its slash.)
 - Contract-breaking changes — a new version, not a silent change.
 
 ## Principles

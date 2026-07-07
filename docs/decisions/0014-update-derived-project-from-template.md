@@ -42,3 +42,8 @@
 - `README.md` — нова секція «Updating an existing project from the template» + пункт команди + рядок агента + лічильники.
 - `templates/PROJECT_README.md` — вказівник у «Useful commands».
 - (runtime, у похідному проєкті) `.claude/memory/template-sync.json` — маркер синку.
+
+> **Примітка (2026-07-07, аудит v2, батч G):** перелік template-owned у п.1 містить
+> історичні імена `log-cmd.py` / `session-start.sh`; актуальні — `scripts/policy/log_command.py`
+> та `scripts/session-start.py` (перейменовано батчами A/D аудиту 2026-07-07). Поточний
+> авторитетний ownership-перелік підтримується в `.claude/agents/template-sync.md`.

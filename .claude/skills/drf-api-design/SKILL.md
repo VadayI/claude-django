@@ -6,7 +6,7 @@ description: "[claude-django] REST API design principles in DRF — resources, m
 # DRF API Design
 
 ## Resources
-- Plural nouns: `/api/v1/articles/`, `/api/v1/articles/{id}/`.
+- Plural nouns, **no trailing slash** (matches the external contract, ADR `0025`): `/api/v1/articles`, `/api/v1/articles/{id}`; routers use `DefaultRouter(trailing_slash=False)`.
 - Action = HTTP method (GET/POST/PUT/PATCH/DELETE), not a verb in the path.
 
 ## Status codes

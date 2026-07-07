@@ -62,10 +62,20 @@ jobs:
       - name: Contract conformance gate
         id: conformance
         working-directory: ${{ github.workspace }}
+        # Level 1 (schemathesis) needs a live server: at stage MVP/production the
+        # gate is STRICT and fails without CONFORMANCE_BASE_URL (ADR 0025). Enable it
+        # by starting the stack in CI and exporting the URL, e.g.:
+        #   - run: docker compose up -d
+        #   - run: curl -fsS --retry 20 --retry-delay 3 --retry-all-errors http://localhost:8000/api/v1/health/
+        #   then add to this step:  env: { CONFORMANCE_BASE_URL: "http://localhost:8000" }
+        # demo/prototype/PoC stages run level 2 (django-contract-tester) without it.
         run: bash scripts/check_contract_conformance.sh
       - name: Contract drift gate (vendored copy matches pinned tag)
         id: drift
         working-directory: ${{ github.workspace }}
+        # Armed only when the repository variable exists: /bootstrap sets it via
+        # `gh variable set CONTRACT_VERSION` and it must be re-set on every pin raise
+        # (ADR 0021/0025) — without the variable this gate is silently skipped.
         if: vars.CONTRACT_VERSION != ''
         env:
           CONTRACT_VERSION: ${{ vars.CONTRACT_VERSION }}

@@ -51,3 +51,8 @@
 - `.mcp.json` — `_note` про опційність + fallback-інструкція.
 - `.claude/commands/bootstrap.md` — Step 6 install-блок + нотатка; `.claude/commands/plugins.md` — той самий блок + очікуваний перелік; `.claude/commands/config.md` — MCP-перевірка під плагіни.
 - `README.md` — нова секція «Plugins (recommended baseline)», переписана MCP-секція, рядок про per-project config.
+
+> **Примітка (2026-07-07):** склад базлайну амендовано ADR `0024` — `engineering@knowledge-work-plugins`
+> переведено в персональні/глобальні (6/10 скілів перетинаються з проектними агентами + другий
+> `github`-конектор у його `.mcp.json`), а `superpowers` встановлюється з офіційного marketplace
+> (`superpowers@claude-plugins-official`).

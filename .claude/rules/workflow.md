@@ -44,7 +44,7 @@ Decision tree:
 On a **new project**, the orchestrator's first action depends on detected state (use `/doctor` to find out):
 
 1. `/doctor` — detect scenario (`fresh` / `existing-incomplete` / `active` / `no-config`) and recommend the next command.
-2. `/bootstrap` — execute scaffold (Mode A: fresh) or PR each missing piece (Mode B: resume). `/bootstrap` is a **binary command, NOT part of the feature pipeline**.
+2. `/bootstrap` — execute scaffold (Mode A: fresh) or PR each missing piece (Mode B: resume). `/bootstrap` is a **binary command, NOT part of the feature pipeline**. For a **foreign** existing project (no template lineage) use `/adopt` instead — additive attach, ADR `0026`.
 3. `/synthesize-brief` (optional but recommended) — synthesize `docs/PROJECT.md` from `docs/**`. Run AFTER placing brief/ТЗ/PDFs into `docs/`, BEFORE `/preflight`.
 4. `/preflight` — build-inputs gate before the first feature.
 5. Standard feature pipeline (`ba → api-architect → ...`).
@@ -62,7 +62,7 @@ Once approved, the plan becomes a **living plan**: seed `docs/plans/NNNN-<slug>.
 
 Trivial tasks (typo, single config value) skip this. The Superpowers `brainstorming`/`writing-plans` skills support this phase.
 
-> **Orchestration precedence.** The role pipeline below is the authoritative orchestration method in this project. Superpowers process skills (`subagent-driven-development`, `executing-plans`, `dispatching-parallel-agents`) may inform HOW a single phase is driven, but they never replace the pipeline's phase order, its named agents, or the Quality Gate.
+> **Orchestration precedence.** The role pipeline below is the authoritative orchestration method in this project. Superpowers process skills (`subagent-driven-development`, `executing-plans`, `dispatching-parallel-agents`) may inform HOW a single phase is driven, but they never replace the pipeline's phase order, its named agents, or the Quality Gate. The same subordination applies to `test-driven-development` (this project's law is @.claude/rules/tdd.md — double-loop at the API boundary) and `systematic-debugging` (the `debugger` agent owns the Bug Fix Pipeline): the skills may sharpen a phase, never redefine it.
 
 ## Pipeline trigger: REQUIRED if ANY applies
 
@@ -91,7 +91,7 @@ ba → api-architect → tester (RED) → django-developer (GREEN) → tester (R
         → [Quality Gate: reviewer | security-scanner | dba] → docs-writer
 ```
 
-> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, per @.claude/rules/verification.md. Regenerate/run on demand with `/verify`. `docs/WORKLOG.md` is NOT a per-feature output — it is persisted once at session end by `/wrap-up` (single owner, @.claude/rules/git-operations.md), which may delegate the append to `docs-writer`. When a feature changes first-start, data-loading, an auth flow, or a top-level resource, `guide-writer` also refreshes `docs/guides/{admin,api-consumer}.md` per @.claude/rules/user-guides.md (regenerate on demand with `/guides`).
+> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, per `.claude/rules/verification.md`. Regenerate/run on demand with `/verify`. `docs/WORKLOG.md` is NOT a per-feature output — it is persisted once at session end by `/wrap-up` (single owner, @.claude/rules/git-operations.md), which may delegate the append to `docs-writer`. When a feature changes first-start, data-loading, an auth flow, or a top-level resource, `guide-writer` also refreshes `docs/guides/{admin,api-consumer}.md` per `.claude/rules/user-guides.md` (regenerate on demand with `/guides`).
 
 | Phase | Mode | Agent(s) | Output |
 |------|-------|----------|-------|

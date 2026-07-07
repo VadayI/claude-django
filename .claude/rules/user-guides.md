@@ -51,7 +51,7 @@ There is **no standalone shell gate** for the guides (unlike `check_app_readmes.
 - `reviewer` blocks a PR that changes user-visible surface — a new/changed **auth flow**, **data-loading command**, **first-start step**, or a new **top-level API resource** — without a corresponding update to the relevant guide. Treat a stale "First start" or "Authentication" section as 🟡 Important.
 - `guide-writer` runs the reconciliation above (every command/endpoint the guide names traces to code/schema) before declaring the PR ready, and flags invented or removed references.
 
-## Binds these agents (rule is auto-loaded)
+## Binds these agents (loaded per-agent via `@`-reference)
 
 - `guide-writer` — owns `docs/guides/admin.md` and `docs/guides/api-consumer.md`; creates them from the templates, keeps them in sync with the shipped surface, and runs the code/schema reconciliation. The dedicated agent for this rule.
 - `api-architect` — when a contract change adds/removes an auth flow or a top-level resource, notes that `api-consumer.md` needs the corresponding section update.

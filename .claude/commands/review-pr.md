@@ -10,7 +10,7 @@ CRITICAL RULES:
 - NEVER mention AI, Claude, LLM, or automation — write as a human engineer.
 - Post findings as INLINE review comments on specific diff lines, NOT as one summary comment.
 
-> **Prereq:** Linux `gh` installed in **this WSL2 shell** and authenticated (`gh auth status`). A Windows `gh.exe` from `winget` does NOT count. If anything below errors with `gh: command not found` or auth failure — run `/doctor` first.
+> **Prereq:** `gh` installed in the shell where `claude` runs and authenticated (`gh auth status`). Native Windows: `gh.exe` (`winget install GitHub.cli`) is valid (ADR `0022`); inside WSL2 use the Linux `gh` (a Windows `gh.exe` is not visible there). If anything below errors with `gh: command not found` or auth failure — run `/doctor` first.
 
 ## Input
 
@@ -43,7 +43,7 @@ The agent prompt MUST include:
 - NEVER use emojis; NEVER mention AI/automation; write in natural human-engineer English.
 - Read the actual changed files locally (not just the diff) for full context.
 - Check project standards: `CLAUDE.md`, `.claude/rules/architecture.md`, `.claude/rules/code-style.md`, `.claude/rules/testing.md`, `.claude/rules/git-operations.md`.
-- Django/DRF-specific patterns to verify: thin views / fat models; validation in serializers; `permission_classes` on every endpoint (401 anon, 403 other user, no IDOR); no N+1 (select_related/prefetch_related); migrations safe and reversible; no secrets in code; serializers don't expose sensitive fields; PR-per-layer respected (mini-frontend never mixed into a backend PR; full production frontend is a separate repo); tests cover the new behavior (success + 400/401/403/404/409 + edge cases).
+- Django/DRF-specific patterns to verify: thin views / fat models; validation in serializers; `permission_classes` on every endpoint (401 anon, 403 other user, no IDOR); no N+1 (select_related/prefetch_related); migrations safe and reversible; no secrets in code; serializers don't expose sensitive fields; repo scope respected (backend-only: the production frontend lives in a separate repository, never mixed into a backend PR); tests cover the new behavior (success + 400/401/403/404/409 + edge cases).
 - For each finding return: file path, diff line number, severity (critical/important/suggestion), comment text.
 
 ## Step 4: Post inline review comments

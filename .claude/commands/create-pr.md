@@ -5,7 +5,7 @@ description: "[claude-django] Open a Pull Request for the current branch — nev
 
 You open a Pull Request for the current branch. NEVER push to `main` directly.
 
-> **Prereq:** Linux `gh` installed in **this WSL2 shell** and authenticated (`gh auth status`). A Windows `gh.exe` from `winget` does NOT count. If anything below errors with `gh: command not found` or auth failure — run `/doctor` first.
+> **Prereq:** `gh` installed in the shell where `claude` runs and authenticated (`gh auth status`). Native Windows: `gh.exe` (`winget install GitHub.cli`) is valid (ADR `0022`); inside WSL2 use the Linux `gh` (a Windows `gh.exe` is not visible there). If anything below errors with `gh: command not found` or auth failure — run `/doctor` first.
 
 ## Input
 Optional `$ARGUMENTS`: a short title/intent. If empty, infer from the branch and commits.
@@ -19,7 +19,7 @@ Optional `$ARGUMENTS`: a short title/intent. If empty, infer from the branch and
    If on `main`, stop and ask the user to create a feature branch.
 2. Ensure work is committed (Conventional Commits) and pushed:
    ```bash
-   # Bash/zsh only (PowerShell/cmd not supported — see ADR 0005). Python is a project requirement.
+   # Cross-platform: python -c runs the same in PowerShell / Git Bash / bash (ADR 0022). Python is a project requirement.
    python -c "import subprocess as s; br=s.check_output(['git','rev-parse','--abbrev-ref','HEAD']).decode().strip(); s.check_call(['git','push','-u','origin',br])"
    ```
 3. Build the PR body using the template in @.claude/rules/git-operations.md (What / Why / How verified / Notes).

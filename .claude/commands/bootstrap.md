@@ -42,8 +42,8 @@ else:
 ```
 
 - `MODE_A` -> fresh scaffold (no `backend/` yet). The GitHub repo is created by **you** beforehand (ADR `0008`); Mode A links to it, it does not create it. Proceed with the Mode A flow below.
-- `MODE_B` -> resume; proceed with the Mode B flow below.
-- `MODE_AMBIGUOUS` -> STOP, ask via `AskUserQuestion`. Special hard guard: if `backend/manage.py` exists but `.git/` does NOT, do NOT auto-pick Mode A — stop with `BACKEND_WITHOUT_GIT, manual intervention required`.
+- `MODE_B` -> resume; proceed with the Mode B flow below. **Foreign-project guard (ADR `0026`):** Mode B assumes template lineage (the backend was scaffolded by Mode A). If the probes show a backend WITHOUT the template shape (no `apps/common`, no `config/settings/` package, no `CONTRACT_VERSION` in `.env.example`) and `.claude/memory/template-sync.json` is absent — STOP and recommend `/adopt`: PR-ing template pieces into a foreign layout produces misplaced files.
+- `MODE_AMBIGUOUS` -> STOP, ask via `AskUserQuestion`. Special hard guard: if `backend/manage.py` exists but `.git/` does NOT, do NOT auto-pick Mode A — stop with `BACKEND_WITHOUT_GIT, manual intervention required`. If the backend predates this config (a **foreign** project), `/adopt` is the right tool — never Mode A (ADR `0026`).
 - `NO_ENV_DETECT` -> **STOP immediately.** `.claude/memory/env-detect.json` is absent, so the runtime is unverified and the hard preflight below cannot be evaluated. See `NO_ENV_DETECT` under *Per-flag remediation*. Do NOT proceed, do NOT fabricate the file.
 
 ## Hard preflight (refuse to start if any blocker is true)
@@ -132,10 +132,11 @@ Decision:
 - `REPO_NOT_FOUND` -> `/bootstrap` (Mode A) links to a repo **you** created by hand; the active token cannot see `$OWNER/$SLUG`. Two causes: the empty repo was never created, or the fine-grained token is not scoped to it. Remedy: (1) create the EMPTY repo at https://github.com/new (no README/.gitignore/license); (2) mint a fine-grained token via the template URL in the GitHub-access preflight (Resource owner = your login; Repository access -> Only select repositories -> `$OWNER/$SLUG`; permissions Contents / Pull requests / Workflows / Administration = Read and write); (3) add the token to `.env` as `GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_...` (sourced by `scripts/claude.sh` / `make cc`; see ADR `0023`) and re-run `/bootstrap`.
 - `NO_GH_SCOPES` -> **Only applies to a classic PAT.** Fine-grained tokens (recommended, per ADR `0008`) don't expose OAuth scopes and are NOT gated here — use the GitHub-access preflight + the `gh repo view` capability probe instead. For a classic PAT missing scopes: `gh auth refresh -s repo,workflow` (add `admin:repo_hook` for auto branch protection), then re-run `/bootstrap`.
 - `UNSUPPORTED_PLATFORM` -> note the detected `platform` and STOP. Since ADR `0022` (amends `0005`) native Windows is a supported runner, `platform_supported` is `true` on Windows, macOS, Linux, and WSL2; this flag now only fires on some *other* platform, not expected on a normal dev machine. Native Windows runs `claude` in PowerShell or Git Bash; WSL2 stays optional (Docker backend).
-- `NO_GH_BIN` -> `gh` is not on PATH in this shell. Install:
+- `NO_GH_BIN` -> `gh` is not on PATH in this shell. Install for the shell you launch `claude` from:
+  - Native Windows (PowerShell / Git Bash): `winget install GitHub.cli`, then reopen the terminal.
   - WSL2 / Linux: `sudo apt update && sudo apt install -y gh` (fallback to the official repo at https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
   - macOS: `brew install gh`.
-  - Note: a Windows `gh.exe` is NOT reachable from inside a WSL2 shell.
+  - Note: a Windows `gh.exe` is NOT reachable from inside a WSL2 shell (and the Linux `gh` is not visible from PowerShell).
 - `NO_GH_AUTH` -> Two equivalent options. **A)** Env-var path (recommended, no extra scopes needed): put the token in `.env` as `GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_...` and launch via `scripts/claude.sh` / `make cc` (ADR `0023`) — the wrapper exports it and copies it into `GH_TOKEN` for `gh`; verify with `gh auth status` (it reports `Logged in to github.com as <user> (GH_TOKEN)`). Do NOT also run `gh auth login` after this — it would refuse to overwrite the env var, and that is **expected behavior, not an error**. **B)** Stored creds path: leave the `.env` PAT empty (the wrapper then leaves your gh creds untouched) and `unset GITHUB_PERSONAL_ACCESS_TOKEN` (also remove any export from `~/.bashrc` / `~/.profile`), then `gh auth login` (HTTPS, paste token). This path requires `read:org` scope on the token in addition to `repo`+`workflow`+`admin:repo_hook` — `gh auth login` validates it. The env-var path does not need `read:org` since `/bootstrap` operations (`repo create`, branch protection, PRs) use `repo`+`workflow`+`admin:repo_hook` only.
 - `NO_DOCKER` -> Start **Docker Desktop**. On Windows enable WSL2 integration (Settings -> Resources -> WSL Integration -> enable your distro).
 - `NO_TEMPLATES` -> This folder is missing the claude-django config. Run the Quick start in `README.md` first to copy `.claude/`, `CLAUDE.md`, `templates/` into the CWD.
@@ -336,7 +337,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
        pytest selects it via `DJANGO_SETTINGS_MODULE = "config.settings.test"` in `backend/pyproject.toml` `[tool.pytest.ini_options]` (already set in the template). Do NOT put `MIGRATION_MODULES` in `dev.py` or `staging.py` — production `common` ships no models, and the dev server should not pay for the test-only redirect.
      - **`staging.py`** must be production-hardened for gunicorn behind a reverse proxy: `DEBUG = False`; `ALLOWED_HOSTS` from `DJANGO_ALLOWED_HOSTS` env (the staging subdomain); `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")` so Django trusts the proxy's TLS termination; `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE = True`. Static files: collect to `STATIC_ROOT` (serve via WhiteNoise or the proxy). Verify it passes `python manage.py check --deploy`.
    - `docker compose exec -T backend python manage.py migrate`
-   - **Pull the external API contract** (ADR 0017): ensure `CONTRACT_VERSION` is set in `.env`, then `bash scripts/pull_contract.sh` (writes `docs/api/openapi.yml` from `claude-api-contract@CONTRACT_VERSION`). If the contract repo/tag does not exist yet, skip and note it — the first feature pulls once the contract is published. `drf-spectacular` still serves Swagger UI/Redoc from live code, but is NOT the canonical schema.
+   - **Pull the external API contract** (ADR 0017): ensure `CONTRACT_VERSION` is set in `.env`, then `bash scripts/pull_contract.sh` (writes `docs/api/openapi.yml` from `claude-api-contract@CONTRACT_VERSION`). If the contract repo/tag does not exist yet, skip and note it — the first feature pulls once the contract is published. **Arm the CI drift gate**: `gh variable set CONTRACT_VERSION --body "vX.Y.Z"` (same value as `.env`; plus `gh variable set CONTRACT_REPO --body "owner/repo"` when not the default) — `backend-ci.yml` runs the drift gate only `if: vars.CONTRACT_VERSION != ''`, so without this variable the gate is silently skipped; re-set it on every pin raise (ADR `0021`/`0025`). `drf-spectacular` still serves Swagger UI/Redoc from live code, but is NOT the canonical schema.
    - Ask the user interactively whether to run `createsuperuser` now.
 
 4. **Initial commit + push + register CI** — dispatch `devops`:
@@ -468,9 +469,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
 
 6. **Manual follow-ups (plugins)** — ❗ **Requires your action in the Claude UI; cannot be automated by the agent.** This does NOT block starting work — you can paste these later. Print these for the user to paste inside `claude`:
    ```
-   /plugin marketplace add obra/superpowers-marketplace
-   /plugin install superpowers@superpowers-marketplace
-   /plugin install engineering@knowledge-work-plugins
+   /plugin install superpowers@claude-plugins-official
    /plugin install playwright@claude-plugins-official
    /plugin install github@claude-plugins-official
    /plugin install context7@claude-plugins-official
@@ -480,7 +479,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    ```
 
    > `github@claude-plugins-official` and `context7@claude-plugins-official` provide
-   > the GitHub + Context7 MCP via plugins (recommended baseline, ADR `0011`), so the
+   > the GitHub + Context7 MCP via plugins (recommended baseline, ADR `0011`/`0024`), so the
    > `.mcp.json` + `enabledMcpjsonServers` path is an optional fallback — don't enable
    > both. Tokens are still needed: `GITHUB_PERSONAL_ACCESS_TOKEN` for the `gh` CLI,
    > `CONTEXT7_API_KEY` for context7. `claude-hud` is a personal/global HUD, not committed.
@@ -542,4 +541,4 @@ When `$ARGUMENTS` contains `--dry-run`:
 
 > Pairs with `/doctor` (mode detection / scenario classification) and `/synthesize-brief` (next step after Mode A if briefs are present in `docs/`).
 
-<!-- Last reviewed/updated: 2026-05-31 (graceful NO_ENV_DETECT stop: mode-detection + preflight probes no longer traceback on a missing env-detect.json; clean per-flag remediation) -->
+<!-- Last reviewed/updated: 2026-07-07 (audit batch E: env-detect dedup + native-Windows runtime policy; v2 batch G: NO_GH_BIN winget remediation) -->

@@ -19,21 +19,20 @@ Update a **derived project** (one bootstrapped from `claude-django`) to a newer 
 
 ## Steps
 
-1. **Log** the invocation (above).
-2. **Clone upstream** (read-only) to a temp dir:
+1. **Clone upstream** (read-only) to a temp dir:
    ```bash
    UPSTREAM_URL="${ARG_URL:-https://github.com/VadayI/claude-django.git}"
    rm -rf /tmp/claude-django && git clone --depth 1 "$UPSTREAM_URL" /tmp/claude-django
    git -C /tmp/claude-django rev-parse HEAD   # the SHA being synced to
    ```
-3. **Feature branch** (skip on `--dry-run`): off fresh `main` —
+2. **Feature branch** (skip on `--dry-run`): off fresh `main` —
    ```bash
    git checkout main && git pull
    git checkout -b chore/sync-template-$(date +%Y%m%d)
    ```
-4. **Dispatch `template-sync`** (`subagent_type: "template-sync"`) with `$UPSTREAM=/tmp/claude-django` and the dry-run flag if present. It performs the categorized sync (template-owned overwrite · merge-by-hand diff · project-owned untouched), wires any new gate scripts into the live `scripts/` + `.github/workflows/backend-ci.yml`, writes `.claude/memory/template-sync.json`, and returns the change report.
-5. **Relay** the report. Highlight the **merge-by-hand** items (CLAUDE.md / settings.json / live CI) so the user reviews those hunks, and the **Stale** section (template-owned files removed/renamed upstream) so the user can decide on manual cleanup — the sync never auto-deletes.
-6. **Open a PR** (skip on `--dry-run`): hand off to `docs-writer` (or run `/create-pr`) with a description summarizing the synced SHA range and the merge-by-hand files to review. **Never push to `main`.**
+3. **Dispatch `template-sync`** (`subagent_type: "template-sync"`) with `$UPSTREAM=/tmp/claude-django` and the dry-run flag if present. It performs the categorized sync (template-owned overwrite · merge-by-hand diff · project-owned untouched), wires any new gate scripts into the live `scripts/` + `.github/workflows/backend-ci.yml`, writes `.claude/memory/template-sync.json`, and returns the change report.
+4. **Relay** the report. Highlight the **merge-by-hand** items (CLAUDE.md / settings.json / live CI) so the user reviews those hunks, and the **Stale** section (template-owned files removed/renamed upstream) so the user can decide on manual cleanup — the sync never auto-deletes.
+5. **Open a PR** (skip on `--dry-run`): hand off to `docs-writer` (or run `/create-pr`) with a description summarizing the synced SHA range and the merge-by-hand files to review. **Never push to `main`.**
 
 ## Hard limits
 

@@ -31,5 +31,5 @@ Generate or refresh the **user-facing onboarding guides** — `docs/guides/admin
 - Never invent endpoints, auth flows, or management commands the code does not have.
 - Never print secret values; use placeholders (`$TOKEN`) in examples.
 
-> Pairs with `/verify` (per-endpoint smoke test) and `/update-docs` (api/README/WORKLOG). The guides are the "getting started" layer above both.
+> Pairs with `/verify` (per-endpoint smoke test) and `/update-docs` (api/README/ADR). The guides are the "getting started" layer above both.
 <!-- Last reviewed/updated: 2026-06-02 -->

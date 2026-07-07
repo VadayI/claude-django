@@ -36,12 +36,7 @@ Optional `$ARGUMENTS`: language code (`en`, `uk`, `pl`) or native name (`укр�
    - The body must NOT contain the literal `{LANGUAGE_NATIVE}` placeholder.
    - `grep '^@.claude/rules/output-language.md$' CLAUDE.md` returns the expected count (1 for non-English, 0 for English).
 
-5. **Log + summary** — append the invocation to `.claude/memory/command-log.jsonl`:
-   ```bash
-   mkdir -p .claude/memory
-   printf '{"ts":"%s","cmd":"/set-language","args":"%s"}\n' "$(date -Iseconds)" "${ARGUMENTS:-}" >> .claude/memory/command-log.jsonl
-   ```
-   Then print: previous language → new language, files changed (`.claude/rules/output-language.md`, `CLAUDE.md`), and the reminder that the change takes effect in the **next** message (the current orchestrator context is already loaded).
+5. **Summary** — invocation logging is automatic (`UserPromptExpansion` hook), no manual append. Print: previous language → new language, files changed (`.claude/rules/output-language.md`, `CLAUDE.md`), and the reminder that the change takes effect in the **next** message (the current orchestrator context is already loaded).
 
 ## Hard limits
 

@@ -42,7 +42,7 @@ Optional `$ARGUMENTS`:
    - `git push -u origin docs/synthesize-brief-$(date +%Y%m%d)`
    - `gh pr create --fill --title "docs: synthesize project brief"`
 
-4. **Log + summary.** Append to `.claude/memory/command-log.jsonl` and print: how many source documents were read, which were `unprocessed`, the PR URL, whether maturity stage and DoD were resolved or remain as Open Questions, and the next step (review the PR diff before merging).
+4. **Summary.** Invocation logging is automatic (`UserPromptExpansion` hook). Print: how many source documents were read, which were `unprocessed`, the PR URL, whether maturity stage and DoD were resolved or remain as Open Questions, and the next step (review the PR diff before merging).
 
 ## Hard limits
 

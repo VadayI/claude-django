@@ -1,37 +1,14 @@
 @.claude/rules/workflow.md
 @.claude/rules/tdd.md
 @.claude/rules/no-stubs.md
-@.claude/rules/api-docs.md
-@.claude/rules/app-readme.md
 @.claude/rules/git-operations.md
-@.claude/rules/code-style.md
-@.claude/rules/simplicity-surgical.md
-@.claude/rules/environment.md
 @.claude/rules/preflight.md
-@.claude/rules/project-maturity.md
 @.claude/rules/output-language.md
-@.claude/rules/verification.md
-@.claude/rules/user-guides.md
 @.claude/rules/living-plan.md
-@.claude/rules/deviation-register.md
 
 ## Agent Dispatch (MANDATORY)
 
-**You are a DISPATCHER (orchestrator). Your job: classification → delegation → synthesis of reports.**
-
-You do NOT:
-
-- Read project source code (`backend/apps/`, `backend/config/`, `tests/`) directly.
-- Write, edit, or analyze implementation code yourself.
-- Do codebase research inline — delegate to `Explore` or `ba`.
-
-You DO:
-
-- Classify the request against the pipeline triggers in @.claude/rules/workflow.md.
-- Immediately delegate the right agent/team.
-- Read agent reports and decide the next step.
-- Ask the user for clarification when requirements are ambiguous.
-- Synthesize the final answer from agent reports.
+**You are a DISPATCHER (orchestrator): classification → delegation → synthesis of reports.** The full role doctrine, tool policy (hard limits), and triage tree live in @.claude/rules/workflow.md (import №1). Never read project source (`backend/apps/`, `backend/config/`, `tests/`) or write implementation code yourself — classify the request against the pipeline triggers there and delegate; ask the user one round of clarification when requirements are ambiguous, then synthesize the final answer from agent reports.
 
 ## Iron principles of this project
 
@@ -45,8 +22,8 @@ You DO:
 
 - Use the available Skills for Django, DRF, pytest/TDD, PostgreSQL, Docker, CI.
 - If a Skill applies — prefer it over repeating rules here.
-- **Rule scoping — not every rule sits in the top `@`-import block.** The import block binds the orchestrator + all agents globally. A second tier is loaded **per-agent / per-command** via `@`-references inside the relevant prompt, to keep the global context lean: `architecture.md` (django-developer, reviewer), `serializers-permissions.md` (bootstrap, integration-architect, django-developer), `migrations-tasks.md` (dba, django-developer), `testing.md` (tester), `mcp-stack.md` (api-architect, django-developer, docs-writer, reviewer). Note: `docker-commands.md` is **referenced by path** (`## Setup` + `bootstrap.md`), not `@`-loaded; and some globally-imported rules (e.g. `api-docs.md`) are additionally `@`-cited per-agent for emphasis. A rule neither imported here nor referenced by any agent/command is an orphan — wire it or remove it.
-- The committed plugin baseline is defined in @.claude/rules/environment.md (Scope 2); manage plugin installs with `/plugins`.
+- **Rule scoping — most rules do NOT sit in the top `@`-import block.** The import block binds the orchestrator + all agents globally and stays minimal — 7 rules: `workflow`, `tdd`, `no-stubs`, `git-operations`, `preflight`, `output-language`, `living-plan`. Everything else is **tier-2**, loaded per-agent / per-command via `@`-references inside the relevant prompt (keeps the global context lean): `architecture`, `serializers-permissions`, `migrations-tasks`, `testing`, `mcp-stack`, plus the nine demoted by audit v2 batch J — `api-docs`, `app-readme`, `code-style`, `simplicity-surgical`, `environment`, `project-maturity`, `verification`, `user-guides`, `deviation-register`. Note: `docker-commands.md` is **referenced by path** (`## Setup` + `bootstrap.md`), not `@`-loaded. A rule neither imported here nor `@`-referenced by any agent/command is an orphan — wire it or remove it.
+- The committed plugin baseline is defined in `.claude/rules/environment.md` (Scope 2); manage plugin installs with `/plugins`.
 - **Read `.claude/memory/env-detect.json` once per session** (it is rewritten by the `SessionStart` hook, which runs `scripts/session-start.py` -> `scripts/detect-env.py`). Use its `platform_supported` / `shell` / `is_wsl2` fields to pick shell-appropriate syntax when dispatching `Bash` calls and when instructing agents that emit commands. Native Windows is supported (ADR `0022`): the per-session hooks are cross-platform Python, so `platform_supported` is `true` on Windows, Linux, and macOS, and `claude` may run in PowerShell or Git Bash. WSL2 on Windows is optional — only a Docker Desktop backend, not required as a shell. Bash idioms (`rm -rf`, `cp -r`, `mkdir -p`, `&&` chains, `/tmp/...`) work everywhere we operate. Python is a hard project requirement — if `env-detect.json` is missing, the SessionStart hook failed; the user must install Python 3.10+.
 - **Editing files on this `/mnt` (9p) mount — never via the `Edit`/`Write` tools.** On this mount they silently truncate the file tail or write NUL bytes; committing such a file lands a 0-byte / corrupt blob on `main` (this already happened — `e0ae693` and `0de247b` zeroed 6 agent/command/skill/plan files, recovered from `git show <prev>:<path>` + the plan ledger). Safe loop: write via **bash heredoc → scratch in `/dev/shm` → `cp` to destination → verify** (`cmp scratch dest`, `wc -c`, no-NUL via `tr -dc '\000' | wc -c`). Do the write + `cp` + verify in **one** bash call — scratch dirs do NOT persist between calls and `/tmp` can be unavailable during workspace boot. Never trust the write call's return value; read authoritative content via `git show HEAD:<path>` (a working-tree read can be a stale 9p inode cache). Run `git commit`/`push` and final byte-verification from the **host shell**, never the sandbox (9p corrupts `.git` index / `multi-pack-index`). Full incident notes: `docs/lessons.md` + HANDOFF *Нотатки середовища*.
 
@@ -55,7 +32,7 @@ You DO:
 0. **Output language — first interaction in a fresh project.** Before doing ANYTHING else (no audit, no classification, no agent dispatch), check whether `.claude/rules/output-language.md` exists. If it does NOT exist AND this is the user's first turn in the session, ask via `AskUserQuestion` (header `Language`, options: `English` (Recommended), `Українська`, `Polski`; "Other" is added by the harness). On non-English answer: copy `templates/output-language.md` → `.claude/rules/output-language.md` replacing both `{LANGUAGE_NATIVE}` tokens with the chosen native name, then append `@.claude/rules/output-language.md` to the import block at the top of this file (after `@.claude/rules/preflight.md`). Skip this step entirely if `templates/output-language.md` is missing (Quick start not done yet) — note it and proceed in English. Skip if the file already exists. To change the language later, run `/set-language`. This gate exists because `/doctor` is the recommended first command but the user may chat in another language before running it; nobody should get English answers when they wanted Ukrainian.
 1. **First action on any task: classify and delegate.** Do not open project files until an agent has run. If the pipeline in @.claude/rules/workflow.md matches — delegate immediately. If the request is ambiguous — do one round of clarification first.
 2. **Plan first for non-trivial work.** Stay in Plan Mode, present the plan (scope, sub-tasks, files, risks), and do not change files until the user approves. Details — @.claude/rules/workflow.md.
-3. After finishing the pipeline, list edge cases and suggest additional test cases. The pipeline also emits a **verification handoff** automatically: `docs-writer` generates `docs/verify/<feature>.md` (Swagger + `curl` checklist derived from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`) so the user can confirm the endpoints by hand. Regenerate or run it on demand with `/verify`. Details — @.claude/rules/verification.md.
+3. After finishing the pipeline, list edge cases and suggest additional test cases. The pipeline also emits a **verification handoff** automatically: `docs-writer` generates `docs/verify/<feature>.md` (Swagger + `curl` checklist derived from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`) so the user can confirm the endpoints by hand. Regenerate or run it on demand with `/verify`. Details — `.claude/rules/verification.md`.
 4. If a task touches more than 3 files — break it into smaller ones, each run through the pipeline separately.
 5. If there is a bug — first write a test that reproduces it, then fix it.
 6. Interactive API testing happens via **Swagger UI / Redoc** (drf-spectacular) — there is no mini-frontend in this repo. A real production frontend (if needed) belongs in a **separate repository** that consumes the **same external `claude-api-contract`** contract, so its release cycle and stack don't entangle with the API repo.
@@ -64,7 +41,7 @@ You DO:
 
 Core (default pipeline): `ba`, `api-architect`, `django-developer`, `tester`, `dba`, `reviewer`, `security-scanner`, `debugger`, `devops`, `ci-cd-engineer`, `docs-writer`
 
-Optional (activate only when relevant, not used in every project): `auditor` (workflow audit via `/audit` — reads `.claude/memory/command-log.jsonl` + live state, suggests next command), `brief-synthesizer` (PROJECT.md synthesis via `/synthesize-brief`), `qa` (E2E/Playwright), `celery-specialist` (async/Celery), `integration-architect` (OAuth/webhooks/payments), `devil` (challenge the plan), `django-refactoring-expert` (refactoring/N+1/tech debt), `domain-architect` (DDD-lite for complex domains), `guide-writer` (user-facing admin + API-consumer guides via `/guides`), `code-structure-auditor` (800-line file-size audit + folder-split proposals via `/structure-audit`), `template-sync` (sync a derived project's config to a newer claude-django version via `/update-from-template`)
+Optional (activate only when relevant, not used in every project): `auditor` (workflow audit via `/audit` — reads `.claude/memory/command-log.jsonl` + live state, suggests next command), `brief-synthesizer` (PROJECT.md synthesis via `/synthesize-brief`), `qa` (E2E/Playwright), `celery-specialist` (async/Celery), `integration-architect` (OAuth/webhooks/payments), `devil` (challenge the plan), `django-refactoring-expert` (refactoring/N+1/tech debt), `domain-architect` (DDD-lite for complex domains), `guide-writer` (user-facing admin + API-consumer guides via `/guides`), `code-structure-auditor` (800-line file-size audit + folder-split proposals via `/structure-audit`), `template-sync` (sync a derived project's config to a newer claude-django version via `/update-from-template`; adopt the config into a foreign existing project via `/adopt`)
 
 ## Stack
 
@@ -72,13 +49,13 @@ Python 3.13 · Django 6 · Django REST Framework · PostgreSQL 18 · Docker · p
 
 ## Setup
 
-System requirements, installation, and common commands — see @README.md and @.claude/rules/docker-commands.md.
+System requirements, installation, and common commands — see @README.md and `.claude/rules/docker-commands.md`.
 
 ## Environment configurator
 
-This config is also an **environment configurator**. The expected local environment is specified in @.claude/rules/environment.md. When connecting to a project (especially on a fresh machine) or whenever the environment is in doubt, run **`/doctor`**: it audits the live machine against the spec across four scopes (system tools · Claude config & access · project state · git hygiene), reports a checklist, and proposes fixes — applying them **only after you confirm** (never auto-fixing risky things, never pushing, never printing secrets).
+This config is also an **environment configurator**. The expected local environment is specified in `.claude/rules/environment.md`. When connecting to a project (especially on a fresh machine) or whenever the environment is in doubt, run **`/doctor`**: it audits the live machine against the spec across four scopes (system tools · Claude config & access · project state · git hygiene), reports a checklist, and proposes fixes — applying them **only after you confirm** (never auto-fixing risky things, never pushing, never printing secrets).
 
 ## Project bootstrap & preflight
 
-On a **new project**, the order is: `/doctor` (detects scenario, recommends `/bootstrap`) → `/bootstrap` (Mode A scaffolds from scratch, Mode B PRs missing pieces) → optionally `/synthesize-brief` (PROJECT.md from `docs/**`) → `/preflight` (build-inputs gate) → first feature via the pipeline. Spec: @.claude/rules/preflight.md.
+On a **new project**, the order is: `/doctor` (detects scenario, recommends `/bootstrap`) → `/bootstrap` (Mode A scaffolds from scratch, Mode B PRs missing pieces) → optionally `/synthesize-brief` (PROJECT.md from `docs/**`) → `/preflight` (build-inputs gate) → first feature via the pipeline. Spec: @.claude/rules/preflight.md. On an existing **foreign** Django project (no template lineage), `/doctor` detects `foreign-django` and recommends **`/adopt`** — an additive attach via `template-sync` (ADR `0026`) — instead of `/bootstrap`.
 <!-- Last reviewed/updated: 2026-06-05 (added simplicity-surgical rule — Karpathy principles 2 & 3 — wired into reviewer Quality Gate; ADR 0016) -->

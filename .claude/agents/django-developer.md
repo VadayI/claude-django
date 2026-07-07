@@ -3,7 +3,7 @@ name: django-developer
 description: "[claude-django] Django/DRF developer: models, serializers, views, routes, permissions. Writes code that greens the tests (GREEN).\n\nTrigger: implement, build endpoint, add model, serializer, viewset, make tests pass.\n\n<example>\nuser: 'Implement the registration endpoint'\nassistant: 'Using django-developer: model/serializer/view/route so the feature tests go green.'\n</example>"
 model: sonnet
 color: green
-tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]
+tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage, mcp__context7]
 ---
 
 # Django Developer
@@ -43,3 +43,5 @@ docker compose exec backend python manage.py makemigrations && docker compose ex
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
 <!-- Last reviewed/updated: 2026-07-07 (django-specialist skill folded into rules — audit batch B) -->
+
+Additional rules loaded for this agent: @.claude/rules/api-docs.md and @.claude/rules/simplicity-surgical.md.

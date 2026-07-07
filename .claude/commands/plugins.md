@@ -8,19 +8,10 @@ Quick **plugin** setup + status for this project — a thin wrapper over `/docto
 ## Behavior
 
 1. **Runtime gate** as `/doctor` Step 0.5 (read `.claude/memory/env-detect.json`; hard-STOP on `NO_ENV_DETECT` / `UNSUPPORTED_PLATFORM`).
-2. **Status** — run the plugin portion of `/doctor`'s `claude` scope: compare installed plugins against the expected set from `@.claude/rules/environment.md` Scope 2 and `.claude/settings.json` `enabledPlugins`:
-   - `superpowers@superpowers-marketplace`
-   - `engineering@knowledge-work-plugins`
-   - `playwright@claude-plugins-official`
-   - `github@claude-plugins-official`
-   - `context7@claude-plugins-official`
-   - `claude-hud@claude-hud` (personal/global — recommended but not in committed `enabledPlugins`)
-   Report each as ✅ installed / ❌ missing.
-3. **Paste-ready install block** — for any missing plugin (or always, if the user asks), print the lines to paste inside `claude` (identical to `/bootstrap` Step 6):
+2. **Status** — run the plugin portion of `/doctor`'s `claude` scope: compare installed plugins against the committed baseline defined **authoritatively in `@.claude/rules/environment.md` Scope 2** (read the list there — do NOT duplicate it here), plus the personal/global recommendations (`claude-hud@claude-hud`, `engineering@knowledge-work-plugins` — recommended, not in committed `enabledPlugins`). Report each as ✅ installed / ❌ missing.
+3. **Paste-ready install block** — for any missing plugin (or always, if the user asks), print the lines to paste inside `claude` (keep identical to `/bootstrap` Step 6 — that block is the canonical copy):
    ```
-   /plugin marketplace add obra/superpowers-marketplace
-   /plugin install superpowers@superpowers-marketplace
-   /plugin install engineering@knowledge-work-plugins
+   /plugin install superpowers@claude-plugins-official
    /plugin install playwright@claude-plugins-official
    /plugin install github@claude-plugins-official
    /plugin install context7@claude-plugins-official
@@ -28,7 +19,7 @@ Quick **plugin** setup + status for this project — a thin wrapper over `/docto
    /plugin install claude-hud
    /claude-hud:setup
    ```
-   Note clearly: these are typed by the **user** in the Claude UI — the agent cannot run them.
+   Note clearly: these are typed by the **user** in the Claude UI — the agent cannot run them. Optional personal extra (not committed): `/plugin install engineering@knowledge-work-plugins` — generic work skills overlapping the project agents (ADR `0024`).
 
 ## Hard limits
 

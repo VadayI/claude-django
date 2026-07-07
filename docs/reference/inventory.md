@@ -36,7 +36,7 @@ Not used in every project — activate only when the task calls for it:
 | `domain-architect` | DDD-lite modeling for genuinely complex domains | opus |
 | `guide-writer` | User-facing onboarding guides — `docs/guides/admin.md` + `docs/guides/api-consumer.md` (run via `/guides`) | sonnet |
 | `code-structure-auditor` | File-size audit (800-line limit) + folder-split proposals (run via `/structure-audit`) | sonnet |
-| `template-sync` | Sync a derived project's config to a newer `claude-django` version, preserving local customizations (run via `/update-from-template`) | sonnet |
+| `template-sync` | Sync a derived project's config to a newer `claude-django` version, preserving local customizations (run via `/update-from-template`); adopt mode attaches the config additively to a foreign existing project (run via `/adopt`) | sonnet |
 
 ## Rules (22) — `.claude/rules/`
 
@@ -59,7 +59,7 @@ These are standalone skills, not vendored into the repo — enable them in your 
 - `mcp-builder` — building MCP servers (Python/FastMCP or Node SDK). Useful when extending `.mcp.json` with a project-specific server.
 - `web-artifacts-builder` — elaborate React/Tailwind/shadcn HTML artifacts. Optional — this repo is backend-only; the interactive API client is Swagger UI / Redoc (drf-spectacular), not a hand-rolled frontend.
 
-> Superpowers marketplace is already enabled via `.claude/settings.json` (`enabledPlugins.superpowers@superpowers-marketplace`), so `brainstorming` and `writing-plans` are available without extra setup — just confirm with `/plugin` if they show as installed.
+> Superpowers marketplace is already enabled via `.claude/settings.json` (`enabledPlugins.superpowers@claude-plugins-official`), so `brainstorming` and `writing-plans` are available without extra setup — just confirm with `/plugin` if they show as installed.
 
 ## Templates — `templates/`
 
@@ -99,12 +99,13 @@ Slash-commands that orchestrate agents over the repo / a GitHub PR (PR commands 
 - `/guides [admin|api]` — generate/refresh the user-facing onboarding guides `docs/guides/admin.md` (operator) and `docs/guides/api-consumer.md` (integrator) via `guide-writer`, reconciling every command/endpoint they name against the code + `docs/api/openapi.yml`. Auto-refreshed in the pipeline's Documentation phase when the surface changes (see `.claude/rules/user-guides.md`).
 - `/structure-audit [path]` — file-size & structure audit via `code-structure-auditor`: runs `scripts/check_file_size.sh`, lists files over/approaching the 800-line limit, and proposes concrete folder-splits (package + `__init__.py` re-exports). Read-only; hand 🔴 splits to `django-refactoring-expert`.
 - `/update-from-template [url|ref] [--dry-run]` — update a project bootstrapped from `claude-django` to a newer template version via `template-sync`: overwrites only template-owned files (agents, commands, skills, rules, gate scripts), preserves project-owned ones (`CLAUDE.md` edits, `settings.json`, `.claude/memory/`, `output-language.md`, `docs/`, `backend/`), surfaces merge-by-hand files as diffs, and opens a **PR** (never pushes to `main`). See ADR `0014`.
+- `/adopt [url|ref] [--dry-run]` — attach the config to an **existing foreign Django project** (no template lineage): layout survey, additive-only copy via `template-sync` adopt mode (existing files never overwritten — conflicts arrive as `*.adopt-proposed` + diffs), writes the lineage marker so future upgrades go through `/update-from-template`, opens a **PR**. See ADR `0026`.
 - `/config-check` — thin wrapper over `/doctor`'s `claude` scope: quick audit of `.claude/settings.json`, `.mcp.json`, MCP servers (github/context7), env keys (set/unset only), and hooks.
 - `/plugins` — thin wrapper over `/doctor`'s plugin checks: reports installed vs expected plugins and prints the paste-ready `/plugin install …` block (plugin install is a manual UI step the agent can't run).
 
 ## Plugins (recommended baseline)
 
-Auto-enabled per-project via `.claude/settings.json` `enabledPlugins` (ADR `0011`, derived from the maintainer's proven setup): `superpowers@superpowers-marketplace` (brainstorming/writing-plans), `engineering@knowledge-work-plugins`, `playwright@claude-plugins-official` (browser tools used by the `qa` agent / E2E), and `github@claude-plugins-official` + `context7@claude-plugins-official` (which provide the GitHub + Context7 MCP — see below). `claude-hud@claude-hud` is recommended too but stays a **personal/global** HUD install, not committed per-project. `code-review` and `code-simplifier` are intentionally **not** in the baseline — their project-agnostic skills duplicate the project-tuned `reviewer` / `security-scanner` / `django-refactoring-expert` agents, so the canonical paths stay `/review-pr`, `/security-check`, `/simplify`. Install lines are printed by `/bootstrap` Step 6 and `/plugins` (plugin install is a manual UI action).
+Auto-enabled per-project via `.claude/settings.json` `enabledPlugins` (ADR `0011`/`0024`): `superpowers@claude-plugins-official` (brainstorming/writing-plans), `playwright@claude-plugins-official` (browser tools used by the `qa` agent / E2E), and `github@claude-plugins-official` + `context7@claude-plugins-official` (which provide the GitHub + Context7 MCP — see below). `claude-hud@claude-hud` and `engineering@knowledge-work-plugins` are recommended as **personal/global** installs, not committed per-project (ADR `0024`: engineering overlaps the project-tuned agents on 6/10 skills and bundles a second github MCP connector). `code-review` and `code-simplifier` are intentionally **not** in the baseline — their project-agnostic skills duplicate the project-tuned `reviewer` / `security-scanner` / `django-refactoring-expert` agents, so the canonical paths stay `/review-pr`, `/security-check`, `/simplify`; `feature-dev` / `pr-review-toolkit` / `commit-commands` are likewise excluded (ADR `0024`). Install lines are printed by `/bootstrap` Step 6 and `/plugins` (plugin install is a manual UI action).
 
 ## MCP servers — official plugins (recommended) or `.mcp.json` (fallback)
 
@@ -127,4 +128,4 @@ Context7 (by Upstash) serves **current** library documentation to agents, so `ap
 
 ## Project settings — `.claude/settings.json`
 
-Per-project Claude Code config: tool permissions (allow `git`/`gh`/`docker`/`npm`, deny direct push to `main` and reading `.env`/secrets), `DJANGO_SETTINGS_MODULE`, auto-enabled plugins (Superpowers, `engineering@knowledge-work-plugins`, plus `playwright`/`github`/`context7` from `claude-plugins-official` — ADR `0011`), and a `Stop` hook that runs `ruff format` + `ruff check --fix` after each turn (silently skips if the `backend` container is down). `model` defaults to `opusplan` — change to taste. (github + context7 now come via plugins, so `enabledMcpjsonServers` is empty by default; `.mcp.json` is the fallback.)
+Per-project Claude Code config: tool permissions (allow `git`/`gh`/`docker`/`npm`, deny direct push to `main` and reading `.env`/secrets), `DJANGO_SETTINGS_MODULE`, auto-enabled plugins (`superpowers`/`playwright`/`github`/`context7` from `claude-plugins-official` — ADR `0011`/`0024`), and a `Stop` hook that runs `ruff format` + `ruff check --fix` after each turn (silently skips if the `backend` container is down). `model` defaults to `opusplan` — change to taste. (github + context7 now come via plugins, so `enabledMcpjsonServers` is empty by default; `.mcp.json` is the fallback.)

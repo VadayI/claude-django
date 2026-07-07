@@ -25,7 +25,7 @@ Up-to-date library docs.
 | Tool | When to use |
 |------|-------------|
 | `resolve-library-id` | Find the library id first |
-| `query-docs` | Current docs for Django, DRF, PostgreSQL when knowledge may be stale |
+| `get-library-docs` | Current docs for Django, DRF, PostgreSQL when knowledge may be stale |
 
 ## Notes
 
@@ -37,7 +37,7 @@ Up-to-date library docs.
 
 - `docs-writer` — opens the PR (`create_pull_request` / `gh pr create`).
 - `reviewer` — reads PR details via `pull_request_read` at the Quality Gate.
-- `api-architect`, `django-developer` — verify current Django/DRF/PostgreSQL APIs via context7 (`resolve-library-id` → `query-docs`) before designing/implementing.
+- `api-architect`, `django-developer` — verify current Django/DRF/PostgreSQL APIs via context7 (`resolve-library-id` → `get-library-docs`) before designing/implementing.
 
 > Loaded per-agent via `@.claude/rules/mcp-stack.md` in each agent's prompt, not via the global CLAUDE.md import block (the orchestrator rarely calls MCP directly).
 <!-- Last reviewed/updated: 2026-06-01 (github/context7 via official plugins; .mcp.json is fallback — ADR 0011) -->

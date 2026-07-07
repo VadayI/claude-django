@@ -24,9 +24,10 @@
 #   TARGET_DIR     where to seed the config (default: current dir).
 #   --ref GIT_REF  branch/tag to clone (default: the upstream default branch).
 #   --url URL      clone from a fork instead of the canonical upstream.
-#   --force        overwrite an already-seeded folder (.claude/ present).
-#                  For upgrading an existing project prefer /update-from-template,
-#                  which preserves project-owned files (ADR 0014).
+#   --force        overwrite an already-seeded folder (.claude/ present) or an
+#                  existing project (differing root files are backed up as *.bak).
+#                  Prefer /update-from-template for a template-derived project
+#                  (ADR 0014) and /adopt for a foreign project (additive, ADR 0026).
 #
 # Env override: CLAUDE_DJANGO_URL takes precedence over the built-in default URL.
 set -euo pipefail
@@ -44,6 +45,14 @@ ok()   { printf '\033[1;32m  ok\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m  !!\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mFATAL\033[0m %s\n' "$*" >&2; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
+# seed SRC DST -- copy; if DST exists and differs, keep a one-time DST.bak first.
+seed() {
+  local src="$1" dst="$2"
+  if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
+    cp "$dst" "$dst.bak"; warn "existing $(basename "$dst") saved as $(basename "$dst").bak"
+  fi
+  cp "$src" "$dst"
+}
 
 # --- 0. Parse args ------------------------------------------------------------
 while [ $# -gt 0 ]; do
@@ -76,6 +85,20 @@ if [ -e "$TARGET/.claude" ] && [ "$FORCE" -ne 1 ]; then
   die "$TARGET already has .claude/ (looks seeded). Re-run with --force to overwrite, or use /update-from-template to upgrade an existing project (preserves your edits, ADR 0014)."
 fi
 
+# Foreign-project guard (ADR 0026): this seeder is for GREENFIELD folders (or
+# re-seeding a template-derived project with --force). An existing non-template
+# project must be adopted additively -- blind copies would overwrite its files.
+if [ "$FORCE" -ne 1 ]; then
+  if [ -e "$TARGET/manage.py" ] || [ -e "$TARGET/backend/manage.py" ]; then
+    die "$TARGET contains a Django project (manage.py). Use /adopt from Claude Code CLI for an additive attach (never overwrites, ADR 0026) -- or --force to seed anyway (differing root files get .bak copies)."
+  fi
+  for f in CLAUDE.md Makefile docker-compose.yml .gitignore; do
+    if [ -e "$TARGET/$f" ]; then
+      die "$TARGET already has $f (existing project?). Use /adopt for an additive attach (ADR 0026), or re-run with --force (keeps $f.bak)."
+    fi
+  done
+fi
+
 # --- 3. Clone the template to a temp dir (cleaned on exit) --------------------
 CLONE="$(mktemp -d)"
 cleanup() { rm -rf "$CLONE"; }
@@ -95,16 +118,18 @@ ok "cloned"
 # Mirrors the README "Quick start" copy block, kept in lockstep with it.
 log "Copying config files"
 cp -r "$CLONE/.claude"        "$TARGET/"
-cp    "$CLONE/CLAUDE.md"      "$TARGET/"
-cp    "$CLONE/.mcp.json"      "$TARGET/"
-cp    "$CLONE/.gitignore"     "$TARGET/"
-cp    "$CLONE/.gitattributes" "$TARGET/"
+seed  "$CLONE/CLAUDE.md"      "$TARGET/CLAUDE.md"
+seed  "$CLONE/.mcp.json"      "$TARGET/.mcp.json"
+seed  "$CLONE/.gitignore"     "$TARGET/.gitignore"
+seed  "$CLONE/.gitattributes" "$TARGET/.gitattributes"
 cp -r "$CLONE/scripts"        "$TARGET/"   # detect-env.py (SessionStart hook) -- REQUIRED, hook fails silently without it
 cp -r "$CLONE/templates"      "$TARGET/"   # FULL templates/ -- /bootstrap Mode A needs all of it
-cp    "$CLONE/templates/docker-compose.yml" "$TARGET/"   # also at root (devcontainer entrypoint)
-cp    "$CLONE/templates/Makefile"           "$TARGET/"   # make help/test/up/...
+seed  "$CLONE/templates/docker-compose.yml" "$TARGET/docker-compose.yml"   # also at root (devcontainer entrypoint)
+seed  "$CLONE/templates/Makefile"           "$TARGET/Makefile"             # make help/test/up/...
 mkdir -p "$TARGET/.github/workflows"
-cp "$CLONE"/templates/.github/workflows/* "$TARGET/.github/workflows/"
+for wf in "$CLONE"/templates/.github/workflows/*; do
+  seed "$wf" "$TARGET/.github/workflows/$(basename "$wf")"
+done
 ok "copied"
 
 # --- 4b. Seed .env so the project is runnable right away ----------------------

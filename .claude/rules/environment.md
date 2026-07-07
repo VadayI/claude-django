@@ -18,7 +18,7 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Wi
 | Python in container | 3.13.x (separate from the host Python above) | `docker compose exec -T backend python --version` |
 | **Node.js (HARD REQUIREMENT)** | 18+ on PATH | `node --version`. Needed only to install the Claude Code CLI via npm (`npm install -g @anthropic-ai/claude-code`); the native Windows installer needs no Node. `detect-env.py` records the derived `node_supported` flag; `/doctor` reports `NO_NODE` if node is absent or < 18. Install via `nvm` if missing. |
 | git | present | `git --version` |
-| GitHub CLI | present in WSL2 (a Windows `gh.exe` from `winget` is NOT visible inside WSL2; install via `apt` or the GitHub CLI Linux instructions) | `gh --version` |
+| GitHub CLI | present in the shell where `claude` runs. Native Windows: `gh.exe` via `winget install GitHub.cli` is the correct install (ADR `0022`). WSL2: Linux `gh` via `apt` (a Windows `gh.exe` is NOT visible inside WSL2) | `gh --version` |
 | **Claude Code CLI** | `claude` on PATH (native Windows installer, or `npm install -g @anthropic-ai/claude-code`) | `claude --version` works. On native Windows, PowerShell / Git Bash are fine. On WSL2, install the Linux-native CLI inside Ubuntu so `which claude` is a `/home/...` or `/usr/...` path (not `/mnt/c/...`). |
 
 ### Windows: native or WSL2 (both supported)
@@ -53,7 +53,7 @@ in env-detect schema v6).
 
 | Requirement | Expected | Check |
 |---|---|---|
-| Plugins (committed baseline) | `superpowers@superpowers-marketplace`, `engineering@knowledge-work-plugins`, `playwright@claude-plugins-official`, `github@claude-plugins-official`, `context7@claude-plugins-official` installed (auto-enabled via `.claude/settings.json` `enabledPlugins`). `claude-hud@claude-hud` is recommended too but stays a **personal/global** install (HUD UI), not committed per-project. `code-review` / `code-simplifier` are intentionally NOT in the baseline — covered by the project-tuned `reviewer` / `security-scanner` / `django-refactoring-expert` agents (ADR `0011`). | `/plugin` list; compare with `.claude/settings.json` `enabledPlugins`. See ADR `0011`. |
+| Plugins (committed baseline) | `superpowers@claude-plugins-official`, `playwright@claude-plugins-official`, `github@claude-plugins-official`, `context7@claude-plugins-official` installed (auto-enabled via `.claude/settings.json` `enabledPlugins`). Personal/global (recommended, NOT committed): `claude-hud@claude-hud` (HUD UI) and `engineering@knowledge-work-plugins` (generic work skills; 6/10 overlap the project-tuned agents and it bundles a second `github` MCP connector — ADR `0024`). `code-review` / `code-simplifier` / `feature-dev` / `pr-review-toolkit` / `commit-commands` are intentionally NOT in the baseline — covered by (or conflicting with) the project-tuned pipeline (ADR `0011`/`0024`). | `/plugin` list; compare with `.claude/settings.json` `enabledPlugins`. See ADR `0011`/`0024`. |
 | MCP servers (github + context7) | provided by the **official plugins** `github@claude-plugins-official` + `context7@claude-plugins-official` (recommended, per ADR `0011`). The committed `.mcp.json` + `enabledMcpjsonServers` path is an optional fallback — do NOT enable both at once (double-registers the same MCP). | `/plugin` shows both installed; `.mcp.json` is NOT referenced in `enabledMcpjsonServers` when using plugins |
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | set — provide via the project `.env` (sourced by `scripts/claude.sh` / `make cc`), **not** a shell-rc export. Still required even with the github plugin: the wrapper copies it into `GH_TOKEN` (which `gh` actually reads — `gh` ignores `GITHUB_PERSONAL_ACCESS_TOKEN`) and drops any stale `GITHUB_TOKEN`. See ADR `0023`. | `[ -n "$GITHUB_PERSONAL_ACCESS_TOKEN" ]` (never print the value) |
 | `CONTEXT7_API_KEY` | set — provide via the project `.env` (sourced by `scripts/claude.sh` / `make cc`); the context7 plugin (or the `.mcp.json` fallback) needs it for doc lookups. See ADR `0023`. | `[ -n "$CONTEXT7_API_KEY" ]` (never print the value) |
@@ -78,8 +78,9 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 | Requirement | Expected | Check |
 |---|---|---|
 | Skeleton | `backend/`, `docs/api/`, `docs/decisions/`, `docs/plans/`, `.claude/memory/` exist | `test -d <dir>` |
-| `CONTRACT_VERSION` pin | set in `.env` to the consumed `claude-api-contract` tag (`vX.Y.Z`); raising it is a deliberate PR (ADR `0017`) | `grep -q '^CONTRACT_VERSION=' .env` |
+| `CONTRACT_VERSION` pin | set in `.env` to the consumed `claude-api-contract` tag (`vX.Y.Z`); raising it is a deliberate PR (ADR `0017`). `CONTRACT_URL` (optional) is a **fetch-only** override — the drift `--check` still validates against the pin (ADR `0025`) | `grep -q '^CONTRACT_VERSION=' .env` |
 | External contract vendored | `docs/api/openapi.yml` present, fetched at the pinned version via `scripts/pull_contract.sh` (vendored copy of the external canon, never generated) | `test -f docs/api/openapi.yml` |
+| CI drift-gate armed | GitHub Actions repository variable `CONTRACT_VERSION` set and equal to the `.env` pin — `backend-ci.yml` runs the drift gate only `if: vars.CONTRACT_VERSION != ''` (`/bootstrap` sets it; re-set on every pin raise, ADR `0025`) | `gh variable get CONTRACT_VERSION` — non-empty, equals the `.env` value |
 | Config files | `CLAUDE.md`, `.claude/`, `docker-compose.yml`, `.env.example` present (committed) | `test -f <file>` |
 | `.env.example` | committed canonical key list; new clones use it to seed `.env` | `test -f .env.example` |
 | `.env` | local-only (gitignored), copied from `.env.example`; secrets filled | `test -f .env` (never print contents). Missing → `cp .env.example .env && $EDITOR .env` |

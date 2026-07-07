@@ -35,3 +35,5 @@ You turn a fuzzy request into clear requirements BEFORE any code.
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
 <!-- Last reviewed/updated: 2026-07-07 (endpoint draft = mapping input, not contract authorship) -->
+
+Additional rule loaded for this agent: @.claude/rules/project-maturity.md — the maturity stage drives pipeline depth; emit an Open Question when `PROJECT.md` lacks it.

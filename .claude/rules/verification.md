@@ -28,7 +28,7 @@ The verification guide is generated from a machine-readable route registry plus 
   ```json
   {
     "method": "POST",
-    "path": "/api/v1/articles/",
+    "path": "/api/v1/articles",
     "app": "articles",
     "feature": "article-crud",
     "auth": "authenticated",
@@ -37,7 +37,7 @@ The verification guide is generated from a machine-readable route registry plus 
   }
   ```
 
-  `auth` is one of `anonymous` | `authenticated` | `owner` | `admin`. `path` is the full versioned path. The file is a JSON array of such objects.
+  `auth` is one of `anonymous` | `authenticated` | `owner` | `admin`. `path` is the full versioned path (no trailing slash — ADR `0025`). The file is a JSON array of such objects. **Mapping to the contract-side registry:** the contract repo keeps its own committed `.claude/memory/endpoints.json` with a different schema (`operationId`, `scopes`, `auth: "bearerAuth"`, `surface`); this backend registry is derived from the contract in phase 2, not shared with it — `auth` here collapses the contract's `security` + `scopes` into four DRF-permission buckets, and `operationId`/`surface` are intentionally dropped (they matter to codegen/frontends, not to DRF tests).
 
 - **`docs/api/openapi.yml`** — the **external contract** vendored from `claude-api-contract` (pulled via `scripts/pull_contract.sh`, pinned by `CONTRACT_VERSION`). The source of truth for field shapes and the final code set. The backend does not generate it.
 
@@ -61,7 +61,7 @@ After GREEN, before the PR opens, `docs-writer` reconciles the routes across **t
    - includes the verify file in the PR.
 4. **On demand.** `/verify` regenerates `docs/verify/<feature>.md` from the same sources; with `--run` it additionally executes the guide against the live server and reports pass/fail (see `.claude/commands/verify.md`).
 
-## Binds these agents (rule is auto-loaded)
+## Binds these agents (loaded per-agent via `@`-reference)
 
 - `api-architect` — the contract is incomplete until the feature's routes are recorded in `.claude/memory/endpoints.json` (method, path, app, auth, declared statuses).
 - `docs-writer` — owns `docs/verify/<feature>.md`; runs the three-way reconciliation (`endpoints.json <-> openapi.yml <-> INDEX.md`) and generates the guide before declaring the PR ready.

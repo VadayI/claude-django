@@ -3,7 +3,7 @@ name: qa
 description: "[claude-django] E2E/browser testing specialist (Playwright). NOT for Python unit/feature tests (that's tester). Optional — used when there is a real UI or full user-flow to verify.\n\nTrigger: e2e, end-to-end, playwright, browser test, user flow, visual regression, smoke test, test on mobile.\n\n<example>\nuser: 'Verify the full registration flow in the browser'\nassistant: 'Using qa: Playwright E2E covering the registration journey, including mobile viewport.'\n</example>"
 model: opus
 color: teal
-tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]
+tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage, mcp__playwright]
 ---
 
 # QA Engineer (E2E)

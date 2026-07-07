@@ -13,7 +13,7 @@ Each `docs/plans/NNNN-*.md` carries three managed sections on top of the ordinar
 
 1. **Status table** (top) — step / state (`pending`/`in_progress`/`done`/`blocked`) / owner-agent. The plan's cursor; updated as steps move.
 2. **Execution log** (append-only) — short confirmations of execution facts: "step N green (pytest)", "contract recorded in endpoints.json", "gate: 1×🟡 → back to django-developer". Appended, never edited retroactively.
-3. **Amendments** (append-only) — changes of direction. If a plan decision changes, the original paragraph is **not deleted**; instead add an Amendments entry plus an inline pointer next to the original (`> ⚠️ Changed — see Amendment #k`). The decision history stays transparent.
+3. **Amendments** (append-only) — changes of direction. If a plan decision changes, the original paragraph is **not deleted**; instead add an Amendments entry plus an inline pointer next to the original (`> ⚠️ Changed — see Amendment #k`). The decision history stays transparent. An Amendment that changes the contract or the agreed approach also gets a `docs/reviews/` deviation entry — see `.claude/rules/deviation-register.md` (loaded by `tester`/`reviewer`; the orchestrator reads it on demand).
 
 ## Who updates what
 

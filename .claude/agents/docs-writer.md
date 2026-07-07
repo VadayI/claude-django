@@ -3,7 +3,7 @@ name: docs-writer
 description: "[claude-django] Documentation: docs/api (endpoint descriptions), README, ADR in docs/decisions, updating docs/WORKLOG, PR description.\n\nTrigger: docs, document, readme, api docs, adr, worklog, pr description, changelog.\n\n<example>\nuser: 'Document the auth endpoints and open a PR'\nassistant: 'Using docs-writer: docs/api/auth.md, verify guide, gh pr create with a description.'\n</example>"
 model: sonnet
 color: blue
-tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]
+tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage, mcp__github]
 ---
 
 # Docs Writer
@@ -34,3 +34,5 @@ The final phase of the pipeline: you document and prepare the PR.
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
 <!-- Last reviewed/updated: 2026-06-05 (living-plan Execution log; WORKLOG persisted at session end via /wrap-up — single owner, not in pipeline) -->
+
+Additional rules loaded for this agent: @.claude/rules/api-docs.md and @.claude/rules/app-readme.md.

@@ -6,7 +6,7 @@ The REST API contract is the primary user-facing artifact this repo serves, but 
 
 ## What "the contract" means here
 
-1. **Canonical OpenAPI schema — external.** Authored in `claude-api-contract` (TypeSpec → OpenAPI 3.1, bundled), released as a git tag `vX.Y.Z`. This backend pins it via `CONTRACT_VERSION` and fetches `openapi.yml@CONTRACT_VERSION` with `scripts/pull_contract.sh` (git tag + raw URL). Raising the pin is a deliberate PR, never an automatic drift. The committed `docs/api/openapi.yml` is a **vendored copy of the external canon**, not a generated output.
+1. **Canonical OpenAPI schema — external.** Authored in `claude-api-contract` (TypeSpec → OpenAPI 3.1, bundled), released as a git tag `vX.Y.Z`. This backend pins it via `CONTRACT_VERSION` and fetches `openapi.yml@CONTRACT_VERSION` with `scripts/pull_contract.sh` (git tag + raw URL). An optional `CONTRACT_URL` lets the build fetch the contract from an online URL instead; it is **fetch-only** — the drift `--check` always validates against the pinned tag (ADR `0025`). Raising the pin is a deliberate PR, never an automatic drift. The committed `docs/api/openapi.yml` is a **vendored copy of the external canon**, not a generated output.
 2. **Interactive UI — local, generated.** `Swagger UI` at `/api/schema/swagger/` and `Redoc` at `/api/schema/redoc/`, served by Django in dev and on staging via `drf-spectacular`. drf-spectacular is used **only** to render a developer-facing client from the live code — it is **not** the canonical schema.
 3. **Per-endpoint human notes (when needed)** — narrative markdown in `docs/api/<resource>.md` for non-obvious things the schema can't carry (rate-limit reasoning, deprecation path, business invariants, idempotency keys).
 4. **Error envelope** — all 4xx/5xx responses share the contract's envelope: `{"detail": "<human>"}` for simple errors and `{"errors": [{"field", "code", "message"}]}` for validation errors, produced by `apps.common.exceptions.exception_handler`. The envelope is part of the consumed contract; see `@.claude/rules/serializers-permissions.md` (ADR `0020`) for the code/status map.
@@ -43,7 +43,7 @@ bash scripts/check_contract_conformance.sh    # schemathesis + django-contract-t
 - URLs include `SpectacularSwaggerView`, `SpectacularRedocView` (UI). `SpectacularAPIView` may serve a live schema to the UI, but the **committed `docs/api/openapi.yml` is the vendored external contract**, not its output.
 - `pyproject.toml` pins `drf-spectacular>=0.27` (UI), plus `schemathesis` (pinned, 3.1) and `django-contract-tester` (conformance).
 
-## Binds these agents (rule is auto-loaded)
+## Binds these agents (loaded per-agent via `@`-reference)
 
 - `api-architect` — reads the pinned external contract and records the feature's routes in `.claude/memory/endpoints.json`. Does NOT author the contract here; a needed contract change is raised in `claude-api-contract`.
 - `django-developer` — implements against the external contract; adds `@extend_schema` only for Swagger-UI parity; runs the conformance gate before declaring GREEN.

@@ -15,6 +15,7 @@ You bring a **derived project** (one bootstrapped from `claude-django`) up to a 
 - A clone of the upstream template, provided by `/update-from-template` at `$UPSTREAM` (default `/tmp/claude-django`). The canonical source is `https://github.com/VadayI/claude-django.git`; a fork URL is used only when the user passes one.
 - The live project (the repo root you run in).
 - `.claude/memory/template-sync.json` if it exists — records the last-synced upstream commit SHA.
+- `MODE` — `update` (default; template-derived project) or `adopt` (foreign project; dispatched by `/adopt` — see *Adopt mode* below).
 
 ## File ownership — the rule that keeps the project safe
 
@@ -59,6 +60,19 @@ Most derived projects deleted `templates/` after bootstrap, so a brand-new gate 
 6. Write `.claude/memory/template-sync.json`: `{"upstream": "<url>", "synced_sha": "<HEAD of $UPSTREAM>", "synced_at": "<ISO>", "previous_sha": "<old value or null>"}`.
 7. Produce the report.
 
+## Adopt mode (foreign project; dispatched by `/adopt`, ADR `0026`)
+
+When dispatched with `MODE=adopt`, the target is an **existing Django project with NO template lineage**. The ownership model above tightens to **additive-only**:
+
+1. **Preconditions differ:** `.claude/` may be absent (normal), and `.claude/memory/template-sync.json` MUST be absent — if it exists this is a derived project: STOP and report "use `/update-from-template`".
+2. **Template-owned becomes "new files only":** copy `.claude/**` (agents/commands/skills/rules — still skipping `output-language.md`: the language gate creates it later), `scripts/detect-env.py`, `scripts/session-start.py`, `scripts/policy/*.py`, and the gate scripts `$UPSTREAM/templates/scripts/check_*.sh` + `pull_contract.sh` → live `scripts/` (+`chmod +x`). If a same-path file exists and differs — do NOT overwrite: write the upstream version as `<name>.adopt-proposed` and add it to the merge report.
+3. **Merge-by-hand files are never edited in adopt mode** (`CLAUDE.md`, `.claude/settings.json`, `.mcp.json`, live `.github/workflows/*`, `Makefile`, `docker-compose.yml`, `pyproject.toml`, `.gitignore`): absent → copy the template version; present → emit `<name>.adopt-proposed` + a diff summary. For CI specifically, prefer proposing `backend-ci.yml` as a NEW separate workflow file when the project already has its own CI (avoids job-name collisions with required status checks).
+4. **`templates/` is NOT copied wholesale** — it is a scaffolding source for `/bootstrap` Mode A, which never runs on a foreign project. Only the pieces named above travel.
+5. **`.env.example`:** present → propose the missing keys (`CONTRACT_REPO`/`CONTRACT_VERSION`/`CONTRACT_URL`, `GITHUB_PERSONAL_ACCESS_TOKEN`, `CONTEXT7_API_KEY`, staging vars) as a diff; absent → copy the template's.
+6. **Backend code untouched:** `apps.common` (error envelope, `HasScope`, health) is NOT auto-installed — list it as a manual follow-up pointing at `.claude/rules/serializers-permissions.md`; same for the `DefaultRouter(trailing_slash=False)` convention (`.claude/rules/architecture.md`) and the contract pin (`.claude/rules/api-docs.md`).
+7. **Finish by writing** `.claude/memory/template-sync.json`: `{"upstream", "synced_sha", "synced_at", "previous_sha": null, "mode": "adopt"}` — this creates the lineage, so every FUTURE update goes through `/update-from-template`.
+8. **Report** gains an `Adopt` header line, the layout survey, and an `*.adopt-proposed` section listing every proposal. Everything else (PR-only, no secrets, `--dry-run`) applies unchanged.
+
 ## Report format
 
 ```
@@ -93,4 +107,4 @@ Next: open a PR (hand to docs-writer / /create-pr). Do NOT push to main.
 - If `--dry-run` was requested, do all the comparison and produce the report, but make NO file changes.
 
 > Goal: a derived project can adopt newer agents, rules, commands, skills, and gates with one command — gaining template improvements while keeping every project-specific customization intact.
-<!-- Last reviewed/updated: 2026-07-07 (session-start.py (batch A); log-cmd.py -> policy/ hooks (batch D)) -->
+<!-- Last reviewed/updated: 2026-07-07 (batches A/D renames; v2 batch K: adopt mode) -->

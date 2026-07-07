@@ -117,7 +117,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 - **Node.js 18+ (via `nvm`; the native Windows installer needs none)** — needed to install the Claude Code CLI via `npm install -g @anthropic-ai/claude-code` and for `npx`-based skills (e.g. the Context7 MCP). `/doctor` reports `NO_NODE` if it is missing or below 18
 - A GitHub account
 
-## Quick start (attach the config to an existing project)
+## Quick start (seed the config into a new project folder)
 
 > **First time on this Windows machine?** Two options. **(a) Native Windows:** install Python 3.10+ (make sure `python --version` works — not the Microsoft Store alias), Node 18+ (only if installing the CLI via npm), `git`, `gh`, and Docker Desktop; run everything from PowerShell or Git Bash. **(b) WSL2:** from PowerShell `wsl --install -d Ubuntu` then `wsl --set-default Ubuntu`, set a Unix user/password, and install the toolchain: `sudo apt update && sudo apt install -y git curl gh python-is-python3 python3-pip` (verify `ID=ubuntu` in `/etc/os-release`, 24.04+).
 >
@@ -186,9 +186,13 @@ Then install the plugins (see below) and adjust `CLAUDE.md` for the project name
 6. `claude` → `/doctor` → `/preflight` — re-verify environment and build inputs (six blockers: brief, stack, maturity stage, Context7, contract link, GitHub access).
 7. First feature through the standard pipeline (`ba → api-architect → ...`).
 
-For an existing project from a second machine: skip step 1 (clone instead), run `/doctor` — it will detect `active` or `existing-incomplete` and tell you whether to run `/bootstrap` in resume mode.
+For an existing project from a second machine: skip step 1 (clone instead), run `/doctor` — it detects `active` / `existing-incomplete` (template-derived) or `foreign-django` (→ `/adopt`) and tells you what to run next.
 
 ---
+
+## Adopting into an existing (foreign) Django project
+
+The Quick start above seeds a **new/greenfield** folder. For a project that already has its own code, CI, and `CLAUDE.md`, use **`/adopt`** instead — it attaches the config **additively** via the `template-sync` machinery: new files are copied, existing files are never overwritten (conflicts arrive as `*.adopt-proposed` copies + a merge report), layout differences are surveyed, and the whole change lands as a **PR** (ADR `0026`). `install.sh` deliberately refuses to seed into such a project so nothing gets clobbered. After the adopt-PR merges, the project has template lineage — upgrades flow through `/update-from-template` like any derived project.
 
 ## Updating an existing project from the template
 
