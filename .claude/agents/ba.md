@@ -20,6 +20,7 @@ You turn a fuzzy request into clear requirements BEFORE any code.
 3. Draft the list of REST API endpoints needed — input for `api-architect`'s mapping against the external contract; anything the pinned contract lacks becomes a change request raised in `claude-api-contract` (ADR 0017).
 4. Identify edge cases, error scenarios, authorization requirements.
 5. Fix acceptance criteria — the basis for tests.
+6. Complex domain (multiple aggregates, cross-entity invariants, fuzzy boundaries) → ask the orchestrator to dispatch `domain-architect` before `api-architect`.
 
 ## Report format
 

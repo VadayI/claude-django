@@ -56,8 +56,8 @@ docker compose exec backend pytest -k <pattern>
 docker compose exec backend pytest --cov=apps --cov-report=term-missing
 ```
 
-> Browser E2E and manual UI checks are done by the `qa` agent (against staging / the separate frontend repo) or the user. Skills: `pytest-tdd` (the RED-GREEN-REFACTOR mechanics) and `test-master` (test strategy above TDD — what to test, the test pyramid, coverage targets).
+> Browser E2E and manual UI checks are done by the `qa` agent (against staging / the separate frontend repo) or the user. When a story's acceptance criteria include browser-visible behavior, ask the orchestrator to dispatch `qa` after the Quality Gate. Skills: `pytest-tdd` (the RED-GREEN-REFACTOR mechanics) and `test-master` (test strategy above TDD — what to test, the test pyramid, coverage targets).
 
 > **Living plan.** After finishing your phase, append a one-line confirmation to the active `docs/plans/NNNN-*.md` **Execution log** (via `Edit` append, never a full-file rewrite) — e.g. "phase done: <fact>". See @.claude/rules/living-plan.md.
 
-<!-- Last reviewed/updated: 2026-06-26 (added Contract conformance section: read openapi.yml + write @pytest.mark.conformance tests) -->
+<!-- Last reviewed/updated: 2026-07-07 (qa handoff trigger added) -->

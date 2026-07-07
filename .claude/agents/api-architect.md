@@ -29,6 +29,7 @@ After reading the contract, **record each route in `.claude/memory/endpoints.jso
 - Consistent field naming (snake_case in JSON or camelCase — pick one and stick to it).
 - Backward-incompatible changes → a new version `/api/v2/`.
 - The contract is the input for `tester` (RED tests) and `django-developer`.
+- Integration surfaces in the requirements (OAuth/SSO, webhooks, payments, service-to-service auth) → ask the orchestrator to dispatch `integration-architect` before you finalize the endpoint mapping.
 
 ## Report format
 
