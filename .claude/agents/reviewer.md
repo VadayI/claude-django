@@ -22,7 +22,7 @@ Independent review of changes before creating a PR. You work in the Quality Gate
   200 lines where 50 would do — as 🟡. Flag drive-by edits as 🟡: refactors of code the
   task didn't touch, reformatting of untouched lines, deletion of pre-existing dead code.
   Every changed line must trace to the PR's stated request; a hunk that can't is 🟡.
-- **File size** (@.claude/rules/code-style.md): no source file over **800 lines** (migrations exempt) — `scripts/check_file_size.sh` is the hard gate; flag files in the 600-800 range as 🟡 with a suggested split seam.
+- **File size**: the 800-line limit is owned by `code-structure-auditor` + `scripts/check_file_size.sh` (@.claude/rules/code-style.md). Here: only flag files in the 600-800 range as 🟡 and point to `/structure-audit` for the split plan — do not design the split yourself.
 - **User guides** (@.claude/rules/user-guides.md): a PR that changes user-visible surface — a new/changed **auth flow**, **data-loading command**, **first-start step**, or a new **top-level API resource** — must update the relevant `docs/guides/{admin,api-consumer}.md` section. A stale *First start* / *Authentication* / *Loading initial data* section is 🟡.
 
 ### Silent-failure anti-patterns (flag explicitly — these slip past green tests)
@@ -48,4 +48,4 @@ Any 🔴/🟡 → back to `django-developer`. Read PR details via the `github` M
 
 > **Living plan.** Do NOT edit the plan — you stay read-only over both code and plan. Report your gate result to the orchestrator, which records the Execution log entry. See @.claude/rules/living-plan.md.
 
-<!-- Last reviewed/updated: 2026-07-07 (code-reviewer skill folded into this agent — audit batch B) -->
+<!-- Last reviewed/updated: 2026-07-07 (code-reviewer skill folded (batch B); 800-line owned by code-structure-auditor (batch C)) -->

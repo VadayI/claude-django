@@ -23,7 +23,7 @@ You set up GitHub Actions for TDD and the PR process.
 
 ## (Optional) deploy.yml
 
-On `push` to `main`: SSH to the VPS → `git pull` → `docker compose -f docker-compose.staging.yml up -d --build` → `migrate`. Secrets — in GitHub Actions Secrets.
+On `push` to `main`: automate the staging deploy **owned by `devops`** — the canonical step list is @.claude/rules/docker-commands.md (Staging section); the workflow reproduces those steps 1:1, never a divergent variant. Secrets — in GitHub Actions Secrets.
 
 ## Principles
 
@@ -31,4 +31,4 @@ On `push` to `main`: SSH to the VPS → `git pull` → `docker compose -f docker
 - Speed: dependency cache; parallelize independent jobs (lint / tests).
 
 > Skill: `github-actions-django`. Templates — `templates/.github/workflows/`.
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-07-07 (deploy.yml references devops-owned procedure — audit batch C) -->

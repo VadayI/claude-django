@@ -62,6 +62,8 @@ Once approved, the plan becomes a **living plan**: seed `docs/plans/NNNN-<slug>.
 
 Trivial tasks (typo, single config value) skip this. The Superpowers `brainstorming`/`writing-plans` skills support this phase.
 
+> **Orchestration precedence.** The role pipeline below is the authoritative orchestration method in this project. Superpowers process skills (`subagent-driven-development`, `executing-plans`, `dispatching-parallel-agents`) may inform HOW a single phase is driven, but they never replace the pipeline's phase order, its named agents, or the Quality Gate.
+
 ## Pipeline trigger: REQUIRED if ANY applies
 
 - Creates/changes a Django model or needs a migration

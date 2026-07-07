@@ -12,7 +12,7 @@ Containerization and deployment. Local — WSL2 + Docker Desktop; staging — VP
 
 ## Shell
 
-Bash in WSL2 Ubuntu (Windows) or native bash/zsh (Linux/macOS). PowerShell/cmd not supported — see `docs/decisions/0005-drop-windows-native-shell.md`.
+Bash on Linux / macOS / WSL2 Ubuntu, or PowerShell / Git Bash on native Windows — per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`). The `.sh` gate scripts need Git Bash on native Windows.
 
 ## What you do
 
@@ -22,14 +22,9 @@ Bash in WSL2 Ubuntu (Windows) or native bash/zsh (Linux/macOS). PowerShell/cmd n
 - Integration with a reverse-proxy (nginx/Traefik) on the VPS: own subdomain, separate ports/network to avoid conflicting with other projects.
 - HTTPS (Let's Encrypt) for access from a mobile browser.
 
-## Deploy (staging)
+## Deploy (staging) — you own this procedure
 
-```bash
-ssh <user>@<STAGING_HOST>
-cd ~/projects/<project> && git pull
-docker compose -f docker-compose.staging.yml up -d --build
-docker compose -f docker-compose.staging.yml exec backend python manage.py migrate
-```
+You are the single owner of the staging deploy. The canonical step list (incl. the pre-deploy `manage.py check --deploy` gate and the post-deploy smoke `curl`) lives in @.claude/rules/docker-commands.md (Staging section) — follow it, do not re-copy it here. `ci-cd-engineer` may automate the same steps in `deploy.yml`, referencing this ownership — never a divergent variant.
 
 > Skill: `docker-compose-django`. Secrets — only via env, never in the repo.
-<!-- Last reviewed/updated: 2026-05-27 -->
+<!-- Last reviewed/updated: 2026-07-07 (deploy ownership + canon in docker-commands.md; shell per ADR 0022 — audit batch C) -->
