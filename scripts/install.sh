@@ -182,7 +182,7 @@ log "Seeded. Next steps:"
 echo "  1) cd $TARGET"
 case "$OS" in
   MINGW*|MSYS*|CYGWIN*)
-    echo "  2) (first time) install Python 3.10+, Node 18+, git, gh, Docker Desktop; ensure 'python --version' works"
+    echo "  2) (first time) install Python 3.13+, Node 18+, git, gh, Docker Desktop; ensure 'python --version' works"
     echo "  3) launch:  claude        # native Windows: PowerShell or Git Bash" ;;
   *)
     echo "  2) (first time on this machine) bash scripts/setup-wsl.sh   # Python/Node/claude/gh"
