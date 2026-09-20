@@ -398,3 +398,20 @@ exit status are forwarded. Applications load their own runtime environment.
 
 This candidate uses integrated core commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe from merged contract PR #57. Delivery was regenerated and checked. Exact known template wrappers migrate by hash;
 custom wrappers conflict and remain unchanged. Full bootstrap/CI migration pending.
+
+## Shared Django instructions (P04)
+
+Claude and Codex read `AGENTS.md` and `docs/ai/catalog.json`. Four selected roles
+have full generated packs and runtime entry points; legacy roles and procedures
+remain available. Python 3.13+ is required for tooling (stdlib only).
+Run `make ai-check` or the explicit commands in
+[production structure](docs/ai/production-structure.md).
+
+The fresh seeder delivers canonical sources/adapters and preflights every legacy
+copy. `--force` no longer bypasses conflicting content or replaces project memory,
+language, MCP or personal settings. For instruction updates use
+`python <reviewed-template>/scripts/install_ai.py --target <project>` to preview,
+then `--apply`; reconcile conflicts as a reviewed diff. No automatic merge.
+Codex can invoke the bootstrap skill or read `docs/ai/workflows/bootstrap.md`
+explicitly. P05 detector, P06 CI choice and P12 full role migration remain pending;
+this checkpoint does not establish runnable backend or deployment acceptance.

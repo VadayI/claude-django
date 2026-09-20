@@ -109,3 +109,10 @@ Mobile testing — open the staging subdomain in the phone's browser.
 ## License
 
 {TODO}
+
+## Shared agent instructions
+
+Claude and Codex share `AGENTS.md` and `docs/ai/catalog.json`. Run `make ai-check`
+to verify core/adapters/ownership. Read `docs/ai/production-structure.md` for
+selected roles, preserved legacy functions, update conflicts and current limits.
+Bootstrap retains `templates/ai/` because the offline generator uses its schemas.

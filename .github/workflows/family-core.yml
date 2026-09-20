@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Exact baseline blobs are exercised by the upgrade fixture.
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -19,3 +21,7 @@ jobs:
         run: python scripts/ai/core_sync.py --check
       - name: Exercise fresh and conflicting delivery
         run: python -m unittest discover -s tests -p 'test_ai_delivery.py'
+      - name: Verify canonical adapters and instruction ownership
+        run: |
+          python scripts/ai/generate_adapters.py --check
+          python scripts/build_instruction_manifest.py --check

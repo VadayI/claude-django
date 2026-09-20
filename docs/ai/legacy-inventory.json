@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "baseline": "1b2ec45a5be2aebbc11ee1cd055a21bcae63165e",
+  "files": {
+    ".claude/rules/api-docs.md": {
+      "sha256": "36e06f93c8a252b6f74080033fd86f0eb2a17c7c62b653479a6c48c6ff1fc42c",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/app-readme.md": {
+      "sha256": "9cef659cf2c333bed0b109272479b461bfa30a73bb1e2324452f671aa39d75c2",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/architecture.md": {
+      "sha256": "686087f0956ed75d99c86afd257032ba624335f07556bd814ed458b89a6fa926",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/code-style.md": {
+      "sha256": "79b654ffb891bd9e8a402b5bb8a7850c9f4e17cdf682272466a9317752d1f4ba",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/deviation-register.md": {
+      "sha256": "c9ab0bd99c43d5a3e1240e387ae5503891995a37d08ea8c0caa4c60a7395ae7b",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/docker-commands.md": {
+      "sha256": "c6841088a823dbc849f7d4f8d91b6bb1180c0e76dfc8fc6a895d79339a742c33",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/environment.md": {
+      "sha256": "e721c1b3a8078383fbcd4191105be92d5f7898e27ebe9996a5d4cf90e43d29ad",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/git-operations.md": {
+      "sha256": "76055b7624886660a4083786092eefef1ac25c2e162e7cbf14efdb8483c1b560",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/living-plan.md": {
+      "sha256": "fe4e6fa7dcecfc7ed5054b586d1b7dfad3045fe4e4af20e9e39e59d8f12b664d",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/mcp-stack.md": {
+      "sha256": "74648506ac39a63b2d59077bf1a210068f385fd0b4cd83b40bb959088438724b",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/migrations-tasks.md": {
+      "sha256": "282bb0932e34aa906e0aebc2c53cef90776df39cbb6549829cf5b31f411ad248",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/no-stubs.md": {
+      "sha256": "c94ca8fe8aefc26de3ba8267e4cfda3d09bee6fd6b5f75c784f3b842553bfb8b",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/output-language.md": {
+      "sha256": "b6414abbfdf8346f1efbad13ce968c23404b28962fee555b6b4e73f0d7c0e26b",
+      "status": "preserved-legacy"
+    },
+    ".claude/rules/preflight.md": {
+      "sha256": "1e08052649c2d151f0c066dcb8ecf6f203cf650adb37dd519fda96a1a5a23892",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/project-maturity.md": {
+      "sha256": "85a5e4054e9ceb49efe68250c199f41b20c1963444d2c53c3d5c286b7d33307b",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/serializers-permissions.md": {
+      "sha256": "99ea096a8b44cf22fb930ca5a8231f5f210310b6ed06453e69fb5c32beebfa57",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/simplicity-surgical.md": {
+      "sha256": "ba7142b621b9cf458bae4006beaa1a8d24449d52c63495f6caf8d08595a4a9b6",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/tdd.md": {
+      "sha256": "b4cd6d3a95cb25b81531c866fc8b92fa12e62cdd1ee03d7f100e20cb2a1ada98",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/testing.md": {
+      "sha256": "e3c2ff62eb42e7f98349847893155d79b2b02bfb525903d9dc9ef89787a20702",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/user-guides.md": {
+      "sha256": "d96a1b4bf1d8c4112df1de31ba71eb8b12eb89b90d50958e690542d441d52736",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/verification.md": {
+      "sha256": "c3c31e57ee10315aa5f7309cf26b9fa87c377b8aa7fe6f52dc6d5b68b0c1ef29",
+      "status": "generated-adapter"
+    },
+    ".claude/rules/workflow.md": {
+      "sha256": "5bee84e488d22f3c0bc5d406e9748be2f9f746f37c8e25d21be0464fdff8fac5",
+      "status": "generated-adapter"
+    },
+    ".claude/agents/api-architect.md": {
+      "sha256": "10a2d4dfcb7cce9d909665ea748bc963f25ebb2b317b1fb82cce5c50b983dc11",
+      "status": "generated-adapter"
+    },
+    ".claude/agents/auditor.md": {
+      "sha256": "bfcec0e264766d6656b3e6bf2d40fb0f7ddaea823ac6721d939d2d2392b14f39",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/ba.md": {
+      "sha256": "0d70a3cd593fb0dd6fa24ba738356490bdcc5ffcf6be5fb38d8352296dd98dea",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/brief-synthesizer.md": {
+      "sha256": "8808b2f092b39483f81be5e9f71b10864712516f06e203172e41667a4c587003",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/celery-specialist.md": {
+      "sha256": "f3c58886020a6a0b55e2cd4998565c0b8c7b1b75b9de8545eba0d570983551eb",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/ci-cd-engineer.md": {
+      "sha256": "c4ff8f8be6374f09e88e16c1c4bfb49d73a1592c1bcbff62001644315849f281",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/code-structure-auditor.md": {
+      "sha256": "06f4688c8fe6f97ec6f3858b0886855495501a9cac7f99e0a135f63c98c157f3",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/dba.md": {
+      "sha256": "5203beabf3d061c1c88b8032315a3f25f22d3a8bf1def4926d6fb0eff96ef4cd",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/debugger.md": {
+      "sha256": "98867bf6699e9ceaeabe3ee1851ad2cae78acb0a8bf2ca070a51f01cd072f03c",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/devil.md": {
+      "sha256": "dfd716c99d4a9a2352ce5e6323e6c8c398c07bac94dae2db2b4777ba707a0040",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/devops.md": {
+      "sha256": "396053b35eb68d83d575077090cb2039450dddf39bd3787b2a63238221d4f928",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/django-developer.md": {
+      "sha256": "05378bb47622680c9170537c48488f5ad4711d85d9983356c5e3d035a27b44e8",
+      "status": "generated-adapter"
+    },
+    ".claude/agents/django-refactoring-expert.md": {
+      "sha256": "6488213e98fc1612f8efea07e62d7575d8a79e2946242b578629ee7c8d393b2b",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/docs-writer.md": {
+      "sha256": "f51a77cd33b50b62d4f2820da201b398a3ec95539b0813731f9227bd4e3e0635",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/domain-architect.md": {
+      "sha256": "3e2b590ffd928917089739c90ba3e9c77afac16ba82436fe3737294c8fb75221",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/guide-writer.md": {
+      "sha256": "3625310a884a32e67ffd0815936e2161f965ab3a34c69983d023169df5c9572e",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/integration-architect.md": {
+      "sha256": "3eab25e72337a49fcd63b9399785e8824801a90d3ccb3a2b3a1985cb87fb0456",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/qa.md": {
+      "sha256": "c4b8e4d6fb792ace9b74f6735ca980ee034ae2c0325530295cd9d0ecdc6e8146",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/reviewer.md": {
+      "sha256": "de2ad64c1655deb4385d4d8361f1cf701107755c355969b5ba5505a156721b17",
+      "status": "generated-adapter"
+    },
+    ".claude/agents/security-scanner.md": {
+      "sha256": "f661a1dfd0f1eaa24f6cca92c1726f2ba8820b3f44293f241bbedeed65fef153",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/template-sync.md": {
+      "sha256": "121da95352fcc747f504ff58885f3e1dc5c38d2285b3b857890495c43e311b2f",
+      "status": "preserved-legacy"
+    },
+    ".claude/agents/tester.md": {
+      "sha256": "22b430d7bda7c742527cace5f50e9f9d0c810dba1771e0257aa97fda4cac364d",
+      "status": "generated-adapter"
+    },
+    ".claude/commands/adopt.md": {
+      "sha256": "6275a52212648a1e7429bbc2f3cf2b902616f96f02d81e61d99698297d4a9153",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/audit.md": {
+      "sha256": "53200b9dca6cfda8d6606987a6b3a37454a360d18fd98fc4f46d31d43666afe8",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/bootstrap.md": {
+      "sha256": "ed74b778561e4f8872406fa519334c73e8e04344242d0ad42414ca3eb8c105b9",
+      "status": "generated-adapter"
+    },
+    ".claude/commands/config-check.md": {
+      "sha256": "2fcca67f093a4eb94b944db60d4d684b3c74212dfd232f4ebd70561910813a45",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/create-pr.md": {
+      "sha256": "78b8332fa3a8eb63060644b076cf17441269e8105670d0d395c2cf0ff84a428a",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/doctor.md": {
+      "sha256": "302a9b9828f4081939a9a14c328cc51e95e60d1a96f12c94e4f10b687cc06324",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/fix-ci.md": {
+      "sha256": "fab4ac757d5b58c5eae0f8509858490558f1b7bdd67475d4f5ddafdb50e2a7ac",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/guides.md": {
+      "sha256": "a881b536eec1cd55b016784898f05388c8887b8a450c918c993c310f37005c05",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/handoff.md": {
+      "sha256": "16ac20b97f3c3fe231869e50f36c969e11f0a63c3b4723112145546ddb1a387b",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/plugins.md": {
+      "sha256": "b8ca0a55fc7cce26d0f1fc39042ad8c0508ccbee7a025d9450534694055843eb",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/preflight.md": {
+      "sha256": "3e277fac274ab47266b193813b39078cb8f6425a1cd4cb31bf23775d87148024",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/review-pr.md": {
+      "sha256": "87321778e3e4b16d52f14bdd49c7113054360a0983c99f0d5670734f7ef05d36",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/security-check.md": {
+      "sha256": "96625c177c39407a96c4aae2e3e90376cd576ee20fba402cce61084894e5c710",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/set-language.md": {
+      "sha256": "6853a9303d8c29cf8a6b864b9d86765fda50b7211aa78dde73d26b4789d4e31e",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/simplify.md": {
+      "sha256": "8bbcda17b954215cb89da2ec21236bc2801ad0abb605316d04a2c18352d248da",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/structure-audit.md": {
+      "sha256": "3fd7d496d062c6eb6673607936ab9e89a26f376e85740d1b321613b53272a20a",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/synthesize-brief.md": {
+      "sha256": "4bd455d3b17deb4e3a9fe50a7445132c7c8e09e2cb9127dec090fc74db768512",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/update-docs.md": {
+      "sha256": "36e53c25afbfc1413f38b1da3c8480ff2d14b406963fc6aaadccb1fb1011891a",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/update-from-template.md": {
+      "sha256": "aceefa18425f21b4d8ba60046e8809c9ae9cac37995248cd3213f5943a374258",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/verify.md": {
+      "sha256": "6aeb4e097189ac1a4a43e65328825c8abe1d83f26206eddb8337999193594009",
+      "status": "preserved-legacy"
+    },
+    ".claude/commands/wrap-up.md": {
+      "sha256": "888961861f448a6be89bb03a044a5800bc6854cb164dabddf599a48acad2a337",
+      "status": "preserved-legacy"
+    },
+    ".claude/skills/ddd-strategic-design/SKILL.md": {
+      "sha256": "9bfe99adbd7f3cfc48f6f816440431658740a176757397908b745c4eaf762afd",
+      "status": "preserved-legacy"
+    },
+    ".claude/skills/docker-compose-django/SKILL.md": {
+      "sha256": "de5a2fb4aed86a4587ee8f3dd468de60d319a29ecdd4e46816d1f3340d1aa490",
+      "status": "preserved-legacy"
+    },
+    ".claude/skills/drf-api-design/SKILL.md": {
+      "sha256": "d1cb7fcb73a9d39b9f14e30f447daf2d5629bda4cc1a68b86117e615ab819603",
+      "status": "preserved-legacy"
+    },
+    ".claude/skills/github-actions-django/SKILL.md": {
+      "sha256": "ca86384e587344da061d37214ae8b021ee8277d7f8af04acde9680680961f4b7",
+      "status": "preserved-legacy"
+    },
+    ".claude/skills/postgresql-optimization/SKILL.md": {
+      "sha256": "a90f30e7f9055e63c431b8f93f33a9474a465f1d4a689e4a5f66aa12cc655d90",
+      "status": "preserved-legacy"
+    },
+    ".claude/skills/pytest-tdd/SKILL.md": {
+      "sha256": "5dfb96e6f421085e4cd10b87c405c956934dcadeea83dcfb213aac5c91571909",
+      "status": "preserved-legacy"
+    },
+    ".claude/skills/test-master/SKILL.md": {
+      "sha256": "d02466e3966e795431315e90fef4f12b4de23c4141c57f2a9ae94fb2e2b1b7e8",
+      "status": "preserved-legacy"
+    },
+    "CLAUDE.md": {
+      "sha256": "b5a92dc905739a311b20e9244b4cef6704e50be32c4a43cec982427c4ad62e68",
+      "status": "generated-adapter"
+    }
+  }
+}
