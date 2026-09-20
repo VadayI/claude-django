@@ -1,0 +1,15 @@
+{
+  "files": {
+    "scripts/claude.ps1": {
+      "legacy_sha256": "18ad3d8e59806cc2b9b7f1ee80dca6d719413634572d06eb8ab2a9864cc125c3",
+      "ownership": "template",
+      "sha256": "6e394c705041b7eaa2ff69fbdd0d99832eb665919026cb61eed039adc86450fe"
+    },
+    "scripts/claude.sh": {
+      "legacy_sha256": "b14504560a38f25454c85a5cc1905557f4ed6ea8eac6900d7e524d1c983451d8",
+      "ownership": "template",
+      "sha256": "865f785eb1c0986fcfce0dba6c242afd8130add7cb8d0583f043c6c808e9acd1"
+    }
+  },
+  "schema_version": 1
+}

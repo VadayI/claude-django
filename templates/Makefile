@@ -30,7 +30,7 @@ ai-core-check: ## Check the pinned family runtime without repairs
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN{FS=":.*?## "} {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
-cc: ## launch Claude Code with .env sourced (scripts/claude.sh)
+cc: ## launch Claude Code with selected .env data (scripts/claude.sh)
 	@bash scripts/claude.sh
 
 setup: ## One-shot host toolchain install (python/node/claude/gh) — WSL2/Debian

@@ -23,3 +23,17 @@ Vendored integrated core b6d1b3d with autonomous drift check and manifest-aware
 component installer. Fresh seeder and both Makefiles include runtime entry points.
 Windows/Linux delivery fixtures passed (2 each). Application scaffold, dependencies,
 models and migrations unchanged. Full Django acceptance and legacy migration pending.
+
+## 2026-09-20 — safe legacy launcher checkpoint
+
+Shared compatibility source: contract commit 269eeadbda4b6309b14ce289d61ecbf7f0ce03ae.
+Contract core tests: Windows 43 PASS + 1 symlink SKIP; Linux all 44 PASS.
+Django/React development pins deliberately depend on unmerged contract PR #57;
+replace them with the actual integrated commit before downstream merge.
+Legacy .env is parsed as selected literal data, never executed; credentials affect
+only the child, preserving blank fallback and PAT precedence. Known legacy wrappers
+migrate by exact hash; custom wrappers conflict before writes. Windows PowerShell
+and Git Bash version probes passed. These are not model-session acceptance.
+React actual main-to-candidate upgrade/generator check passed; Django old-seed
+component upgrade/repeat passed. Full bootstrap, CI-choice and P05+ remain pending.
+All PRs remain unmerged; a new explicit user command is required for merge.

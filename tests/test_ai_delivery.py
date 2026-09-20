@@ -54,6 +54,21 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(custom.read_text(encoding="utf-8"), "custom launcher")
             self.assertFalse((target / "docs/ai/core-source.json").exists())
 
+    def test_custom_legacy_wrapper_is_preserved(self):
+        """Reject an unknown wrapper instead of treating all legacy files as owned.
+
+        No arguments/return value. Writes a temporary synthetic wrapper; no DB or
+        network. Assertion failures identify accidental broad migration rights.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            custom = target / "scripts/claude.sh"
+            custom.parent.mkdir(parents=True)
+            custom.write_text("# custom wrapper\n", encoding="utf-8")
+            _, conflicts = install_ai.plan(ROOT, target)
+            self.assertEqual(conflicts, ["scripts/claude.sh"])
+            self.assertEqual(custom.read_text(encoding="utf-8"), "# custom wrapper\n")
+
 
 if __name__ == "__main__":
     unittest.main()

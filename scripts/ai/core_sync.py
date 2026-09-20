@@ -1,4 +1,4 @@
-"""Preview, install or verify core files from an immutable reviewed Git revision."""
+"""Deliver core files from an exact Git revision or the owner's local source."""
 
 import argparse
 import json
@@ -103,6 +103,43 @@ def target_root(target: Path) -> Path:
     return target
 
 
+def local_payload(source: Path) -> tuple[dict, dict[str, str]]:
+    """Read the owning repository's local core using content-based provenance.
+
+    Args: source is the repository containing a generated template-core tree.
+    Returns: Local-source receipt and runtime payload, without a commit claim.
+    Raises: ValueError for unsafe paths, stale manifests or invalid ownership;
+        filesystem/JSON errors propagate. Every listed source file is verified.
+    Side effects: File reads only; no Git, network, database or writes. Source-only
+        installers, tests and README are excluded from the project payload.
+    """
+    root = target_root(source / "template-core")
+    manifest_text = contained(root, MANIFEST).read_text(encoding="utf-8")
+    manifest = json.loads(manifest_text)
+    if manifest.get("schema_version") != 1 or not isinstance(manifest.get("files"), dict):
+        raise ValueError("Unsupported local core manifest")
+    files = {}
+    for name, record in manifest["files"].items():
+        safe_name(name)
+        content = contained(root, name).read_text(encoding="utf-8")
+        if record.get("ownership") != "template" or digest(content) != record.get("sha256"):
+            raise ValueError(f"Local source digest/ownership mismatch: {name}")
+        if name.startswith(("scripts/ai/", "templates/ai/", "docs/ai/")) and name not in (
+            "scripts/ai/generate_core.py", "scripts/ai/install_core.py"
+        ):
+            files[name] = content
+    if "core.json" not in manifest["files"] or not files:
+        raise ValueError("Local manifest lacks version metadata or runtime files")
+    config = json.loads(contained(root, "core.json").read_text(encoding="utf-8"))
+    if config.get("schema_version") != 1:
+        raise ValueError("Unsupported local core version metadata")
+    return {"schema_version": 1, "source_repository": config["source_repository"],
+            "source_kind": "local", "source_path": "template-core", "pin_status": "local",
+            "version": config["version"], "source_manifest_digest": digest(manifest_text),
+            "files": {name: {"sha256": digest(text), "ownership": "template"}
+                      for name, text in sorted(files.items())}}, files
+
+
 def preview(target: Path, metadata: dict, files: dict[str, str]) -> tuple[dict[str, str], list[str]]:
     """Prepare all changes, preserving project/custom files and previous pins.
 
@@ -164,13 +201,19 @@ def integrated_pin(source: Path, metadata: dict) -> dict:
 def verify(target: Path) -> list[str]:
     """Verify installed payload against its pin without source checkout access.
 
-    Args: target is a reviewed nonlinked project root.
+    Args: target is a reviewed nonlinked project root. Receipts can identify an
+        exact commit or local source content; local receipts cannot claim a SHA.
     Returns: Drift paths; malformed or missing metadata raises ValueError/OSError.
     Side effects: Reads only. Does not establish remote availability, integration,
         source authenticity, test success or deployment readiness; no DB/network.
     """
     pin = json.loads(contained(target, PIN).read_text(encoding="utf-8"))
-    if pin.get("schema_version") != 1 or not re.fullmatch(r"[0-9a-f]{40}", pin.get("source_commit", "")):
+    local = pin.get("source_kind") == "local"
+    valid_source = (pin.get("source_path") == "template-core" and pin.get("pin_status") == "local"
+                    and "source_commit" not in pin and bool(re.fullmatch(
+                        r"[0-9a-f]{64}", pin.get("source_manifest_digest", "")))) if local else bool(
+                            re.fullmatch(r"[0-9a-f]{40}", pin.get("source_commit", "")))
+    if pin.get("schema_version") != 1 or not valid_source:
         raise ValueError("Invalid installed source pin")
     if not isinstance(pin.get("files"), dict) or not pin["files"]:
         raise ValueError("Empty or invalid installed manifest")
@@ -186,7 +229,8 @@ def verify(target: Path) -> list[str]:
 def main() -> int:
     """Preview/apply pinned delivery or check installed drift, with explicit errors.
 
-    CLI args select target, source repository/commit and --development-pin.
+    CLI args select target and exact source repository/commit provenance, or
+        --local-source for target/template-core and digest-based provenance.
     Returns: 0 consistent/success; 1 conflict/drift; 2 invalid configuration.
     Side effects: Apply writes planned UTF-8 files only after complete preflight;
         preview/check are read-only. Integrated pins inspect remote main with
@@ -200,6 +244,7 @@ def main() -> int:
     provenance = parser.add_mutually_exclusive_group()
     provenance.add_argument("--development-pin", action="store_true")
     provenance.add_argument("--integrated-pin", action="store_true")
+    provenance.add_argument("--local-source", action="store_true")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--apply", action="store_true")
@@ -208,17 +253,22 @@ def main() -> int:
         parser.error("Python 3.13+ is required")
     try:
         target = target_root(args.target)
-        if args.check and args.source is None:
+        if args.local_source:
+            if args.commit is not None or args.source is not None:
+                raise ValueError("Local source uses target/template-core, without --source or --commit")
+            metadata, files = local_payload(target)
+        elif args.check and args.source is None:
             drift = verify(target)
             print(json.dumps({"mode": "check", "drift": drift}))
             return int(bool(drift))
-        if args.source is None or args.commit is None or not (args.development_pin or args.integrated_pin):
-            raise ValueError("Delivery requires --source, --commit and an explicit --development-pin or --integrated-pin")
-        metadata, files = payload(args.source, args.commit)
-        if args.integrated_pin:
-            metadata = integrated_pin(args.source, metadata)
         else:
-            metadata["pin_status"] = "development"
+            if args.source is None or args.commit is None or not (args.development_pin or args.integrated_pin):
+                raise ValueError("Delivery requires --source, --commit and an explicit --development-pin or --integrated-pin")
+            metadata, files = payload(args.source, args.commit)
+            if args.integrated_pin:
+                metadata = integrated_pin(args.source, metadata)
+            else:
+                metadata["pin_status"] = "development"
         pending, conflicts = preview(target, metadata, files)
         print(json.dumps({"mode": "apply" if args.apply else "check" if args.check else "preview",
                           "writes": sorted(pending), "conflicts": conflicts}))

@@ -7,7 +7,7 @@ AI_ARGS ?=
 
 help:
 	@echo "Targets:"
-	@echo "  cc    launch Claude Code with .env sourced (scripts/claude.sh)"
+	@echo "  cc    launch Claude Code with selected .env data (scripts/claude.sh)"
 	@echo "  ai-claude / ai-codex   launch via portable family runtime"
 	@echo "  ai-core-check         check pinned family runtime drift"
 

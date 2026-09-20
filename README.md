@@ -9,7 +9,7 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 ## Shared Claude/Codex runtime delivery (P04 checkpoint)
 
-The template now vendors the family runtime from integrated contract core commit
+The initial delivery used integrated contract core commit
 `b6d1b3d3582c4a18545050be6f475d270f53bc48`. Python 3.13+ and its standard library
 are sufficient; no sibling checkout or marketplace is needed for core tooling.
 Run `python scripts/ai/core_sync.py --check` to verify installed file digests.
@@ -34,7 +34,7 @@ For a version probe add `--probe` (Make: `AI_ARGS=--probe`). PowerShell and Git 
 wrappers live in `scripts/ai/launch.ps1` and `scripts/ai/launch.sh`. These launchers
 never execute `.env`; optional credentials must be supplied explicitly from the
 process environment as described in [launcher configuration](docs/ai/launchers.md).
-The existing `cc` launcher and legacy bootstrap remain pending migration.
+The `cc` launcher now uses the compatibility adapter described below; legacy bootstrap remains pending migration.
 
 Core delivery is not full Django/Codex support: legacy role/procedure migration,
 shared detector/runner and runnable derived-backend acceptance remain outstanding.
@@ -386,3 +386,17 @@ and `docs/WORKLOG.md`, then opens a PR via `gh` — never a direct commit to `ma
 The result is one reviewed PR for one feature, with tests, docs, and an up-to-date schema.
 For the next feature you repeat from step 0. If a feature would touch more than ~3 files,
 split it into smaller features and run each through the pipeline separately.
+
+### Safe legacy launcher migration
+
+`make cc`, `scripts/claude.sh` and `scripts/claude.ps1` now use a shared Python
+compatibility launcher. Selected dotenv values are literal data: shell statements,
+substitutions and unknown application environment keys are not executed or passed.
+The PAT/GH_TOKEN precedence and blank-placeholder fallback are preserved only in
+the child process; PowerShell caller variables remain unchanged. CLI arguments and
+exit status are forwarded. Applications load their own runtime environment.
+
+This candidate uses development core commit 269eeadbda4b6309b14ce289d61ecbf7f0ce03ae
+from contract PR #57. Before downstream merge, repin to the actual integrated source
+and regenerate/check delivery. Exact known template wrappers migrate by hash;
+custom wrappers conflict and remain unchanged. Full bootstrap/CI migration pending.
