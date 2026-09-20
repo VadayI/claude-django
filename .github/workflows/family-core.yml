@@ -1,0 +1,21 @@
+name: Family core delivery
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  delivery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify vendored source receipt
+        run: python scripts/ai/core_sync.py --check
+      - name: Exercise fresh and conflicting delivery
+        run: python -m unittest discover -s tests -p 'test_ai_delivery.py'

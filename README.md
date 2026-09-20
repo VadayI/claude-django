@@ -7,6 +7,41 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 ---
 
+## Shared Claude/Codex runtime delivery (P04 checkpoint)
+
+The template now vendors the family runtime from integrated contract core commit
+`b6d1b3d3582c4a18545050be6f475d270f53bc48`. Python 3.13+ and its standard library
+are sufficient; no sibling checkout or marketplace is needed for core tooling.
+Run `python scripts/ai/core_sync.py --check` to verify installed file digests.
+The receipt and ownership manifest are `docs/ai/core-source.json`.
+
+Fresh `scripts/install.sh` includes the runtime and its docs. To update only this
+component in an existing project, use the reviewed template checkout:
+
+```text
+python scripts/install_ai.py --target "../existing project"
+python scripts/install_ai.py --target "../existing project" --apply
+```
+
+Preview makes no changes. Apply refuses customized/unowned conflicts before any
+runtime write, preserves project README/settings/notes, and repeats without a diff.
+This command updates the core component only; it does not migrate all legacy rules,
+activate CI, or scaffold a Django application. Legacy `install.sh --force` is not
+the ownership-aware update path for the entire template.
+
+Use `make ai-claude` / `make ai-codex` or `python scripts/ai/launch.py codex`.
+For a version probe add `--probe` (Make: `AI_ARGS=--probe`). PowerShell and Git Bash
+wrappers live in `scripts/ai/launch.ps1` and `scripts/ai/launch.sh`. These launchers
+never execute `.env`; optional credentials must be supplied explicitly from the
+process environment as described in [launcher configuration](docs/ai/launchers.md).
+The existing `cc` launcher and legacy bootstrap remain pending migration.
+
+Core delivery is not full Django/Codex support: legacy role/procedure migration,
+shared detector/runner and runnable derived-backend acceptance remain outstanding.
+The older support statements below describe the legacy Claude workflow.
+
+---
+
 ## Where this runs (supported runtime)
 
 This config runs in **Claude Code CLI** (the terminal `claude` command) on **native Windows** (PowerShell or Git Bash), **WSL2 Ubuntu**, **Linux**, or **macOS**. The per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`), so `platform_supported` is `true` on all four.

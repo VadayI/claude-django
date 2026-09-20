@@ -1,3 +1,15 @@
+# 2026-09-20 — P04 family runtime checkpoint
+
+Base: 7adc1d154978628b08b8a472c05b243f0a74adee; task branch
+feat/shared-runtime-delivery in an isolated clone. Original checkout untouched.
+Integrated contract core b6d1b3d is vendored autonomously; source receipt checks,
+Windows Python 3.14 and Linux Python 3.13 fresh/repeat/conflict fixtures passed.
+Installer and both Makefiles expose the shared runtime. Core update preserves
+project docs/settings and rejects custom files; no app code/models/migrations changed.
+This is component delivery, not runnable Django or full Codex role acceptance.
+Next: legacy launcher/bootstrap migration and P05–P13. Merge requires user command.
+
+Earlier handoff follows as historical context:
 # HANDOFF — claude-django
 
 > Read this first when joining the project in a new session.

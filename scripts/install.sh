@@ -115,6 +115,10 @@ fi
 ok "cloned"
 
 # --- 4. Copy the config + scaffolding inputs ----------------------------------
+# Fail before legacy copies if the shared runtime has local customizations.
+have python || die "Python 3.13+ is required for family runtime delivery."
+python "$CLONE/scripts/install_ai.py" --target "$TARGET" --apply \
+  || die "Family runtime delivery failed; reconcile reported conflicts before retrying."
 # Mirrors the README "Quick start" copy block, kept in lockstep with it.
 log "Copying config files"
 cp -r "$CLONE/.claude"        "$TARGET/"
