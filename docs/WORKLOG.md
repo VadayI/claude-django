@@ -26,10 +26,9 @@ models and migrations unchanged. Full Django acceptance and legacy migration pen
 
 ## 2026-09-20 — safe legacy launcher checkpoint
 
-Shared compatibility source: contract commit 269eeadbda4b6309b14ce289d61ecbf7f0ce03ae.
+Shared compatibility source: integrated contract commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe.
 Contract core tests: Windows 43 PASS + 1 symlink SKIP; Linux all 44 PASS.
-Django/React development pins deliberately depend on unmerged contract PR #57;
-replace them with the actual integrated commit before downstream merge.
+Django/React pins reference merged contract PR #57 at integrated commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe.
 Legacy .env is parsed as selected literal data, never executed; credentials affect
 only the child, preserving blank fallback and PAT precedence. Known legacy wrappers
 migrate by exact hash; custom wrappers conflict before writes. Windows PowerShell

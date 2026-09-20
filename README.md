@@ -396,7 +396,5 @@ The PAT/GH_TOKEN precedence and blank-placeholder fallback are preserved only in
 the child process; PowerShell caller variables remain unchanged. CLI arguments and
 exit status are forwarded. Applications load their own runtime environment.
 
-This candidate uses development core commit 269eeadbda4b6309b14ce289d61ecbf7f0ce03ae
-from contract PR #57. Before downstream merge, repin to the actual integrated source
-and regenerate/check delivery. Exact known template wrappers migrate by hash;
+This candidate uses integrated core commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe from merged contract PR #57. Delivery was regenerated and checked. Exact known template wrappers migrate by hash;
 custom wrappers conflict and remain unchanged. Full bootstrap/CI migration pending.
