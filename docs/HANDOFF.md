@@ -1,3 +1,15 @@
+# 2026-09-20 — P04 family runtime checkpoint
+
+Base: 7adc1d154978628b08b8a472c05b243f0a74adee; task branch
+feat/shared-runtime-delivery in an isolated clone. Original checkout untouched.
+Integrated contract core b6d1b3d is vendored autonomously; source receipt checks,
+Windows Python 3.14 and Linux Python 3.13 fresh/repeat/conflict fixtures passed.
+Installer and both Makefiles expose the shared runtime. Core update preserves
+project docs/settings and rejects custom files; no app code/models/migrations changed.
+This is component delivery, not runnable Django or full Codex role acceptance.
+Next: legacy launcher/bootstrap migration and P05–P13. Merge requires user command.
+
+Earlier handoff follows as historical context:
 # HANDOFF — claude-django
 
 > Read this first when joining the project in a new session.
@@ -34,3 +46,16 @@
 
 - Cowork на /mnt (9p): правки лише bash+python через /dev/shm→cp з cmp/NUL-верифікацією; `git commit`/`push` — тільки host shell (див. `docs/lessons.md`).
 - Хроніка H1 2026 — `docs/WORKLOG-2026-H1.md`; сесії 2026-06-10…2026-07-06 без WORKLOG-записів (джерело — git log).
+
+## 2026-09-20 — safe legacy launcher checkpoint
+
+Shared compatibility source: integrated contract commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe.
+Contract core tests: Windows 43 PASS + 1 symlink SKIP; Linux all 44 PASS.
+Django/React pins reference merged contract PR #57 at integrated commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe.
+Legacy .env is parsed as selected literal data, never executed; credentials affect
+only the child, preserving blank fallback and PAT precedence. Known legacy wrappers
+migrate by exact hash; custom wrappers conflict before writes. Windows PowerShell
+and Git Bash version probes passed. These are not model-session acceptance.
+React actual main-to-candidate upgrade/generator check passed; Django old-seed
+component upgrade/repeat passed. Full bootstrap, CI-choice and P05+ remain pending.
+All PRs remain unmerged; a new explicit user command is required for merge.

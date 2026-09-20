@@ -115,6 +115,10 @@ fi
 ok "cloned"
 
 # --- 4. Copy the config + scaffolding inputs ----------------------------------
+# Fail before legacy copies if the shared runtime has local customizations.
+have python || die "Python 3.13+ is required for family runtime delivery."
+python "$CLONE/scripts/install_ai.py" --target "$TARGET" --apply \
+  || die "Family runtime delivery failed; reconcile reported conflicts before retrying."
 # Mirrors the README "Quick start" copy block, kept in lockstep with it.
 log "Copying config files"
 cp -r "$CLONE/.claude"        "$TARGET/"
@@ -178,7 +182,7 @@ log "Seeded. Next steps:"
 echo "  1) cd $TARGET"
 case "$OS" in
   MINGW*|MSYS*|CYGWIN*)
-    echo "  2) (first time) install Python 3.10+, Node 18+, git, gh, Docker Desktop; ensure 'python --version' works"
+    echo "  2) (first time) install Python 3.13+, Node 18+, git, gh, Docker Desktop; ensure 'python --version' works"
     echo "  3) launch:  claude        # native Windows: PowerShell or Git Bash" ;;
   *)
     echo "  2) (first time on this machine) bash scripts/setup-wsl.sh   # Python/Node/claude/gh"

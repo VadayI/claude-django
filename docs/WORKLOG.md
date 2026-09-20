@@ -16,3 +16,23 @@
 - **L (гігієна):** WORKLOG H1 (43 записи) → `docs/WORKLOG-2026-H1.md`; `docs/HANDOFF.md` регенеровано (був stale з 2026-06-09); кореневий untracked HANDOFF.md → `LOCAL/HANDOFF-template-dev.md`; bootstrap футер-дата.
 - Механіка: усі правки bash+python через /dev/shm→cp (Edit/Write на 9p-mount заборонені), кожен файл cmp + NUL-чек; settings.json перевірено json.load; backend-ci.yml — PyYAML; install.sh — bash -n + функціональний тест guard-ів; pull_contract.sh — bash -n + тест нормалізації. Коміти — з host shell (3: звіт / конфіг F–K / docs L).
 - Лишається: батч M — окремий PR у claude-api-contract (README Status: v0.3.0+ = template releases; consumer-секція — реальний механізм піна замість check_contract_sync.sh/lock.json; узгодити форму CONTRACT_REPO); CLI-верифікації з `docs/todo.md` (log-hook, MCP allowlist, демоція); справжній контрактний реліз (v0.5.0) у contract-репо, після чого підняти пін тут PR-ом + `gh variable set`.
+
+## 2026-09-20 — P04 family runtime delivery
+
+Vendored integrated core b6d1b3d with autonomous drift check and manifest-aware
+component installer. Fresh seeder and both Makefiles include runtime entry points.
+Windows/Linux delivery fixtures passed (2 each). Application scaffold, dependencies,
+models and migrations unchanged. Full Django acceptance and legacy migration pending.
+
+## 2026-09-20 — safe legacy launcher checkpoint
+
+Shared compatibility source: integrated contract commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe.
+Contract core tests: Windows 43 PASS + 1 symlink SKIP; Linux all 44 PASS.
+Django/React pins reference merged contract PR #57 at integrated commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe.
+Legacy .env is parsed as selected literal data, never executed; credentials affect
+only the child, preserving blank fallback and PAT precedence. Known legacy wrappers
+migrate by exact hash; custom wrappers conflict before writes. Windows PowerShell
+and Git Bash version probes passed. These are not model-session acceptance.
+React actual main-to-candidate upgrade/generator check passed; Django old-seed
+component upgrade/repeat passed. Full bootstrap, CI-choice and P05+ remain pending.
+All PRs remain unmerged; a new explicit user command is required for merge.

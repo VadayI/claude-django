@@ -11,6 +11,18 @@
 DC ?= docker compose
 BACKEND ?= $(DC) exec backend
 ARGS ?=
+AI_PYTHON ?= python
+AI_ARGS ?=
+.PHONY: ai-claude ai-codex ai-core-check
+
+ai-claude: ## Launch Claude through the portable family runtime
+	@$(AI_PYTHON) scripts/ai/launch.py claude $(AI_ARGS)
+
+ai-codex: ## Launch Codex through the portable family runtime
+	@$(AI_PYTHON) scripts/ai/launch.py codex $(AI_ARGS)
+
+ai-core-check: ## Check the pinned family runtime without repairs
+	@$(AI_PYTHON) scripts/ai/core_sync.py --check
 
 .DEFAULT_GOAL := help
 .PHONY: help cc setup up dev down ps logs build test cov lint fmt migrate makemigrations superuser shell schema gates doctor-deps check-deploy
@@ -18,7 +30,7 @@ ARGS ?=
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN{FS=":.*?## "} {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
-cc: ## launch Claude Code with .env sourced (scripts/claude.sh)
+cc: ## launch Claude Code with selected .env data (scripts/claude.sh)
 	@bash scripts/claude.sh
 
 setup: ## One-shot host toolchain install (python/node/claude/gh) — WSL2/Debian
