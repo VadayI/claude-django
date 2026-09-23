@@ -7,13 +7,28 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 ---
 
-## Shared Claude/Codex runtime delivery (P04 checkpoint)
+## Shared Claude/Codex runtime delivery (P05 downstream candidate)
 
-The initial delivery used integrated contract core commit
-`b6d1b3d3582c4a18545050be6f475d270f53bc48`. Python 3.13+ and its standard library
+This review branch uses development-pinned contract core commit
+`83018a14142807430c987500f8dc33604b493598`; it is not claimed integrated.
+Python 3.13+ and its standard library
 are sufficient; no sibling checkout or marketplace is needed for core tooling.
 Run `python scripts/ai/core_sync.py --check` to verify installed file digests.
 The receipt and ownership manifest are `docs/ai/core-source.json`.
+
+The stack-owned `templates/ai/checks/django.json` catalogs the four existing
+family-core workflow checks as literal argv arrays: receipt drift, autonomous
+delivery unittest, adapter drift, and instruction-manifest drift. Run an exact
+committed candidate with a new output path below `.ai-runtime`:
+
+```text
+python scripts/ai/runner.py --repository . --candidate FULL_COMMIT_SHA --base FULL_BASE_SHA --catalog templates/ai/checks/django.json --output .ai-runtime/results/django.json
+```
+
+The runner exports a pristine tree per check. Missing mandatory implementations
+or prerequisites produce `NOT_VERIFIED` and a nonzero exit, never PASS. The
+catalog is delivered by the instruction component manifest, not duplicated in
+the seed inventory.
 
 Fresh `scripts/install.sh` includes the runtime and its docs. To update only this
 component in an existing project, use the reviewed template checkout:
@@ -37,7 +52,7 @@ process environment as described in [launcher configuration](docs/ai/launchers.m
 The `cc` launcher now uses the compatibility adapter described below; legacy bootstrap remains pending migration.
 
 Core delivery is not full Django/Codex support: legacy role/procedure migration,
-shared detector/runner and runnable derived-backend acceptance remain outstanding.
+full CI-mode materialization and runnable derived-backend/DB acceptance remain outstanding.
 The older support statements below describe the legacy Claude workflow.
 
 ---

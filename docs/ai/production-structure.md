@@ -3,7 +3,9 @@
 P04 supplies the editable catalog, all 22 complete rule sources, four selected
 role contracts, full generated packs and Claude/Codex entry points. This is
 production **structure**, not a claim of application/deployment readiness.
-The pinned family core remains integrated source `485bb7a` without local edits.
+The family core is development-pinned to exact contract candidate
+`83018a14142807430c987500f8dc33604b493598` without local edits. This branch does
+not claim that candidate is integrated.
 
 Edit `docs/ai/rules`, `docs/ai/roles`, and `docs/ai/workflows`; then run:
 
@@ -14,6 +16,22 @@ python scripts/ai/generate_adapters.py --check
 python scripts/build_instruction_manifest.py --check
 python scripts/ai/core_sync.py --check
 ```
+
+`templates/ai/checks/django.json` is stack-owned and delivered through this
+instruction component. It is intentionally absent from `seed-inputs.json`, so
+the combined installer has one owner for the catalog. The catalog preserves the
+four current workflow checks and their order: core receipt, delivery unittest,
+adapter generation drift, and instruction-manifest drift. An exact committed
+candidate can be checked with:
+
+```text
+python scripts/ai/runner.py --repository . --candidate FULL_COMMIT_SHA --base FULL_BASE_SHA --catalog templates/ai/checks/django.json --output .ai-runtime/results/django.json
+```
+
+Every check runs in a fresh `git archive` export. The delivery unittest uses a
+versioned reviewed legacy-byte fixture rather than checkout history, so it remains
+autonomous in that export. Missing mandatory paths or prerequisites are
+`NOT_VERIFIED`, never a silent skip or PASS.
 
 Catalog dependency lists include the full referenced closure. Worker packs
 conservatively contain every non-coordinator rule. The coordinator workflow is
@@ -60,8 +78,9 @@ not asserted complete by generating files.
 
 Claude `/bootstrap` and Codex bootstrap skill enter the same complete procedure.
 It explicitly probes the actual host instead of requiring a Claude hook and
-retains `templates/ai/` during scaffold cleanup. The legacy detector report is
-transitional (P05). CI choice/workflow materialization is P06: fresh bootstrap
+retains `templates/ai/` during scaffold cleanup. The legacy detector report
+remains transitional alongside the shared P05 detector. CI choice/workflow
+materialization is P06: fresh bootstrap
 must stop before activation/push until the explicit choice is implemented and
 verified. Backend/DB acceptance, full role model sessions and P13 install/adopt/
 rollback acceptance remain separate obligations. The existing legacy commands

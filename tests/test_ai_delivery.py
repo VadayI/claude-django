@@ -1,5 +1,6 @@
 """Behavioral checks for autonomous Django family-runtime delivery."""
 
+import base64
 import json
 from pathlib import Path
 import subprocess
@@ -7,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from unittest import mock
+import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -15,8 +17,88 @@ import seed_preflight
 import build_instruction_manifest
 
 
+LEGACY_FIXTURE = ROOT / "tests/fixtures/legacy-delivery.json"
+LEGACY_PATHS = {
+    "CLAUDE.md",
+    ".claude/agents/django-developer.md",
+    ".claude/rules/workflow.md",
+    "scripts/install_ai.py",
+    "templates/Makefile",
+    "scripts/install.sh",
+    "templates/PROJECT_README.md",
+}
+
+
+def legacy_files() -> dict[str, bytes]:
+    """Decode the reviewed pre-P04 delivery bytes used by migration fixtures.
+
+    Technical details:
+    - Reads the versioned fixture bundled with the exact candidate, so tests remain
+      autonomous in a ``git archive`` export without repository history.
+    - Requires the documented schema, source revision, and zlib/base85 encoding.
+
+    Returns:
+        Mapping of repository-relative fixture paths to their exact legacy bytes.
+
+    Raises:
+        ValueError: If fixture metadata or an encoded value is invalid.
+        OSError: If the versioned fixture cannot be read.
+
+    Side effects:
+        Reads one public test fixture. It performs no writes, database operations,
+        subprocesses, Git operations, environment changes, or network access.
+    """
+    document = json.loads(LEGACY_FIXTURE.read_text(encoding="utf-8"))
+    if set(document) != {"schema_version", "source_commit", "encoding", "files"} or (
+        document["schema_version"] != 1
+        or document["source_commit"] != "1b2ec45a5be2aebbc11ee1cd055a21bcae63165e"
+        or document["encoding"] != "zlib+base85"
+        or not isinstance(document["files"], dict)
+        or set(document["files"]) != LEGACY_PATHS
+    ):
+        raise ValueError("Invalid legacy delivery fixture metadata")
+    try:
+        return {
+            name: zlib.decompress(base64.b85decode(content.encode("ascii")))
+            for name, content in document["files"].items()
+        }
+    except (AttributeError, ValueError, zlib.error) as error:
+        raise ValueError("Invalid legacy delivery fixture bytes") from error
+
+
 class DeliveryTests(unittest.TestCase):
     """Use disposable project trees, preserving the reviewed source checkout."""
+
+    def test_django_runner_catalog_matches_current_workflow_inventory(self):
+        """Bind the stack catalog to all four existing workflow commands.
+
+        No arguments or return value. Reads the versioned catalog, core receipt,
+        and instruction manifest without writes, subprocesses, DB, or network.
+        Assertions prevent command/dependency drift, seed duplication, or an
+        accidental integrated claim for the reviewed development core candidate.
+        """
+        catalog_path = "templates/ai/checks/django.json"
+        catalog = json.loads((ROOT / catalog_path).read_text(encoding="utf-8"))
+        commands = [item["argv"] for item in catalog["checks"]]
+        self.assertEqual(commands, [
+            ["{python}", "scripts/ai/core_sync.py", "--check"],
+            ["{python}", "-m", "unittest", "discover", "-s", "tests", "-p", "test_ai_delivery.py"],
+            ["{python}", "scripts/ai/generate_adapters.py", "--root", ".", "--check"],
+            ["{python}", "scripts/build_instruction_manifest.py", "--check"],
+        ])
+        self.assertEqual([item["dependencies"] for item in catalog["checks"]], [
+            [],
+            ["django.core-receipt"],
+            ["django.core-receipt", "django.delivery-unittest"],
+            ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
+        ])
+        receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
+        self.assertEqual(receipt["source_commit"], "83018a14142807430c987500f8dc33604b493598")
+        self.assertEqual(receipt["pin_status"], "development")
+        instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))
+        seed = json.loads((ROOT / "templates/ai/seed-inputs.json").read_text(encoding="utf-8"))
+        self.assertIn(catalog_path, instruction["files"])
+        self.assertNotIn(catalog_path, seed["files"])
 
     def test_fresh_repeat_and_autonomous_check(self):
         """Deliver to Unicode paths and check without source access or DB/network.
@@ -42,6 +124,7 @@ class DeliveryTests(unittest.TestCase):
                                         "--root", str(target), "--check"],
                                        cwd=target, capture_output=True, text=True)
             self.assertEqual(generated.returncode, 0, generated.stderr + generated.stdout)
+            self.assertTrue((target / "templates/ai/checks/django.json").is_file())
             autonomous = subprocess.run([sys.executable, str(target / "scripts/install_ai.py"),
                                          "--target", str(target)],
                                         cwd=target, capture_output=True, text=True)
@@ -105,19 +188,17 @@ class DeliveryTests(unittest.TestCase):
     def test_exact_legacy_adapter_upgrade_preserves_language_and_memory(self):
         """Upgrade exact baseline adapters while leaving project-owned bytes intact.
 
-        No arguments/return. Reads Git baseline blobs and writes temporary files;
-        no DB/network. Assertion failures identify legacy migration regressions.
+        No arguments/return. Reads versioned baseline bytes and writes temporary
+        files; no Git/DB/network. Assertions identify migration regressions.
         """
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
-            baseline = "1b2ec45a5be2aebbc11ee1cd055a21bcae63165e"
+            fixtures = legacy_files()
             for name in ("CLAUDE.md", ".claude/agents/django-developer.md", ".claude/rules/workflow.md",
                          "scripts/install_ai.py"):
-                result = subprocess.run(["git", "show", f"{baseline}:{name}"], cwd=ROOT,
-                                        capture_output=True, check=True)
                 path = target / name
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(result.stdout)
+                path.write_bytes(fixtures[name])
             claude = target / "CLAUDE.md"
             claude.write_text(
                 "\n".join(line for line in claude.read_text(encoding="utf-8").split("\n")
@@ -265,11 +346,11 @@ class DeliveryTests(unittest.TestCase):
     def test_integrated_legacy_seed_updates_through_explicit_hashes(self):
         """Upgrade exact integrated seed files without accepting custom variants.
 
-        No arguments/return. Reads four public Git blobs and writes a temporary
-        fixture; no database/network. Explicit historical hashes are the only
+        No arguments/return. Reads reviewed versioned bytes and writes a temporary
+        fixture; no Git/database/network. Explicit historical hashes are the only
         no-receipt migration path and all other differences remain conflicts.
         """
-        baseline = "1b2ec45a5be2aebbc11ee1cd055a21bcae63165e"
+        fixtures = legacy_files()
         legacy = {
             "Makefile": "templates/Makefile",
             "scripts/install.sh": "scripts/install.sh",
@@ -279,15 +360,9 @@ class DeliveryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
             for name, origin in legacy.items():
-                content = subprocess.run(
-                    ["git", "show", f"{baseline}:{origin}"],
-                    cwd=ROOT,
-                    capture_output=True,
-                    check=True,
-                ).stdout
                 path = target / name
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(content)
+                path.write_bytes(fixtures[origin])
             pending, conflicts = seed_preflight.plan(ROOT, target)
             self.assertEqual(conflicts, [])
             self.assertTrue(set(legacy).issubset(pending))
