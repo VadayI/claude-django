@@ -75,7 +75,7 @@ class DeliveryTests(unittest.TestCase):
         No arguments or return value. Reads the versioned catalog, core receipt,
         and instruction manifest without writes, subprocesses, DB, or network.
         Assertions prevent command/dependency drift, seed duplication, or an
-        accidental integrated claim for the reviewed development core candidate.
+        provenance drift after the reviewed source was integrated on main.
         """
         catalog_path = "templates/ai/checks/django.json"
         catalog = json.loads((ROOT / catalog_path).read_text(encoding="utf-8"))
@@ -93,8 +93,9 @@ class DeliveryTests(unittest.TestCase):
             ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
         ])
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
-        self.assertEqual(receipt["source_commit"], "246717baa1c33fb4cf2ed38875efdf8ea577cacd")
-        self.assertEqual(receipt["pin_status"], "development")
+        self.assertEqual(receipt["source_commit"], "2e985eeb4883ccb79151c6c5834d6f82186d46a1")
+        self.assertEqual(receipt["pin_status"], "integrated")
+        self.assertEqual(receipt["observed_upstream_main"], receipt["source_commit"])
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))
         seed = json.loads((ROOT / "templates/ai/seed-inputs.json").read_text(encoding="utf-8"))
         self.assertIn(catalog_path, instruction["files"])
