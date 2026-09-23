@@ -6,11 +6,13 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import install_ai
 import seed_preflight
+import build_instruction_manifest
 
 
 class DeliveryTests(unittest.TestCase):
@@ -109,12 +111,19 @@ class DeliveryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
             baseline = "1b2ec45a5be2aebbc11ee1cd055a21bcae63165e"
-            for name in ("CLAUDE.md", ".claude/agents/django-developer.md", ".claude/rules/workflow.md"):
+            for name in ("CLAUDE.md", ".claude/agents/django-developer.md", ".claude/rules/workflow.md",
+                         "scripts/install_ai.py"):
                 result = subprocess.run(["git", "show", f"{baseline}:{name}"], cwd=ROOT,
                                         capture_output=True, check=True)
                 path = target / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(result.stdout)
+            claude = target / "CLAUDE.md"
+            claude.write_text(
+                "\n".join(line for line in claude.read_text(encoding="utf-8").split("\n")
+                          if line != "@.claude/rules/output-language.md"),
+                encoding="utf-8",
+            )
             for name in (".claude/rules/output-language.md", ".claude/memory/endpoints.json"):
                 path = target / name
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -161,6 +170,150 @@ class DeliveryTests(unittest.TestCase):
             path.write_text(path.read_text(encoding="utf-8") + "\nLocal custom rule.\n", encoding="utf-8")
             _, conflicts = install_ai.plan(ROOT, target)
             self.assertEqual(conflicts, [name])
+
+    def test_unlisted_notes_never_enter_delivery_manifest(self):
+        """Exclude arbitrary instruction-folder notes from explicit source inventory.
+
+        No arguments/return. Copies only managed fixture payload and adds a
+        synthetic private note; no secrets, DB/network. Assertion failures show
+        accidental glob-based ownership of unlisted project files.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            pending, _ = install_ai.plan(ROOT, target)
+            for name, content in pending.items():
+                path = target / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8")
+            before = build_instruction_manifest.render(target)
+            (target / "docs/ai/private-note.md").write_text("not template-owned\n", encoding="utf-8")
+            (target / ".claude/agents/custom-private.md").write_text("not template-owned\n", encoding="utf-8")
+            self.assertEqual(build_instruction_manifest.render(target), before)
+
+    def test_linked_ancestor_rejected_for_absent_child(self):
+        """Reject a linked ancestor even when the installation child does not exist.
+
+        No arguments/return. Temporary symlink fixture only, skipped if host
+        privileges disallow it. No DB/network; assertions detect escaped writes.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            real = root / "real"
+            real.mkdir()
+            link = root / "linked"
+            try:
+                link.symlink_to(real, target_is_directory=True)
+            except OSError:
+                self.skipTest("Host cannot create directory symlink")
+            with self.assertRaises(ValueError):
+                install_ai.plan(ROOT, link / "absent-child")
+            self.assertEqual(list(real.iterdir()), [])
+
+    def test_seed_inventory_sources_are_checked_before_absent_destinations(self):
+        """Reject a missing manifest source even when every target is absent.
+
+        No arguments/return. Uses a patched explicit manifest read and a fresh
+        temporary target; no database/network or persistent writes. The expected
+        file error proves source validation is independent of target existence.
+        """
+        original = seed_preflight.contained
+
+        def missing_source(root: Path, name: str) -> Path:
+            """Redirect one seed source to an absent path for this test only.
+
+            Args: root and name are the requested containment inputs.
+            Returns: The normal contained path, except for the selected source.
+            Side effects: Filesystem metadata reads only; no DB/network/writes.
+            Raises: ValueError from the real containment guard for unsafe paths.
+            """
+            if root == ROOT and name == ".claude/settings.json":
+                return root / "missing-settings.json"
+            return original(root, name)
+
+        with tempfile.TemporaryDirectory() as directory:
+            with mock.patch.object(seed_preflight, "contained", side_effect=missing_source):
+                with self.assertRaises(FileNotFoundError):
+                    seed_preflight.plan(ROOT, Path(directory))
+
+    def test_seed_plan_keeps_workflow_templates_inert_and_ignores_unlisted_files(self):
+        """Plan only explicit files and never materialize active workflows.
+
+        No arguments/return. Reads reviewed sources and uses a temporary target;
+        no database/network. Assertions enforce the no-recursive-copy boundary
+        while retaining inert workflow templates for the later P06 materializer.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            pending, conflicts = seed_preflight.plan(ROOT, Path(directory))
+            self.assertEqual(conflicts, [])
+            self.assertIn("templates/.github/workflows/backend-ci.yml", pending)
+            self.assertNotIn(".github/workflows/backend-ci.yml", pending)
+            self.assertNotIn("README.md", pending)
+
+    def test_combined_seed_components_have_identical_overlaps(self):
+        """Require every overlapping component to propose identical content.
+
+        No arguments/return. Reads explicit manifests into a temporary fresh
+        target; no writes, database or network. A mismatch raises in the shared
+        seed planner before apply, preventing order-dependent overwrites.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            pending, conflicts = seed_preflight.plan(ROOT, Path(directory))
+            self.assertEqual(conflicts, [])
+            overlap = "templates/ai/instruction-delivery.json"
+            self.assertEqual(pending[overlap], (ROOT / overlap).read_text(encoding="utf-8"))
+
+    def test_integrated_legacy_seed_updates_through_explicit_hashes(self):
+        """Upgrade exact integrated seed files without accepting custom variants.
+
+        No arguments/return. Reads four public Git blobs and writes a temporary
+        fixture; no database/network. Explicit historical hashes are the only
+        no-receipt migration path and all other differences remain conflicts.
+        """
+        baseline = "1b2ec45a5be2aebbc11ee1cd055a21bcae63165e"
+        legacy = {
+            "Makefile": "templates/Makefile",
+            "scripts/install.sh": "scripts/install.sh",
+            "templates/Makefile": "templates/Makefile",
+            "templates/PROJECT_README.md": "templates/PROJECT_README.md",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            for name, origin in legacy.items():
+                content = subprocess.run(
+                    ["git", "show", f"{baseline}:{origin}"],
+                    cwd=ROOT,
+                    capture_output=True,
+                    check=True,
+                ).stdout
+                path = target / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(content)
+            pending, conflicts = seed_preflight.plan(ROOT, target)
+            self.assertEqual(conflicts, [])
+            self.assertTrue(set(legacy).issubset(pending))
+            self.assertIn(seed_preflight.RECEIPT, pending)
+
+    def test_seed_apply_conflict_writes_nothing(self):
+        """Stop a combined apply before creating any other planned file.
+
+        No arguments/return. Invokes the local CLI against a temporary custom
+        settings file; no DB/network. All bytes and paths must remain unchanged
+        when ownership preflight reports a conflict.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            custom = target / ".claude/settings.json"
+            custom.parent.mkdir(parents=True)
+            custom.write_text('{"custom": true}\n', encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts/seed_preflight.py"), "--target", str(target), "--apply"],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertEqual(custom.read_text(encoding="utf-8"), '{"custom": true}\n')
+            self.assertEqual([path.relative_to(target).as_posix() for path in target.rglob("*") if path.is_file()],
+                             [".claude/settings.json"])
 
 
 if __name__ == "__main__":

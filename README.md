@@ -145,7 +145,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 ## Prerequisites
 
 - [Claude Code](https://code.claude.com) CLI
-- **Python 3.10+ on PATH as `python`** (hard requirement; the `SessionStart` hook runs `scripts/detect-env.py`). On Ubuntu install `python-is-python3` if only `python3` is present.
+- **Python 3.13+ on PATH as `python`** (hard requirement for the ownership-safe installer and shared runtime). On Ubuntu install `python-is-python3` if only `python3` is present.
 - Docker Desktop (WSL2 or Hyper-V backend)
 - **Shell:** PowerShell or Git Bash on native Windows, bash in WSL2 Ubuntu, or bash/zsh on Linux/macOS — all supported (ADR `0022`).
 - WSL2 (Ubuntu) — **optional on Windows** (one of two runners; the other is native PowerShell / Git Bash). Docker Desktop still needs a WSL2 or Hyper-V backend. The project can live on your Windows drive (`/mnt/...` from WSL2, `D:\...` natively — fully supported, ADR `0009`); `~/projects/<slug>` in the WSL2 FS is optional for faster bind-mounts
@@ -154,11 +154,11 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 
 ## Quick start (seed the config into a new project folder)
 
-> **First time on this Windows machine?** Two options. **(a) Native Windows:** install Python 3.10+ (make sure `python --version` works — not the Microsoft Store alias), Node 18+ (only if installing the CLI via npm), `git`, `gh`, and Docker Desktop; run everything from PowerShell or Git Bash. **(b) WSL2:** from PowerShell `wsl --install -d Ubuntu` then `wsl --set-default Ubuntu`, set a Unix user/password, and install the toolchain: `sudo apt update && sudo apt install -y git curl gh python-is-python3 python3-pip` (verify `ID=ubuntu` in `/etc/os-release`, 24.04+).
+> **First time on this Windows machine?** Two options. **(a) Native Windows:** install Python 3.13+ (make sure `python --version` works — not the Microsoft Store alias), Node 18+ (only if installing the CLI via npm), `git`, `gh`, and Docker Desktop; run everything from PowerShell or Git Bash. **(b) WSL2:** from PowerShell `wsl --install -d Ubuntu` then `wsl --set-default Ubuntu`, set a Unix user/password, and install Python 3.13+ plus the remaining toolchain (verify `ID=ubuntu` in `/etc/os-release`, 24.04+).
 >
 > Then open your shell at the project: PowerShell or Git Bash at `D:\...` (native), or `wsl` and `cd /mnt/d/...` (WSL2) — a Windows-drive path is fine either way (ADR `0009`). On WSL2 the one thing that matters is `which claude` resolving to `/home/...` (not `/mnt/c/...`); on native Windows a `claude.exe` on PATH is correct.
 
-**Fastest — one-line seed.** From the root of your project folder in **Git Bash or WSL2**, this clones the template, copies the config, and seeds a placeholder `.env` from `.env.example` (never overwriting an existing `.env`) in one go (idempotent; refuses to clobber an already-seeded folder unless `--force`):
+**Fastest — one-line seed.** From the root of your project folder in **Git Bash or WSL2**, this clones the template and applies its explicit per-file seed inventory. It never creates or overwrites `.env`, project memory/language, or active workflows. A seeded folder is rejected unless `--force` is supplied; `--force` only permits a checked repeat and never bypasses ownership conflicts:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/VadayI/claude-django/main/scripts/install.sh)
@@ -176,38 +176,21 @@ If deep TLS inspection still blocks it, seed from **WSL2** instead (it uses Open
 
 Then launch `claude` → `/doctor` → `/bootstrap`. To upgrade an *already-seeded* project use `/update-from-template` instead (it preserves your edits, ADR `0014`).
 
-**Manual equivalent** (what `install.sh` does, if you prefer to run it by hand):
+**Reviewable manual equivalent** (the same manifest/preflight/apply path used by `install.sh`):
 
 ```bash
-# Git Bash or WSL2, from the root of your project (a Windows-drive path is fine — ADR 0009)
-rm -rf /tmp/claude-django && git clone https://github.com/VadayI/claude-django.git /tmp/claude-django
-cp -r /tmp/claude-django/.claude ./
-cp /tmp/claude-django/CLAUDE.md ./
-cp /tmp/claude-django/.mcp.json ./
-cp /tmp/claude-django/.gitignore ./
-cp /tmp/claude-django/.gitattributes ./
-cp -r /tmp/claude-django/scripts ./          # detect-env.py (SessionStart hook) + policy/ hook scripts — REQUIRED; the hook fails SILENTLY without it and /doctor will STOP with NO_ENV_DETECT
-cp -r /tmp/claude-django/templates ./        # FULL templates/ — /bootstrap Mode A needs all of it
-cp /tmp/claude-django/templates/docker-compose.yml ./   # also at repo root (devcontainer entrypoint)
-cp /tmp/claude-django/templates/Makefile ./          # dev-loop command shortcuts (make help/test/up/...)
-mkdir -p .github/workflows && cp /tmp/claude-django/templates/.github/workflows/* .github/workflows/
+# Git Bash or WSL2, from the reviewed template clone. Preview first, then apply.
+python scripts/seed_preflight.py --target "/path/to/new project"
+python scripts/seed_preflight.py --target "/path/to/new project" --apply
 
-# Seed .env so the project is runnable right away (placeholders -- fill real secrets; never overwrite a real .env):
-cp /tmp/claude-django/templates/.env.example ./.env.example   # committed key list
-[ -f ./.env ] || cp ./.env.example ./.env                      # gitignored, local-only
-
-# Wipe transient state from the template clone (these are regenerated by the SessionStart hook):
-rm -f .claude/memory/env-detect.json .claude/memory/command-log.jsonl
-
-# Reset the language override so the derived project starts fresh (mirrors install.sh step 5):
-rm -f .claude/rules/output-language.md
-sed -i '\#^@\.claude/rules/output-language\.md$#d' CLAUDE.md
+# Workflow definitions stay under templates/.github/workflows/. P06 will
+# materialize the selected local/GitHub mode; this seed does not activate them.
 
 # WSL2 only: confirm `claude` is the Linux-native CLI, not the Windows `claude.exe` (no shadowing on native Windows).
 which claude    # WSL2/Linux/macOS: expect /home/... or /usr/...  (if /mnt/c/..., see step 1 / step 5 above)
 ```
 
-Then install the plugins (see below) and adjust `CLAUDE.md` for the project name. Then run **`/doctor`** inside `claude` — it detects the scenario and recommends the next command. If `/doctor` HARD-STOPs, jump to **[Troubleshooting startup](#troubleshooting-startup--doctor-hard-stops)** below.
+Then install any needed optional plugins (see below). Mixed-owned instruction files are not edited silently; reconcile any reported conflict as a reviewed diff. Run **`/doctor`** inside `claude` — it detects the scenario and recommends the next command. If `/doctor` HARD-STOPs, jump to **[Troubleshooting startup](#troubleshooting-startup--doctor-hard-stops)** below.
 
 ---
 

@@ -29,6 +29,17 @@ python scripts/install_ai.py --target "path with spaces"
 python scripts/install_ai.py --target "path with spaces" --apply
 ```
 
+The top-level seeder uses `templates/ai/seed-inputs.json` as its only explicit
+target-to-source inventory and combines it with the same component plans before
+any write. Every listed source is resolved and read even when its target is
+absent. It never recursively copies a directory. Workflow files are delivered
+only below `templates/.github/workflows/`; materializing `.github/workflows/`
+belongs to P06 after CI-mode selection. `--force` permits a checked repeat of the
+fresh seeder but does not permit overwriting customized or mixed-owned files.
+`docs/ai/seed-source.json` records the exact installed source digests. Later
+template-owned seed updates accept only that receipt or the explicitly recorded
+integrated legacy hashes; arbitrary local variants remain conflicts.
+
 The instruction manifest and destination receipt track exact file hashes.
 Unmodified template-owned files update; customized files conflict before any
 writes. Existing AGENTS/CLAUDE/Codex config remain mixed-owned and conflict if

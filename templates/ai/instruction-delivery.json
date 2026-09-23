@@ -528,6 +528,7 @@
     },
     "CLAUDE.md": {
       "legacy_sha256": [
+        "040fd488e395472736ff23e2687b06f24bec447e639a13387e1d91f6557a99bc",
         "b5a92dc905739a311b20e9244b4cef6704e50be32c4a43cec982427c4ad62e68"
       ],
       "ownership": "mixed",
@@ -567,7 +568,7 @@
     },
     "docs/ai/production-structure.md": {
       "ownership": "template",
-      "sha256": "abd7c6b432db46632f594542a58f448fbb21c5fc402e7cef52887da1f4b398f4"
+      "sha256": "419bf412ec761b23941030dc6be8650cd0cb5848ad7580e0f4d24481fca0eaf1"
     },
     "docs/ai/roles/api-architect.md": {
       "ownership": "template",
@@ -683,11 +684,14 @@
     },
     "scripts/build_instruction_manifest.py": {
       "ownership": "template",
-      "sha256": "e409e828a024c2ccecf0d7e2b2fd9a3edad7b291edf7b5e34ad2897bc8405eac"
+      "sha256": "39e01b1ddbba0b268d85e3678b61061c948e8757d69be176bde1f6f50faa74fe"
     },
     "scripts/install_ai.py": {
+      "legacy_sha256": [
+        "b8f0ccbed691c1035b2dd4b07ec681507f17a396396993c5c633dbf57c74be33"
+      ],
       "ownership": "template",
-      "sha256": "b9cb6b5fb89440b88f2a034e47d5fa10404ba46f15149b30f0acc9f75a9d6463"
+      "sha256": "ec9d3946c502dd1d28b88a1d8c6add9819a3430a9c36f2a2da0bb9ee7db4f4b5"
     },
     "scripts/instruction_delivery.py": {
       "ownership": "template",
@@ -695,11 +699,15 @@
     },
     "scripts/seed_preflight.py": {
       "ownership": "template",
-      "sha256": "3fe580396201611da7754a3ce8921d37ba308d9f7fc3d3b5b3bc3d50f331c6a9"
+      "sha256": "c921b560ed02a2843c303fce2c567bfc639557eceec0d71de83ff6ca6f3e575c"
     },
     "templates/ai/launcher-delivery.json": {
       "ownership": "template",
       "sha256": "7d0e7b2560e2aa8407b4aa02e609e98c80a670b212ace6a280b865467432ff5a"
+    },
+    "templates/ai/seed-inputs.json": {
+      "ownership": "template",
+      "sha256": "03a74e9e29d7a5861336d562c8454245bcd745e57474e46613228b1067d7c514"
     }
   },
   "schema_version": 1

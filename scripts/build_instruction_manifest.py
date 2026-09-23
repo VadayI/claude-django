@@ -10,6 +10,11 @@ from core_paths import contained, digest
 from generate_adapters import MANIFEST as ADAPTERS
 from instruction_delivery import MANIFEST, RECEIPT
 
+MIGRATION_HASHES = {
+    "CLAUDE.md": {"040fd488e395472736ff23e2687b06f24bec447e639a13387e1d91f6557a99bc"},
+    "scripts/install_ai.py": {"b8f0ccbed691c1035b2dd4b07ec681507f17a396396993c5c633dbf57c74be33"},
+}
+
 
 def render(root: Path) -> str:
     """Describe all reviewed instruction sources, adapters and local dependencies.
@@ -25,19 +30,25 @@ def render(root: Path) -> str:
     inventory = json.loads(contained(root, "docs/ai/legacy-inventory.json").read_text(encoding="utf-8"))
     names = {"AGENTS.md", ADAPTERS, "scripts/install_ai.py", "scripts/instruction_delivery.py",
              "scripts/build_instruction_manifest.py", "scripts/seed_preflight.py", "templates/ai/launcher-delivery.json",
-             ".codex/config.toml"}
+             ".codex/config.toml", "docs/ai/legacy-inventory.json",
+             "docs/ai/production-structure.md", "docs/ai/legacy/claude-startup.md",
+             "templates/ai/seed-inputs.json"}
     names.update(adapters["sources"])
     names.update(adapters["files"])
-    for directory in ("docs/ai", ".claude/agents", ".claude/commands", ".claude/skills"):
-        names.update(path.relative_to(root).as_posix() for path in (root / directory).rglob("*") if path.is_file() and path.suffix in (".md", ".json"))
+    # The frozen reviewed inventory is explicit; never enroll arbitrary files
+    # discovered under docs/ai or .claude, including untracked notes/secrets.
+    names.update(inventory["files"])
     names -= set(core["files"]) | {"docs/ai/core-source.json", "docs/ai/launcher-source.json", RECEIPT}
-    names = {name for name in names if not name.startswith("docs/ai/overrides/")}
+    names.discard(".claude/rules/output-language.md")
     files = {}
     for name in sorted(names):
         files[name] = {"sha256": digest(contained(root, name).read_text(encoding="utf-8")),
                        "ownership": "mixed" if name in ("AGENTS.md", "CLAUDE.md", ".codex/config.toml") else "template"}
+        legacy = set(MIGRATION_HASHES.get(name, set()))
         if name in inventory["files"]:
-            files[name]["legacy_sha256"] = [inventory["files"][name]["sha256"]]
+            legacy.add(inventory["files"][name]["sha256"])
+        if legacy:
+            files[name]["legacy_sha256"] = sorted(legacy)
     return json.dumps({"schema_version": 1, "component": "django-instructions", "files": files}, sort_keys=True, indent=2) + "\n"
 
 
