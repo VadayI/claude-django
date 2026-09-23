@@ -372,7 +372,8 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
      blocked.
      ```bash
      echo "Triggering initial backend-ci run to register the status check..."
-     gh workflow run backend-ci.yml --ref main 2>/dev/null \
+     REGISTER_SHA="$(git rev-parse HEAD)"
+     gh workflow run backend-ci.yml --ref main -f base="$REGISTER_SHA" 2>/dev/null \
        || echo "i workflow_dispatch not yet available; the push trigger above will register it"
      echo "Triggering initial backend-policy run to register the status check..."
      gh workflow run backend-policy.yml --ref main 2>/dev/null \
@@ -380,6 +381,11 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
      # Give GitHub ~8s to register the run before Step 5 references the check.
      sleep 8
      ```
+     `base=REGISTER_SHA` is an explicit self-base registration run; it checks
+     delivery state, not a PR diff. The `family-core` exact-runner job also
+     appears on push/PR/merge-group, but do not add its required context until
+     a hosted run confirms its actual name. Existing backend jobs remain
+     separate and the P05 catalog does not prove backend readiness.
      In `local` mode do not run either registration command, do not wait for hosted statuses, and do not install a local cron or Task Scheduler job.
 
    > **Documented exception:** this single push to `main` is the ONLY direct-main push allowed in the whole project — see `docs/ai/rules/git-operations.md` *Documented exception*. Step 5 immediately enables branch protection so the iron rule kicks back in.

@@ -415,6 +415,12 @@ hooks after `git init` with `python scripts/ai/install_git_hooks.py --target .
 Django runner catalog covers delivery integrity only; backend readiness still
 requires the project's separate checks.
 
+The canonical `backend-ci.yml` includes a `family-core` job invoking the same
+P05 exact-candidate runner in local manual and GitHub modes. Its current
+catalog covers delivery integrity; existing backend lint, conformance, drift
+and pytest jobs remain separate. A manual dispatch must supply an exact
+`base` commit; a first push with a zero previous OID fails honestly.
+
 Claude and Codex read `AGENTS.md` and `docs/ai/catalog.json`. Four selected roles
 have full generated packs and runtime entry points; legacy roles and procedures
 remain available. Python 3.13+ is required for tooling (stdlib only).

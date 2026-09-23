@@ -59,7 +59,10 @@ def render(source: Path, filename: str, mode: str) -> str:
         raise ValueError(f"Unreviewed canonical events or jobs: {filename}")
     if mode == "github":
         return canonical
-    return canonical[:start] + "on:\n  workflow_dispatch:\n" + canonical[end:]
+    dispatch = re.search(r"(?m)^  workflow_dispatch:\n(?:^    .*\n)*", canonical[start:end])
+    if dispatch is None:
+        raise ValueError(f"Missing reviewed manual event: {filename}")
+    return canonical[:start] + "on:\n" + dispatch.group(0) + canonical[end:]
 
 
 def project_text(target: Path, mode: str) -> str:

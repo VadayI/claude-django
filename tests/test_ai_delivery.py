@@ -95,6 +95,11 @@ class DeliveryTests(unittest.TestCase):
                 self.assertNotIn("  pull_request:", active)
                 self.assertNotIn("  push:", active)
                 self.assertNotIn("  merge_group:", active)
+            local_ci = (target / ".github/workflows/backend-ci.yml").read_text(encoding="utf-8")
+            self.assertIn("        required: true", local_ci)
+            self.assertIn("  family-core:\n", local_ci)
+            self.assertIn('--candidate "$CI_CANDIDATE" --base "$base" --event "$event"', local_ci)
+            self.assertIn("--catalog templates/ai/checks/django.json", local_ci)
             project_path = target / ci_mode.PROJECT
             project = json.loads(project_path.read_text(encoding="utf-8"))
             project["extensions"] = {"owner": "fixture"}
@@ -107,6 +112,7 @@ class DeliveryTests(unittest.TestCase):
                 path.write_text(content, encoding="utf-8", newline="\n")
             self.assertEqual(ci_mode.plan(ROOT, target, "github"), ({}, []))
             hosted_ci = (target / ".github/workflows/backend-ci.yml").read_text(encoding="utf-8")
+            self.assertEqual(local_ci.split("\njobs:\n", 1)[1], hosted_ci.split("\njobs:\n", 1)[1])
             self.assertNotIn("if: vars.CONTRACT_VERSION != ''", hosted_ci)
             self.assertIn("CONTRACT_VERSION is missing", hosted_ci)
             self.assertEqual(json.loads(project_path.read_text(encoding="utf-8"))["extensions"],

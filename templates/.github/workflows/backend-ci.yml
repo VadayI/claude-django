@@ -13,6 +13,11 @@ on:
   # Manual trigger so /bootstrap can register the status check before the first
   # PR exists, via `gh workflow run backend-ci.yml --ref main`.
   workflow_dispatch:
+    inputs:
+      base:
+        description: Exact base commit for manual runner verification
+        required: true
+        type: string
   merge_group:
 
 # Cancel superseded runs for the same PR/branch so a new push stops stale runs.
@@ -21,6 +26,40 @@ concurrency:
   group: backend-ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  family-core:
+    name: Family core exact checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Run exact-candidate Django delivery catalog
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          CI_CANDIDATE: ${{ github.sha }}
+          CI_PR_BASE: ${{ github.event.pull_request.base.sha }}
+          CI_PUSH_BASE: ${{ github.event.before }}
+          CI_MERGE_BASE: ${{ github.event.merge_group.base_sha }}
+          CI_MANUAL_BASE: ${{ inputs.base }}
+        run: |
+          set -euo pipefail
+          case "$CI_EVENT" in
+            pull_request) event=pull_request; base="$CI_PR_BASE" ;;
+            push) event=push; base="$CI_PUSH_BASE" ;;
+            merge_group) event=pull_request; base="$CI_MERGE_BASE" ;;
+            workflow_dispatch) event=manual; base="$CI_MANUAL_BASE" ;;
+            *) echo "Unsupported CI event: $CI_EVENT" >&2; exit 2 ;;
+          esac
+          python scripts/ai/runner.py --repository . --candidate "$CI_CANDIDATE" --base "$base" --event "$event" --network allowed --catalog templates/ai/checks/django.json --output .ai-runtime/results/django.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: django-exact-runner-result
+          path: .ai-runtime/results/django.json
+          if-no-files-found: warn
   test:
     runs-on: ubuntu-latest
     services:
