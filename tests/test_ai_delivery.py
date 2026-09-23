@@ -93,7 +93,7 @@ class DeliveryTests(unittest.TestCase):
             ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
         ])
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
-        self.assertEqual(receipt["source_commit"], "83018a14142807430c987500f8dc33604b493598")
+        self.assertEqual(receipt["source_commit"], "ec719b9f0cbe3bffb9556931587233415c7566c2")
         self.assertEqual(receipt["pin_status"], "development")
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))
         seed = json.loads((ROOT / "templates/ai/seed-inputs.json").read_text(encoding="utf-8"))
