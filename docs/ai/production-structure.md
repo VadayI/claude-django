@@ -33,6 +33,13 @@ versioned reviewed legacy-byte fixture rather than checkout history, so it remai
 autonomous in that export. Missing mandatory paths or prerequisites are
 `NOT_VERIFIED`, never a silent skip or PASS.
 
+Derived backend projects also receive `templates/ai/checks/django-backend.json`
+and its two stack-owned gate adapters through this instruction component. It
+extends the four delivery checks with the eight blocking backend code gates
+and the contract-pin review policy. CI and pre-push use this same catalog.
+PostgreSQL, a live conformance server, and a checked-in public contract pin
+are explicit prerequisites; absence is `NOT_VERIFIED`, not a skipped success.
+
 Catalog dependency lists include the full referenced closure. Worker packs
 conservatively contain every non-coordinator rule. The coordinator workflow is
 excluded, including transitive references. Generated Claude rule files direct

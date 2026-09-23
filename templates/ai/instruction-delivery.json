@@ -548,7 +548,7 @@
     },
     "docs/ai/generated/adapters-manifest.json": {
       "ownership": "template",
-      "sha256": "7d13402b0b3188280be9f391d83fbd182dbc20a386668470ff48e36a11bc68fd"
+      "sha256": "f05c590da489339cedfd5655e886b3a5be2d3358c928502aea3bc03611c67032"
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
@@ -576,7 +576,7 @@
     },
     "docs/ai/production-structure.md": {
       "ownership": "template",
-      "sha256": "2c94307b9bca89ca1c13f2de6ae11715983f8b35705a46892f9a0da75e700b03"
+      "sha256": "59ca992dee1c9bed1ca56aef00508cb9a42a25bcb75071e2f12ab092eae5d127"
     },
     "docs/ai/roles/api-architect.md": {
       "ownership": "template",
@@ -684,11 +684,19 @@
     },
     "docs/ai/workflows/bootstrap.md": {
       "ownership": "template",
-      "sha256": "3a4b9ce48032c00cb9ad8e55e6c763ad7cdecae77d6e225b454841825b47de7c"
+      "sha256": "b9bfc6fffdf962c30ccdb323af41ec838e9b6f80986d5e061bdb02685071399b"
     },
     "docs/ai/workflows/orchestrate.md": {
       "ownership": "template",
       "sha256": "1d4227ad077482a10bb7c376c0f791cf0027187d0a7e924a36aa7454b0099325"
+    },
+    "scripts/ai/backend_policy.py": {
+      "ownership": "template",
+      "sha256": "a6045144cf040d290b7370f4e27db30cbf33cfc92413aebce0ca126b8ac288d2"
+    },
+    "scripts/ai/backend_prereq.py": {
+      "ownership": "template",
+      "sha256": "a374ba2d90428ac6bd0443b8f9a6534011f020aacd3b5356e4ed31d9e6d5ea2b"
     },
     "scripts/ai/delivery_selftest.py": {
       "ownership": "template",
@@ -696,7 +704,7 @@
     },
     "scripts/ai/git_hooks.py": {
       "ownership": "template",
-      "sha256": "705651d3b4b898d1b03be1afbe9db3e32e38b2640c9e77f87a5aa2353018e4df"
+      "sha256": "71cbd1c226ddc9dc6abc75f57e718626fa7c1a331c43a8bcc6aae4f8d632f48b"
     },
     "scripts/ai/install_git_hooks.py": {
       "ownership": "template",
@@ -708,7 +716,7 @@
     },
     "scripts/build_instruction_manifest.py": {
       "ownership": "template",
-      "sha256": "9292e282ed4433e9bac97a8d2011877f5c5b1ecc0e60a3e1af8ff39112a7a091"
+      "sha256": "37a5f64d524d8699435659c986107e4a7b41e64b8c52337a58dc2c111a5fb903"
     },
     "scripts/install_ai.py": {
       "legacy_sha256": [
@@ -724,6 +732,10 @@
     "scripts/seed_preflight.py": {
       "ownership": "template",
       "sha256": "c921b560ed02a2843c303fce2c567bfc639557eceec0d71de83ff6ca6f3e575c"
+    },
+    "templates/ai/checks/django-backend.json": {
+      "ownership": "template",
+      "sha256": "5b45b074117894f0e64cfd28d7ec08edfa31ac45399b8b58ff1ecac995fbdfc7"
     },
     "templates/ai/checks/django.json": {
       "ownership": "template",

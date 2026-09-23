@@ -99,7 +99,7 @@ class DeliveryTests(unittest.TestCase):
             self.assertIn("        required: true", local_ci)
             self.assertIn("  family-core:\n", local_ci)
             self.assertIn('--candidate "$CI_CANDIDATE" --base "$base" --event "$event"', local_ci)
-            self.assertIn("--catalog templates/ai/checks/django.json", local_ci)
+            self.assertIn("--catalog templates/ai/checks/django-backend.json", local_ci)
             project_path = target / ci_mode.PROJECT
             project = json.loads(project_path.read_text(encoding="utf-8"))
             project["extensions"] = {"owner": "fixture"}
@@ -185,8 +185,10 @@ class DeliveryTests(unittest.TestCase):
                                        cwd=target, capture_output=True, text=True)
             self.assertEqual(generated.returncode, 0, generated.stderr + generated.stdout)
             self.assertTrue((target / "templates/ai/checks/django.json").is_file())
+            self.assertTrue((target / "templates/ai/checks/django-backend.json").is_file())
             for name in (".githooks/pre-commit", ".githooks/pre-push",
-                         "scripts/ai/git_hooks.py", "scripts/ai/install_git_hooks.py"):
+                         "scripts/ai/git_hooks.py", "scripts/ai/install_git_hooks.py",
+                         "scripts/ai/backend_prereq.py", "scripts/ai/backend_policy.py"):
                 self.assertTrue((target / name).is_file(), name)
             autonomous = subprocess.run([sys.executable, str(target / "scripts/install_ai.py"),
                                          "--target", str(target)],

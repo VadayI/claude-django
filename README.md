@@ -411,15 +411,18 @@ remains pending.
 For a derived project, connect the delivered staged-index and per-ref push
 hooks after `git init` with `python scripts/ai/install_git_hooks.py --target .
 --apply`. The installer preserves existing Git hook configuration. Set
-`AI_PYTHON` to Python 3.13+ when the default interpreter is older. The current
-Django runner catalog covers delivery integrity only; backend readiness still
-requires the project's separate checks.
+`AI_PYTHON` to Python 3.13+ when the default interpreter is older. The
+`django.json` core catalog covers delivery integrity; derived projects use
+`django-backend.json` for code and policy gates.
 
 The canonical `backend-ci.yml` includes a `family-core` job invoking the same
-P05 exact-candidate runner in local manual and GitHub modes. Its current
-catalog covers delivery integrity; existing backend lint, conformance, drift
-and pytest jobs remain separate. A manual dispatch must supply an exact
-`base` commit; a first push with a zero previous OID fails honestly.
+P05 exact-candidate runner in local manual and GitHub modes. The derived
+catalog maps all eight blocking backend code gates and the PR pin policy.
+PostgreSQL, a live conformance target, and a checked-in public contract pin
+are explicit prerequisites; absent inputs report NOT_VERIFIED and block a
+required runner job. Existing bespoke jobs remain until hosted parity is
+verified. A manual dispatch must supply an exact `base` commit; a first push
+with a zero previous OID fails honestly.
 
 Claude and Codex read `AGENTS.md` and `docs/ai/catalog.json`. Four selected roles
 have full generated packs and runtime entry points; legacy roles and procedures

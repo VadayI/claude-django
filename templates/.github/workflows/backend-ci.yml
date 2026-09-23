@@ -29,6 +29,17 @@ jobs:
   family-core:
     name: Family core exact checks
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app" --health-interval 5s
+          --health-timeout 3s --health-retries 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,7 +47,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Run exact-candidate Django delivery catalog
+      - name: Install backend test dependencies
+        working-directory: backend
+        run: pip install -e ".[dev]"
+      - name: Run exact-candidate Django backend catalog
         env:
           CI_EVENT: ${{ github.event_name }}
           CI_CANDIDATE: ${{ github.sha }}
@@ -53,7 +67,7 @@ jobs:
             workflow_dispatch) event=manual; base="$CI_MANUAL_BASE" ;;
             *) echo "Unsupported CI event: $CI_EVENT" >&2; exit 2 ;;
           esac
-          python scripts/ai/runner.py --repository . --candidate "$CI_CANDIDATE" --base "$base" --event "$event" --network allowed --catalog templates/ai/checks/django.json --output .ai-runtime/results/django.json
+          python scripts/ai/runner.py --repository . --candidate "$CI_CANDIDATE" --base "$base" --event "$event" --network allowed --catalog templates/ai/checks/django-backend.json --output .ai-runtime/results/django.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

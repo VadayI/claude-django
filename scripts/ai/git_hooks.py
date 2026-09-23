@@ -55,8 +55,8 @@ def pre_commit(root: Path) -> int:
     Returns: 0 for approved index or 1 for a policy violation.
     Raises: Git/decoding errors propagate to CLI failure 2.
     Side effects: Read-only staged Git diff query; no formatting, writes,
-        database, network, or application execution. Django's current runner
-        catalog checks delivery only; backend readiness needs separate gates.
+        database, network, or application execution. The full candidate
+        catalog runs at pre-push and in hosted CI.
     """
     result = subprocess.run(["git", "-C", str(root), "diff", "--cached", "--check"], check=False)
     return 0 if result.returncode == 0 else 1
@@ -86,12 +86,14 @@ def assert_candidate_tooling(root: Path, commit: str) -> None:
     Args: root is local repository; commit is the exact candidate OID.
     Returns: None when all local execution inputs equal committed blobs.
     Raises: ValueError for dirty/stale tooling; Git errors propagate.
-    Side effects: Reads three working files and exact Git blobs; no writes,
+    Side effects: Reads five working files and exact Git blobs; no writes,
         database, network, or Git ref/index mutation.
     Business rule: A dirty local catalog or runner cannot claim a result for
         different committed verification logic.
     """
-    for name in ("scripts/ai/git_hooks.py", "scripts/ai/runner.py", "templates/ai/checks/django.json"):
+    for name in ("scripts/ai/git_hooks.py", "scripts/ai/runner.py",
+                 "scripts/ai/backend_prereq.py", "scripts/ai/backend_policy.py",
+                 "templates/ai/checks/django-backend.json"):
         committed = git(root, "show", f"{commit}:{name}")
         if (root / name).read_text(encoding="utf-8").encode("utf-8") != committed:
             raise ValueError(f"Working verification input differs from candidate: {name}")
@@ -157,7 +159,7 @@ def pre_push(root: Path, updates: list[tuple[str, str, str, str]], remote: str) 
         output = root / ".ai-runtime/results" / f"prepush-{local_oid[:12]}-{uuid.uuid4().hex}.json"
         command = [sys.executable, str(root / "scripts/ai/runner.py"), "--repository", str(root),
                    "--candidate", local_oid, "--base", base, "--event", "push", "--network", "allowed",
-                   "--catalog", str(root / "templates/ai/checks/django.json"), "--output", str(output)]
+                   "--catalog", str(root / "templates/ai/checks/django-backend.json"), "--output", str(output)]
         result = subprocess.run(command, cwd=root, check=False)
         if result.returncode:
             print(f"[pre-push] exact checks failed for {remote_ref}: {output}", file=sys.stderr)

@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "catalog_id": "django.backend-exact",
+  "profile": "full",
+  "policy": {"allow_mandatory_not_applicable": false},
+  "invalidation_paths": [
+    "docs/ai/core-source.json",
+    "docs/ai/generated/adapters-manifest.json",
+    "templates/ai/instruction-delivery.json",
+    "templates/ai/checks/django-backend.json",
+    "scripts/ai/backend_prereq.py",
+    "scripts/ai/backend_policy.py",
+    "backend",
+    "docs/api/openapi.yml"
+  ],
+  "checks": [
+    {
+      "id": "django.core-receipt",
+      "description": "Verify the vendored family-core receipt and managed payload.",
+      "argv": ["{python}", "scripts/ai/core_sync.py", "--check"],
+      "cwd": ".",
+      "mandatory": true,
+      "timeout_seconds": 120,
+      "prerequisites": ["python"],
+      "applicability": {"path_exists": "scripts/ai/core_sync.py", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [],
+      "dependencies": [],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.delivery-unittest",
+      "description": "Exercise downstream-safe fresh, repeat, custom-conflict, update, and autonomous delivery.",
+      "argv": ["{python}", "scripts/ai/delivery_selftest.py"],
+      "cwd": ".",
+      "mandatory": true,
+      "timeout_seconds": 180,
+      "prerequisites": ["python"],
+      "applicability": {"path_exists": "scripts/ai/delivery_selftest.py", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [],
+      "dependencies": ["django.core-receipt"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.adapter-drift",
+      "description": "Verify canonical Django runtime adapters and role packs.",
+      "argv": ["{python}", "scripts/ai/generate_adapters.py", "--root", ".", "--check"],
+      "cwd": ".",
+      "mandatory": true,
+      "timeout_seconds": 120,
+      "prerequisites": ["python"],
+      "applicability": {"path_exists": "scripts/ai/generate_adapters.py", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [],
+      "dependencies": ["django.core-receipt", "django.delivery-unittest"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.instruction-manifest",
+      "description": "Verify the stack-owned instruction delivery manifest.",
+      "argv": ["{python}", "scripts/build_instruction_manifest.py", "--check"],
+      "cwd": ".",
+      "mandatory": true,
+      "timeout_seconds": 120,
+      "prerequisites": ["python"],
+      "applicability": {"path_exists": "scripts/build_instruction_manifest.py", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [],
+      "dependencies": ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.backend-nul",
+      "description": "Check NUL bytes and conflict markers in derived backend inputs.",
+      "argv": ["{git_bash}", "scripts/check_nul_bytes.sh", ".claude/", "scripts/", "backend/"],
+      "cwd": ".", "mandatory": true, "timeout_seconds": 120,
+      "prerequisites": ["git-bash"],
+      "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.backend-ruff",
+      "description": "Run the same Ruff lint gate as backend-ci.",
+      "argv": ["ruff", "check", "."],
+      "cwd": "backend", "mandatory": true, "timeout_seconds": 180,
+      "prerequisites": ["ruff"],
+      "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.backend-stubs",
+      "description": "Require all backend stubs in the ledger.",
+      "argv": ["{git_bash}", "scripts/check_stubs.sh"],
+      "cwd": ".", "mandatory": true, "timeout_seconds": 120,
+      "prerequisites": ["git-bash"],
+      "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.backend-conformance",
+      "description": "Run live and response contract conformance only with a verified local service.",
+      "argv": ["{python}", "scripts/ai/backend_prereq.py", "conformance", "{git_bash}"],
+      "cwd": ".", "mandatory": true, "timeout_seconds": 600,
+      "prerequisites": ["python", "git-bash"],
+      "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"], "network_access": "loopback",
+      "not_verified_exit_codes": [75], "ephemeral_outputs": ["backend/.pytest_cache/"]
+    },
+    {
+      "id": "django.backend-drift",
+      "description": "Compare vendored contract to the public checked-in pin.",
+      "argv": ["{python}", "scripts/ai/backend_prereq.py", "drift", "{git_bash}"],
+      "cwd": ".", "mandatory": true, "timeout_seconds": 180,
+      "prerequisites": ["python", "git-bash", "curl"],
+      "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"], "network_access": "external",
+      "not_verified_exit_codes": [75]
+    },
+    {
+      "id": "django.backend-readmes",
+      "description": "Check each derived backend application README.",
+      "argv": ["{git_bash}", "scripts/check_app_readmes.sh"],
+      "cwd": ".", "mandatory": true, "timeout_seconds": 120,
+      "prerequisites": ["git-bash"],
+      "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.backend-filesize",
+      "description": "Enforce the backend file-size limit.",
+      "argv": ["{git_bash}", "scripts/check_file_size.sh"],
+      "cwd": ".", "mandatory": true, "timeout_seconds": 120,
+      "prerequisites": ["git-bash"],
+      "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.backend-pytest",
+      "description": "Run backend coverage tests when PostgreSQL is available.",
+      "argv": ["{python}", "scripts/ai/backend_prereq.py", "pytest", "{git_bash}"],
+      "cwd": ".", "mandatory": true, "timeout_seconds": 600,
+      "prerequisites": ["python", "pytest"],
+      "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"], "network_access": "loopback",
+      "not_verified_exit_codes": [75],
+      "ephemeral_outputs": ["backend/.coverage", "backend/.pytest_cache/"]
+    },
+    {
+      "id": "django.backend-policy",
+      "description": "Apply reviewed PR policy to exact candidate and base exports.",
+      "argv": ["{python}", "scripts/ai/backend_policy.py", "--run-context", "{run_context}", "--base-export", "{base_export}"],
+      "cwd": ".", "mandatory": true, "timeout_seconds": 120,
+      "prerequisites": ["python"],
+      "applicability": {"kind": "always"},
+      "expected_artifacts": [], "dependencies": ["django.instruction-manifest"],
+      "allowed_side_effects": ["evidence"]
+    }
+  ]
+}
