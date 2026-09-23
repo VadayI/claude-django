@@ -26,7 +26,7 @@
     },
     "docs/ai/runner.md": {
       "ownership": "template",
-      "sha256": "53cf052ada154a5eb88d10eee89816577c53e24b85dbd33b6d4a2e02b94d6092"
+      "sha256": "3786b47a4a0f66df249c2a1315bec893815de4b3842fe3bbea1fef6913a4b42d"
     },
     "docs/ai/runtime-compatibility.md": {
       "ownership": "template",
@@ -82,7 +82,7 @@
     },
     "scripts/ai/runner.py": {
       "ownership": "template",
-      "sha256": "a6b55a747a846432609b6fa8221a1481a3770919dda74b6f942d3592f4b2d7a2"
+      "sha256": "4c9caa84ee08be65a9e70dd2746b81aa570faf84ab87ef8578b8138446fa20e1"
     },
     "scripts/ai/runner_caps.py": {
       "ownership": "template",
@@ -98,7 +98,7 @@
     },
     "templates/ai/checks/react.json": {
       "ownership": "template",
-      "sha256": "b1258f3eb598ac485bd68c26d5bcc301de136b1c0f209190e0f5e108cb23d49d"
+      "sha256": "2310a1675a1a66f79ef8b0564099c4da490c80f825ebaf120d360a7637162b4b"
     },
     "templates/ai/checks/workflow-inventory.json": {
       "ownership": "template",
@@ -118,7 +118,7 @@
     },
     "templates/ai/schemas/check-catalog.schema.json": {
       "ownership": "template",
-      "sha256": "9e09614beffe660d4e5018077ba61208b4cf94010cacd879bfb9231c42c45863"
+      "sha256": "c721c7ba041665c8a45410388ed46ff40ef224d8cc82a42e3e70dc7da927d045"
     },
     "templates/ai/schemas/check-result.schema.json": {
       "ownership": "template",
@@ -135,8 +135,8 @@
   },
   "pin_status": "development",
   "schema_version": 1,
-  "source_commit": "dfc527559ef23530d21157c869201ebb627d2317",
-  "source_manifest_digest": "65057855599d57aa6507cbabef7987c6ee34a09099f833f14a40c36e09b2f100",
+  "source_commit": "246717baa1c33fb4cf2ed38875efdf8ea577cacd",
+  "source_manifest_digest": "2e6e2bb702cc0e2649723fcc8eb96a350b62c4ecfcbf977026c3b0044ead1f28",
   "source_repository": "https://github.com/VadayI/claude-api-contract.git",
   "version": "0.2.0-dev"
 }
