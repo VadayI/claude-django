@@ -682,9 +682,13 @@
       "ownership": "template",
       "sha256": "1d4227ad077482a10bb7c376c0f791cf0027187d0a7e924a36aa7454b0099325"
     },
+    "scripts/ai/delivery_selftest.py": {
+      "ownership": "template",
+      "sha256": "93a0e1c139d8c77d0de69297934f655a26c858163e8199d4b73135a98069c048"
+    },
     "scripts/build_instruction_manifest.py": {
       "ownership": "template",
-      "sha256": "bd0c77ab2a5da3b303ce3ffa98c6b29178fedc7205e0c45a1ca5219228b7bae4"
+      "sha256": "327cdb458c91f5f6014ad39dc427de4bfa70c57842428b691ade84c7b89fd94b"
     },
     "scripts/install_ai.py": {
       "legacy_sha256": [
@@ -703,7 +707,7 @@
     },
     "templates/ai/checks/django.json": {
       "ownership": "template",
-      "sha256": "295df9f177e66f0b8517624ac76cc38bb0ac59dc0035379e3f03caf3eca32fe2"
+      "sha256": "d51232fb52272ed5875bacaa1b99d8c1759bad9ac1f46b4ea8899893850161e4"
     },
     "templates/ai/launcher-delivery.json": {
       "ownership": "template",

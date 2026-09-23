@@ -82,7 +82,7 @@ class DeliveryTests(unittest.TestCase):
         commands = [item["argv"] for item in catalog["checks"]]
         self.assertEqual(commands, [
             ["{python}", "scripts/ai/core_sync.py", "--check"],
-            ["{python}", "-m", "unittest", "discover", "-s", "tests", "-p", "test_ai_delivery.py"],
+            ["{python}", "scripts/ai/delivery_selftest.py"],
             ["{python}", "scripts/ai/generate_adapters.py", "--root", ".", "--check"],
             ["{python}", "scripts/build_instruction_manifest.py", "--check"],
         ])
@@ -132,6 +132,94 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(json.loads(autonomous.stdout)["writes"], [])
             self.assertFalse((target / "README.md").exists())
             self.assertFalse((target / "docs/project-state/project.json").exists())
+
+    def test_delivered_fresh_and_update_candidates_pass_exact_runner(self):
+        """Run the vendored Django catalog against delivered Git candidates.
+
+        No arguments or return value. Creates a temporary fresh delivery, initializes
+        only that target as a Git repository, performs an autonomous repeat/update,
+        and writes runner evidence below the disposable target. It performs no
+        database or network access and does not mutate the reviewed source checkout.
+        Subprocess or JSON failures propagate through assertions with captured output.
+        The business rule is that both the fresh commit and the updated descendant
+        must pass every mandatory catalog check using only their delivered files.
+        """
+        with tempfile.TemporaryDirectory(prefix="django exact candidate ") as directory:
+            target = Path(directory) / "delivered project"
+            target.mkdir()
+            pending, conflicts = install_ai.plan(ROOT, target)
+            self.assertEqual(conflicts, [])
+            for name, content in pending.items():
+                path = target / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8", newline="\n")
+
+            init = subprocess.run(
+                ["git", "init"], cwd=target, capture_output=True, text=True, encoding="utf-8", check=False)
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+            add = subprocess.run(
+                ["git", "add", "."], cwd=target, capture_output=True, text=True, encoding="utf-8", check=False)
+            self.assertEqual(add.returncode, 0, add.stdout + add.stderr)
+            commit = subprocess.run(
+                ["git", "-c", "user.name=Django Delivery Test", "-c", "user.email=delivery@example.invalid",
+                 "commit", "-m", "fresh delivery"],
+                cwd=target, capture_output=True, text=True, encoding="utf-8", check=False)
+            self.assertEqual(commit.returncode, 0, commit.stdout + commit.stderr)
+            fresh_sha = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=target, capture_output=True, text=True,
+                encoding="utf-8", check=True).stdout.strip()
+
+            runner = target / "scripts/ai/runner.py"
+            catalog = target / "templates/ai/checks/django.json"
+            fresh_output = target / ".ai-runtime/results/fresh.json"
+            fresh = subprocess.run(
+                [sys.executable, str(runner), "--repository", str(target), "--candidate", fresh_sha,
+                 "--base", fresh_sha, "--catalog", str(catalog), "--output", str(fresh_output)],
+                cwd=target, capture_output=True, text=True, encoding="utf-8", check=False)
+            self.assertEqual(fresh.returncode, 0, fresh.stdout + fresh.stderr)
+            self.assertEqual(json.loads(fresh_output.read_text(encoding="utf-8"))["outcome"], "PASS")
+
+            managed_update = target / "docs/ai/rules/testing.md"
+            previous_content = "# Reviewed previous template revision\n"
+            managed_update.write_text(previous_content, encoding="utf-8")
+            receipt_path = target / "docs/ai/instruction-source.json"
+            previous_receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            previous_receipt["files"]["docs/ai/rules/testing.md"]["sha256"] = install_ai.digest(previous_content)
+            receipt_path.write_text(
+                json.dumps(previous_receipt, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8", newline="\n")
+            update_writes, update_conflicts = install_ai.plan(ROOT, target)
+            self.assertEqual(update_conflicts, [])
+            self.assertIn("docs/ai/rules/testing.md", update_writes)
+            for name, content in update_writes.items():
+                path = target / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8", newline="\n")
+            self.assertEqual(install_ai.plan(target, target), ({}, []))
+            note = target / "docs/project-owned-update.md"
+            note.write_text("preserved update fixture\n", encoding="utf-8")
+            add_update = subprocess.run(
+                ["git", "add", "docs/project-owned-update.md"], cwd=target,
+                capture_output=True, text=True, encoding="utf-8", check=False)
+            self.assertEqual(add_update.returncode, 0, add_update.stdout + add_update.stderr)
+            update_commit = subprocess.run(
+                ["git", "-c", "user.name=Django Delivery Test", "-c", "user.email=delivery@example.invalid",
+                 "commit", "-m", "project update"],
+                cwd=target, capture_output=True, text=True, encoding="utf-8", check=False)
+            self.assertEqual(update_commit.returncode, 0, update_commit.stdout + update_commit.stderr)
+            update_sha = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=target, capture_output=True, text=True,
+                encoding="utf-8", check=True).stdout.strip()
+            update_output = target / ".ai-runtime/results/update.json"
+            updated = subprocess.run(
+                [sys.executable, str(runner), "--repository", str(target), "--candidate", update_sha,
+                 "--base", fresh_sha, "--catalog", str(catalog), "--output", str(update_output)],
+                cwd=target, capture_output=True, text=True, encoding="utf-8", check=False)
+            self.assertEqual(updated.returncode, 0, updated.stdout + updated.stderr)
+            result = json.loads(update_output.read_text(encoding="utf-8"))
+            self.assertEqual(result["outcome"], "PASS")
+            self.assertEqual([check["status"] for check in result["checks"]], ["PASS"] * 4)
+            self.assertEqual(note.read_text(encoding="utf-8"), "preserved update fixture\n")
 
     def test_custom_file_conflicts_without_writes(self):
         """Reject a conflicting custom file before writing any installed receipt.

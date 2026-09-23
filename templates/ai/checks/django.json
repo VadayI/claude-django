@@ -25,13 +25,13 @@
     },
     {
       "id": "django.delivery-unittest",
-      "description": "Exercise fresh, repeat, custom-conflict, update, and autonomous delivery.",
-      "argv": ["{python}", "-m", "unittest", "discover", "-s", "tests", "-p", "test_ai_delivery.py"],
+      "description": "Exercise downstream-safe fresh, repeat, custom-conflict, update, and autonomous delivery.",
+      "argv": ["{python}", "scripts/ai/delivery_selftest.py"],
       "cwd": ".",
       "mandatory": true,
       "timeout_seconds": 180,
       "prerequisites": ["python"],
-      "applicability": {"path_exists": "tests/test_ai_delivery.py", "missing_status": "NOT_VERIFIED"},
+      "applicability": {"path_exists": "scripts/ai/delivery_selftest.py", "missing_status": "NOT_VERIFIED"},
       "expected_artifacts": [],
       "dependencies": ["django.core-receipt"],
       "allowed_side_effects": ["evidence"]

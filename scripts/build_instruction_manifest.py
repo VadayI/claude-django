@@ -30,7 +30,7 @@ def render(root: Path) -> str:
     inventory = json.loads(contained(root, "docs/ai/legacy-inventory.json").read_text(encoding="utf-8"))
     names = {"AGENTS.md", ADAPTERS, "scripts/install_ai.py", "scripts/instruction_delivery.py",
              "scripts/build_instruction_manifest.py", "scripts/seed_preflight.py", "templates/ai/launcher-delivery.json",
-             "templates/ai/checks/django.json",
+             "templates/ai/checks/django.json", "scripts/ai/delivery_selftest.py",
              ".codex/config.toml", "docs/ai/legacy-inventory.json",
              "docs/ai/production-structure.md", "docs/ai/legacy/claude-startup.md",
              "templates/ai/seed-inputs.json"}
