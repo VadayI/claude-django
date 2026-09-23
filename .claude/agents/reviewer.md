@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: "[claude-django] Code review before PR: architecture, readability, rule compliance, risks. Works in the Quality Gate.\n\nTrigger: code review, review changes, audit code, is this good, before PR.\n\n<example>\nuser: 'Review the changes before the PR'\nassistant: 'Using reviewer: review of architecture, style, tests, risks.'\n</example>"
-model: opus
+model: fable
 color: red
 tools: [Read, Glob, Grep, Bash, SendMessage, mcp__github]
 ---

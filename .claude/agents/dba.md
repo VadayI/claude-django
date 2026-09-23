@@ -1,7 +1,7 @@
 ---
 name: dba
 description: "[claude-django] Database specialist: models, migrations, indexes, PostgreSQL query optimization, N+1 elimination.\n\nTrigger: migration, database schema, index, slow query, N+1, optimize query, postgres.\n\n<example>\nuser: 'The article list query is slow'\nassistant: 'Using dba: N+1 analysis, select_related/prefetch_related, indexes.'\n</example>"
-model: sonnet
+model: opus
 color: orange
 tools: [Read, Glob, Grep, Edit, Write, Bash, SendMessage]
 ---

@@ -8,15 +8,15 @@ Complete reference for every agent, rule, skill, command, template, MCP server, 
 
 | Agent | Purpose | Model |
 | --- | --- | --- |
-| `ba` | Business analysis, user stories, scope, endpoint draft | opus |
+| `ba` | Business analysis, user stories, scope, endpoint draft | fable |
 | `api-architect` | REST API contract: **reads** the pinned `docs/api/openapi.yml` and records this PR's routes in `.claude/memory/endpoints.json` — does NOT design the contract | opus |
-| `django-developer` | Django/DRF implementation (GREEN phase) | sonnet |
+| `django-developer` | Django/DRF implementation (GREEN phase) | opus |
 | `tester` | pytest tests, TDD (RED phase) | opus |
-| `dba` | Models, migrations, indexes, PostgreSQL optimization, N+1 | sonnet |
-| `reviewer` | Code review before PR | opus |
-| `security-scanner` | Security audit: authz, OWASP, secrets | opus |
-| `debugger` | Bug investigation, root-cause | sonnet |
-| `devops` | Docker, deploy to VPS staging, reverse-proxy | sonnet |
+| `dba` | Models, migrations, indexes, PostgreSQL optimization, N+1 | opus |
+| `reviewer` | Code review before PR | fable |
+| `security-scanner` | Security audit: authz, OWASP, secrets | fable |
+| `debugger` | Bug investigation, root-cause | opus |
+| `devops` | Docker, deploy to VPS staging, reverse-proxy | opus |
 | `ci-cd-engineer` | GitHub Actions CI on every PR | sonnet |
 | `docs-writer` | `docs/api`, OpenAPI sync, ADR, WORKLOG, PR description | sonnet |
 
@@ -27,14 +27,14 @@ Not used in every project — activate only when the task calls for it:
 | Agent | Purpose | Model |
 | --- | --- | --- |
 | `auditor` | Workflow auditor — reads `.claude/memory/command-log.jsonl` + live state, suggests the next command (run via `/audit`) | sonnet |
-| `brief-synthesizer` | Reads `docs/**` (md/txt/pdf/docx/images) and writes a structured `docs/PROJECT.md` (run via `/synthesize-brief`) | sonnet |
+| `brief-synthesizer` | Reads `docs/**` (md/txt/pdf/docx/images) and writes a structured `docs/PROJECT.md` (run via `/synthesize-brief`) | opus |
 | `qa` | E2E/browser tests (Playwright), incl. mobile via staging | opus |
-| `celery-specialist` | Background/async tasks: Celery + Redis/RabbitMQ | sonnet |
-| `integration-architect` | OAuth, webhooks, payments, third-party APIs | sonnet |
-| `devil` | Devil's advocate — challenges the plan during planning | opus |
+| `celery-specialist` | Background/async tasks: Celery + Redis/RabbitMQ | opus |
+| `integration-architect` | OAuth, webhooks, payments, third-party APIs | opus |
+| `devil` | Devil's advocate — challenges the plan during planning | fable |
 | `django-refactoring-expert` | Refactoring, N+1, tech-debt cleanup (behavior-preserving) | opus |
 | `domain-architect` | DDD-lite modeling for genuinely complex domains | opus |
-| `guide-writer` | User-facing onboarding guides — `docs/guides/admin.md` + `docs/guides/api-consumer.md` (run via `/guides`) | sonnet |
+| `guide-writer` | User-facing onboarding guides — `docs/guides/admin.md` + `docs/guides/api-consumer.md` (run via `/guides`) | opus |
 | `code-structure-auditor` | File-size audit (800-line limit) + folder-split proposals (run via `/structure-audit`) | sonnet |
 | `template-sync` | Sync a derived project's config to a newer `claude-django` version, preserving local customizations (run via `/update-from-template`); adopt mode attaches the config additively to a foreign existing project (run via `/adopt`) | sonnet |
 
