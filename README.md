@@ -408,6 +408,13 @@ remains pending.
 
 ## Shared Django instructions (P04)
 
+For a derived project, connect the delivered staged-index and per-ref push
+hooks after `git init` with `python scripts/ai/install_git_hooks.py --target .
+--apply`. The installer preserves existing Git hook configuration. Set
+`AI_PYTHON` to Python 3.13+ when the default interpreter is older. The current
+Django runner catalog covers delivery integrity only; backend readiness still
+requires the project's separate checks.
+
 Claude and Codex read `AGENTS.md` and `docs/ai/catalog.json`. Four selected roles
 have full generated packs and runtime entry points; legacy roles and procedures
 remain available. Python 3.13+ is required for tooling (stdlib only).

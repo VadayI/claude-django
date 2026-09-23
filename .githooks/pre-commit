@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Short staged-index check; choose Python 3.13+ with AI_PYTHON if needed.
+set -e
+PYTHON="${AI_PYTHON:-python}"
+"$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 13) else 2)'
+"$PYTHON" scripts/ai/git_hooks.py pre-commit

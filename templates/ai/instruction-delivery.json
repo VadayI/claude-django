@@ -522,6 +522,14 @@
       "ownership": "mixed",
       "sha256": "b0062df33974015b73e29b17b680a1f880e8e79d130a70463771cbc2aed3663c"
     },
+    ".githooks/pre-commit": {
+      "ownership": "template",
+      "sha256": "5c59a61b63ed04aef2cdb698acd451d43f682b9bdc93409b6b5b7a5f7261164a"
+    },
+    ".githooks/pre-push": {
+      "ownership": "template",
+      "sha256": "bf61e6ec19ce214b6a9d13635c68d1391e6751a0558ef44aa26ee394563b5d06"
+    },
     "AGENTS.md": {
       "ownership": "mixed",
       "sha256": "9bbe24bf7904e321c9fb5ac72dd743b8ac11f28192cadb6898c6b1582e4ac940"
@@ -540,7 +548,7 @@
     },
     "docs/ai/generated/adapters-manifest.json": {
       "ownership": "template",
-      "sha256": "cfdb8658e966352f51d22b069267dd5a4511c781507bdb1ad42479146585c8d2"
+      "sha256": "77364dc54db0dcbeabd8d419a254ef8ced7df7f78df8addda3afcfa697c7ec16"
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
@@ -676,7 +684,7 @@
     },
     "docs/ai/workflows/bootstrap.md": {
       "ownership": "template",
-      "sha256": "9861c47ee01b5dafc21d633dcf0953eba49cb49258a83a40879370c4be1b0017"
+      "sha256": "3df6e9bb40e6712d9e49948857c73d7777678642eec5df9675324e3bd6e9ec76"
     },
     "docs/ai/workflows/orchestrate.md": {
       "ownership": "template",
@@ -686,9 +694,21 @@
       "ownership": "template",
       "sha256": "93a0e1c139d8c77d0de69297934f655a26c858163e8199d4b73135a98069c048"
     },
+    "scripts/ai/git_hooks.py": {
+      "ownership": "template",
+      "sha256": "705651d3b4b898d1b03be1afbe9db3e32e38b2640c9e77f87a5aa2353018e4df"
+    },
+    "scripts/ai/install_git_hooks.py": {
+      "ownership": "template",
+      "sha256": "d3a1a232b8fdaf57f20bce1367d87178bdcccd76a159d0ab34ed3e6e95c4bb3e"
+    },
+    "scripts/ai/test_git_hooks.py": {
+      "ownership": "template",
+      "sha256": "77b71a969c3434e6615907ef576620d2c385f6ff928dd226d25e9c0eeae75de5"
+    },
     "scripts/build_instruction_manifest.py": {
       "ownership": "template",
-      "sha256": "327cdb458c91f5f6014ad39dc427de4bfa70c57842428b691ade84c7b89fd94b"
+      "sha256": "9292e282ed4433e9bac97a8d2011877f5c5b1ecc0e60a3e1af8ff39112a7a091"
     },
     "scripts/install_ai.py": {
       "legacy_sha256": [
@@ -715,7 +735,7 @@
     },
     "templates/ai/seed-inputs.json": {
       "ownership": "template",
-      "sha256": "95e0065d1862af718b8029396c611c111af4d26e89c19ee84cc12fda16295338"
+      "sha256": "db6ab8433b69c4aad6310307f8fc91445a5129801bb527cdcdd28446c40f22bd"
     }
   },
   "schema_version": 1

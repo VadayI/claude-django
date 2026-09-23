@@ -31,6 +31,8 @@ def render(root: Path) -> str:
     names = {"AGENTS.md", ADAPTERS, "scripts/install_ai.py", "scripts/instruction_delivery.py",
              "scripts/build_instruction_manifest.py", "scripts/seed_preflight.py", "templates/ai/launcher-delivery.json",
              "templates/ai/checks/django.json", "scripts/ai/delivery_selftest.py",
+             ".githooks/pre-commit", ".githooks/pre-push", "scripts/ai/git_hooks.py",
+             "scripts/ai/install_git_hooks.py", "scripts/ai/test_git_hooks.py",
              ".codex/config.toml", "docs/ai/legacy-inventory.json",
              "docs/ai/production-structure.md", "docs/ai/legacy/claude-startup.md",
              "templates/ai/seed-inputs.json"}

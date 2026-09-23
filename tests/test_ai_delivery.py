@@ -179,6 +179,9 @@ class DeliveryTests(unittest.TestCase):
                                        cwd=target, capture_output=True, text=True)
             self.assertEqual(generated.returncode, 0, generated.stderr + generated.stdout)
             self.assertTrue((target / "templates/ai/checks/django.json").is_file())
+            for name in (".githooks/pre-commit", ".githooks/pre-push",
+                         "scripts/ai/git_hooks.py", "scripts/ai/install_git_hooks.py"):
+                self.assertTrue((target / name).is_file(), name)
             autonomous = subprocess.run([sys.executable, str(target / "scripts/install_ai.py"),
                                          "--target", str(target)],
                                         cwd=target, capture_output=True, text=True)
