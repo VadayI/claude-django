@@ -423,6 +423,10 @@ are explicit prerequisites; absent inputs report NOT_VERIFIED and block a
 required runner job. Existing bespoke jobs remain until hosted parity is
 verified. A manual dispatch must supply an exact `base` commit; a first push
 with a zero previous OID fails honestly.
+The runner currently has no verified run-owned DB/server identity. Its pytest
+and conformance catalog checks therefore always report NOT_VERIFIED and never
+probe arbitrary localhost services. Full backend parity needs an isolated
+service handle and hosted evidence before replacing the bespoke jobs.
 
 Claude and Codex read `AGENTS.md` and `docs/ai/catalog.json`. Four selected roles
 have full generated packs and runtime entry points; legacy roles and procedures

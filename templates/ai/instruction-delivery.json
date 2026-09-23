@@ -548,7 +548,7 @@
     },
     "docs/ai/generated/adapters-manifest.json": {
       "ownership": "template",
-      "sha256": "f05c590da489339cedfd5655e886b3a5be2d3358c928502aea3bc03611c67032"
+      "sha256": "d79d5763bfbc06915ae0f4506dfb92e2da92ef20b34707b22649339abea6f495"
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
@@ -576,7 +576,7 @@
     },
     "docs/ai/production-structure.md": {
       "ownership": "template",
-      "sha256": "59ca992dee1c9bed1ca56aef00508cb9a42a25bcb75071e2f12ab092eae5d127"
+      "sha256": "f77d95d07504f2623acbcde112b15ec6065ab1156b3b7320767be3164c87e57b"
     },
     "docs/ai/roles/api-architect.md": {
       "ownership": "template",
@@ -684,7 +684,7 @@
     },
     "docs/ai/workflows/bootstrap.md": {
       "ownership": "template",
-      "sha256": "b9bfc6fffdf962c30ccdb323af41ec838e9b6f80986d5e061bdb02685071399b"
+      "sha256": "9fb106acf6272baa8d6807758ce567eb220f01ee8fd4223aa52f94c430ac5c21"
     },
     "docs/ai/workflows/orchestrate.md": {
       "ownership": "template",
@@ -696,7 +696,7 @@
     },
     "scripts/ai/backend_prereq.py": {
       "ownership": "template",
-      "sha256": "a374ba2d90428ac6bd0443b8f9a6534011f020aacd3b5356e4ed31d9e6d5ea2b"
+      "sha256": "165de16223348a03d4e15bfb108a324ad3a8033e21199d8f8fb31e3b3e786b21"
     },
     "scripts/ai/delivery_selftest.py": {
       "ownership": "template",

@@ -1,4 +1,4 @@
-"""Run derived Django gates with explicit DB, server, and pin prerequisites.
+"""Run derived Django gates with explicit isolation and pin prerequisites.
 
 Exit 75 means the exact runner must report NOT_VERIFIED rather than PASS.
 The wrapper runs only inside the runner's disposable candidate export.
@@ -8,8 +8,6 @@ import argparse
 import os
 from pathlib import Path
 import re
-import shutil
-import socket
 import subprocess
 import sys
 
@@ -34,67 +32,33 @@ def pinned_version(path: Path) -> str | None:
     return None
 
 
-def port_available(host: str, port: int) -> bool:
-    """Probe a declared local service before running database-backed checks.
-
-    Args: host is loopback name; port is PostgreSQL or HTTP port.
-    Returns: True when a short TCP connection succeeds.
-    Raises: None; connection failures return False.
-    Side effects: Opens and closes one loopback socket; no DB queries, writes,
-        external network access, or project mutation.
-    Business rule: An absent service yields NOT_VERIFIED, never a green skip.
-    """
-    try:
-        with socket.create_connection((host, port), timeout=1):
-            return True
-    except OSError:
-        return False
-
-
 def run_gate(root: Path, name: str, shell: str) -> int:
-    """Run one exact derived backend gate after checking its prerequisites.
+    """Run public pin drift or report DB-backed gates unverified.
 
     Args: root is the disposable candidate export; name is a reviewed gate ID;
         shell is the runner-resolved Git Bash or POSIX Bash executable.
-    Returns: Child exit code, or 75 for an absent DB/server/pin/tooling input.
+    Returns: Child exit code, or 75 for unverified isolation/pin/tooling.
     Raises: ValueError for unsupported gate; OSError for unreadable input.
-    Side effects: Drift may fetch the pinned public contract; conformance and
-        pytest may query local services and write declared transient test
-        outputs. No project Git refs, secrets, release, or deployment change.
-    Business rule: A failed executed gate is FAIL; unavailable prerequisites
-        are NOT_VERIFIED through the runner's exit-code protocol.
+    Side effects: Drift may fetch the pinned public contract. DB/conformance
+        gates never touch a local service until the runner can bind them to a
+        verified run-owned ephemeral service. No DB writes, Git refs, secrets,
+        release, or deployment change occurs here.
+    Business rule: An open localhost port does not prove service ownership;
+        DB-backed checks always return NOT_VERIFIED in this checkpoint.
     """
     backend = root / "backend"
     if not backend.is_dir():
         print("backend gate: backend/ unavailable", file=sys.stderr)
         return NOT_VERIFIED
-    env = os.environ.copy()
-    env["DJANGO_SETTINGS_MODULE"] = "config.settings.dev"
-    env["DJANGO_SECRET_KEY"] = "ci-nonsecret-test-key"
-    env["DATABASE_URL"] = "postgres://app:app@localhost:5432/app"
-    if name == "pytest":
-        if not port_available("127.0.0.1", 5432):
-            print("backend gate: PostgreSQL unavailable", file=sys.stderr)
-            return NOT_VERIFIED
-        command = [sys.executable, "-m", "pytest", "--cov=apps", "--cov-report=term-missing"]
-        cwd = backend
-    elif name == "conformance":
-        if (not (root / "docs/api/openapi.yml").is_file()
-                or not port_available("127.0.0.1", 8000)
-                or not port_available("127.0.0.1", 5432)):
-            print("backend gate: contract, live server, or PostgreSQL unavailable", file=sys.stderr)
-            return NOT_VERIFIED
-        if not shutil.which("schemathesis") or not shutil.which("pytest"):
-            print("backend gate: schemathesis or pytest unavailable", file=sys.stderr)
-            return NOT_VERIFIED
-        env["CONFORMANCE_BASE_URL"] = "http://127.0.0.1:8000"
-        command = [shell, "scripts/check_contract_conformance.sh"]
-        cwd = root
-    elif name == "drift":
+    if name in {"pytest", "conformance"}:
+        print("backend gate: run-owned DB/server identity is not established", file=sys.stderr)
+        return NOT_VERIFIED
+    if name == "drift":
         version = pinned_version(root / ".env.example")
         if not version:
             print("backend gate: public CONTRACT_VERSION unavailable", file=sys.stderr)
             return NOT_VERIFIED
+        env = os.environ.copy()
         env["CONTRACT_VERSION"] = version
         command = [shell, "scripts/pull_contract.sh", "--check"]
         cwd = root
@@ -114,7 +78,7 @@ def main() -> int:
     Returns: 0 pass, 75 unavailable prerequisite, otherwise child failure.
     Raises: None for supported validation errors; argparse reports bad input.
     Side effects: Delegates to run_gate in the candidate export only; no Git,
-        database schema mutation by this wrapper, secret read, or deployment.
+        database access, secret read, or deployment.
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("gate", choices=("pytest", "conformance", "drift"))

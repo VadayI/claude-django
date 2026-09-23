@@ -43,18 +43,19 @@ class BackendRunnerCatalogTests(unittest.TestCase):
             self.assertEqual(item["not_verified_exit_codes"], [75])
 
     def test_unavailable_services_and_pin_are_not_verified(self):
-        """Return exit 75 before DB/live/conformance/drift false greens.
+        """Return exit 75 without touching unowned DB or live services.
 
         Args: None; temporary backend and public pin fixtures.
         Returns: None after absent-prerequisite assertions.
         Raises: AssertionError if a missing service or pin reports PASS.
-        Side effects: Temporary local files only; no actual DB/network call.
+        Side effects: Temporary local files only; subprocess launch mocked;
+            no actual database or network call.
         """
         with tempfile.TemporaryDirectory(prefix="django backend prereq ") as directory:
             root = Path(directory)
             (root / "backend").mkdir()
             self.assertEqual(backend_prereq.run_gate(root, "drift", "bash"), 75)
-            with mock.patch.object(backend_prereq, "port_available", return_value=False):
+            with mock.patch.object(backend_prereq.subprocess, "run", side_effect=AssertionError("unsafe launch")):
                 self.assertEqual(backend_prereq.run_gate(root, "pytest", "bash"), 75)
                 self.assertEqual(backend_prereq.run_gate(root, "conformance", "bash"), 75)
 

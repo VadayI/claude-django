@@ -39,6 +39,9 @@ extends the four delivery checks with the eight blocking backend code gates
 and the contract-pin review policy. CI and pre-push use this same catalog.
 PostgreSQL, a live conformance server, and a checked-in public contract pin
 are explicit prerequisites; absence is `NOT_VERIFIED`, not a skipped success.
+The current runner cannot attest ownership of a temporary DB/server, so
+pytest and live conformance return `NOT_VERIFIED` without opening localhost
+connections. Do not count catalog presence as a passing backend test.
 
 Catalog dependency lists include the full referenced closure. Worker packs
 conservatively contain every non-coordinator rule. The coordinator workflow is
