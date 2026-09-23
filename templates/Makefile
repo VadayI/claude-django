@@ -99,3 +99,13 @@ doctor-deps: ## Quick host tool check (versions only; not the /doctor command)
 	  if command -v $$t >/dev/null 2>&1; then printf '  ok  %-8s %s\n' "$$t" "$$(command -v $$t)"; \
 	  else printf '  --  %-8s missing\n' "$$t"; fi; \
 	done
+
+.PHONY: ai-generate ai-check
+ai-generate:
+	@$(AI_PYTHON) scripts/ai/generate_adapters.py --apply
+	@$(AI_PYTHON) scripts/build_instruction_manifest.py --apply
+
+ai-check:
+	@$(AI_PYTHON) scripts/ai/core_sync.py --check
+	@$(AI_PYTHON) scripts/ai/generate_adapters.py --check
+	@$(AI_PYTHON) scripts/build_instruction_manifest.py --check

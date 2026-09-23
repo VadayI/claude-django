@@ -1,0 +1,492 @@
+{
+  "schema_version": 1,
+  "phase": "P04 production delivery; selected roles; P12 full role/command migration pending",
+  "rules": [
+    {
+      "id": "api-docs",
+      "path": "docs/ai/rules/api-docs.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "serializers-permissions",
+        "verification"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/api-docs.md"
+    },
+    {
+      "id": "app-readme",
+      "path": "docs/ai/rules/app-readme.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/app-readme.md"
+    },
+    {
+      "id": "architecture",
+      "path": "docs/ai/rules/architecture.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "api-docs",
+        "serializers-permissions"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/architecture.md"
+    },
+    {
+      "id": "code-style",
+      "path": "docs/ai/rules/code-style.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "api-docs",
+        "app-readme",
+        "git-operations"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/code-style.md"
+    },
+    {
+      "id": "deviation-register",
+      "path": "docs/ai/rules/deviation-register.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "living-plan"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/deviation-register.md"
+    },
+    {
+      "id": "docker-commands",
+      "path": "docs/ai/rules/docker-commands.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/docker-commands.md"
+    },
+    {
+      "id": "environment",
+      "path": "docs/ai/rules/environment.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/environment.md"
+    },
+    {
+      "id": "git-operations",
+      "path": "docs/ai/rules/git-operations.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/git-operations.md"
+    },
+    {
+      "id": "living-plan",
+      "path": "docs/ai/rules/living-plan.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "deviation-register",
+        "workflow"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/living-plan.md"
+    },
+    {
+      "id": "mcp-stack",
+      "path": "docs/ai/rules/mcp-stack.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/mcp-stack.md"
+    },
+    {
+      "id": "migrations-tasks",
+      "path": "docs/ai/rules/migrations-tasks.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "tdd",
+        "testing"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/migrations-tasks.md"
+    },
+    {
+      "id": "no-stubs",
+      "path": "docs/ai/rules/no-stubs.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/no-stubs.md"
+    },
+    {
+      "id": "output-language",
+      "path": "docs/ai/rules/output-language.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit."
+    },
+    {
+      "id": "preflight",
+      "path": "docs/ai/rules/preflight.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "project-maturity"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/preflight.md"
+    },
+    {
+      "id": "project-maturity",
+      "path": "docs/ai/rules/project-maturity.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "no-stubs",
+        "preflight",
+        "serializers-permissions",
+        "tdd",
+        "workflow"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/project-maturity.md"
+    },
+    {
+      "id": "serializers-permissions",
+      "path": "docs/ai/rules/serializers-permissions.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "api-docs",
+        "testing"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/serializers-permissions.md"
+    },
+    {
+      "id": "simplicity-surgical",
+      "path": "docs/ai/rules/simplicity-surgical.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/simplicity-surgical.md"
+    },
+    {
+      "id": "tdd",
+      "path": "docs/ai/rules/tdd.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "no-stubs"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/tdd.md"
+    },
+    {
+      "id": "testing",
+      "path": "docs/ai/rules/testing.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "tdd"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/testing.md"
+    },
+    {
+      "id": "user-guides",
+      "path": "docs/ai/rules/user-guides.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "api-docs",
+        "verification"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/user-guides.md"
+    },
+    {
+      "id": "verification",
+      "path": "docs/ai/rules/verification.md",
+      "scope": "role-or-capability",
+      "explicit_consumers": [
+        "api-architect",
+        "django-developer",
+        "tester",
+        "reviewer"
+      ],
+      "declared_consumers": [],
+      "dependencies": [
+        "api-docs"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/verification.md"
+    },
+    {
+      "id": "workflow",
+      "path": "docs/ai/rules/workflow.md",
+      "scope": "coordinator-only",
+      "explicit_consumers": [],
+      "declared_consumers": [],
+      "dependencies": [
+        "git-operations",
+        "living-plan",
+        "tdd",
+        "user-guides",
+        "verification"
+      ],
+      "review": "Full source preserved; references translated; conservative complete worker delivery. P12 semantic/runtime migration remains explicit.",
+      "legacy_path": ".claude/rules/workflow.md"
+    }
+  ],
+  "roles": {
+    "api-architect": {
+      "path": "docs/ai/roles/api-architect.md",
+      "rules": [
+        "api-docs",
+        "app-readme",
+        "architecture",
+        "code-style",
+        "deviation-register",
+        "docker-commands",
+        "environment",
+        "git-operations",
+        "living-plan",
+        "mcp-stack",
+        "migrations-tasks",
+        "no-stubs",
+        "output-language",
+        "preflight",
+        "project-maturity",
+        "serializers-permissions",
+        "simplicity-surgical",
+        "tdd",
+        "testing",
+        "user-guides",
+        "verification"
+      ],
+      "delivery": "role-pack",
+      "read_only": false
+    },
+    "django-developer": {
+      "path": "docs/ai/roles/django-developer.md",
+      "rules": [
+        "api-docs",
+        "app-readme",
+        "architecture",
+        "code-style",
+        "deviation-register",
+        "docker-commands",
+        "environment",
+        "git-operations",
+        "living-plan",
+        "mcp-stack",
+        "migrations-tasks",
+        "no-stubs",
+        "output-language",
+        "preflight",
+        "project-maturity",
+        "serializers-permissions",
+        "simplicity-surgical",
+        "tdd",
+        "testing",
+        "user-guides",
+        "verification"
+      ],
+      "delivery": "role-pack",
+      "read_only": false
+    },
+    "tester": {
+      "path": "docs/ai/roles/tester.md",
+      "rules": [
+        "api-docs",
+        "app-readme",
+        "architecture",
+        "code-style",
+        "deviation-register",
+        "docker-commands",
+        "environment",
+        "git-operations",
+        "living-plan",
+        "mcp-stack",
+        "migrations-tasks",
+        "no-stubs",
+        "output-language",
+        "preflight",
+        "project-maturity",
+        "serializers-permissions",
+        "simplicity-surgical",
+        "tdd",
+        "testing",
+        "user-guides",
+        "verification"
+      ],
+      "delivery": "role-pack",
+      "read_only": false
+    },
+    "reviewer": {
+      "path": "docs/ai/roles/reviewer.md",
+      "rules": [
+        "api-docs",
+        "app-readme",
+        "architecture",
+        "code-style",
+        "deviation-register",
+        "docker-commands",
+        "environment",
+        "git-operations",
+        "living-plan",
+        "mcp-stack",
+        "migrations-tasks",
+        "no-stubs",
+        "output-language",
+        "preflight",
+        "project-maturity",
+        "serializers-permissions",
+        "simplicity-surgical",
+        "tdd",
+        "testing",
+        "user-guides",
+        "verification"
+      ],
+      "delivery": "role-pack",
+      "read_only": true
+    }
+  },
+  "workflows": {
+    "orchestrate": "docs/ai/workflows/orchestrate.md",
+    "bootstrap": "docs/ai/workflows/bootstrap.md"
+  }
+}

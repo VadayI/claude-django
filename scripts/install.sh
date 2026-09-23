@@ -24,8 +24,8 @@
 #   TARGET_DIR     where to seed the config (default: current dir).
 #   --ref GIT_REF  branch/tag to clone (default: the upstream default branch).
 #   --url URL      clone from a fork instead of the canonical upstream.
-#   --force        overwrite an already-seeded folder (.claude/ present) or an
-#                  existing project (differing root files are backed up as *.bak).
+#   --force        retry an already-seeded folder (.claude/ present) or an
+#                  existing project only when all managed content is unchanged.
 #                  Prefer /update-from-template for a template-derived project
 #                  (ADR 0014) and /adopt for a foreign project (additive, ADR 0026).
 #
@@ -45,15 +45,6 @@ ok()   { printf '\033[1;32m  ok\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m  !!\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mFATAL\033[0m %s\n' "$*" >&2; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
-# seed SRC DST -- copy; if DST exists and differs, keep a one-time DST.bak first.
-seed() {
-  local src="$1" dst="$2"
-  if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
-    cp "$dst" "$dst.bak"; warn "existing $(basename "$dst") saved as $(basename "$dst").bak"
-  fi
-  cp "$src" "$dst"
-}
-
 # --- 0. Parse args ------------------------------------------------------------
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -75,14 +66,18 @@ case "$OS" in
   *)      die "Unsupported platform '$OS'. Use Git Bash or WSL2 on Windows, or native Linux/macOS bash." ;;
 esac
 have git || die "git not found. Install it first (WSL2: sudo apt install -y git)."
+have python || die "Python 3.13+ is required for safe destination checks."
 
 # --- 2. Resolve + guard the target -------------------------------------------
+# Check lexical ancestors BEFORE cd/pwd can erase a link or junction boundary.
+MSYS2_ARG_CONV_EXCL='*' python -c 'import os,pathlib,re,sys; raw=sys.argv[1]; raw=(raw[1]+":"+raw[2:]) if os.name=="nt" and re.match(r"^/[A-Za-z](?:/|$)",raw) else raw; sys.exit(2) if os.name=="nt" and raw.startswith("/") else None; p=pathlib.Path(raw).absolute(); sys.exit(1 if sys.version_info < (3,13) or any(q.is_symlink() or q.is_junction() for q in (p,*p.parents)) else 0)' "$TARGET" \
+  || die "Target ancestors must not be symlinks/junctions; Python 3.13+ is required."
 mkdir -p "$TARGET"
 TARGET="$(cd "$TARGET" && pwd)"
 log "Seeding claude-django config into: $TARGET"
 
 if [ -e "$TARGET/.claude" ] && [ "$FORCE" -ne 1 ]; then
-  die "$TARGET already has .claude/ (looks seeded). Re-run with --force to overwrite, or use /update-from-template to upgrade an existing project (preserves your edits, ADR 0014)."
+  die "$TARGET already has .claude/ (looks seeded). Re-run with --force for a checked repeat, or use /update-from-template to upgrade an existing project (preserves your edits, ADR 0014)."
 fi
 
 # Foreign-project guard (ADR 0026): this seeder is for GREENFIELD folders (or
@@ -90,11 +85,11 @@ fi
 # project must be adopted additively -- blind copies would overwrite its files.
 if [ "$FORCE" -ne 1 ]; then
   if [ -e "$TARGET/manage.py" ] || [ -e "$TARGET/backend/manage.py" ]; then
-    die "$TARGET contains a Django project (manage.py). Use /adopt from Claude Code CLI for an additive attach (never overwrites, ADR 0026) -- or --force to seed anyway (differing root files get .bak copies)."
+    die "$TARGET contains a Django project (manage.py). Use /adopt from Claude Code CLI for an additive attach (never overwrites, ADR 0026) -- or --force for a checked repeat; conflicts remain blocked."
   fi
   for f in CLAUDE.md Makefile docker-compose.yml .gitignore; do
     if [ -e "$TARGET/$f" ]; then
-      die "$TARGET already has $f (existing project?). Use /adopt for an additive attach (ADR 0026), or re-run with --force (keeps $f.bak)."
+      die "$TARGET already has $f (existing project?). Use /adopt for an additive attach (ADR 0026), or re-run with --force for a checked repeat."
     fi
   done
 fi
@@ -114,53 +109,16 @@ else
 fi
 ok "cloned"
 
-# --- 4. Copy the config + scaffolding inputs ----------------------------------
-# Fail before legacy copies if the shared runtime has local customizations.
-have python || die "Python 3.13+ is required for family runtime delivery."
-python "$CLONE/scripts/install_ai.py" --target "$TARGET" --apply \
-  || die "Family runtime delivery failed; reconcile reported conflicts before retrying."
-# Mirrors the README "Quick start" copy block, kept in lockstep with it.
-log "Copying config files"
-cp -r "$CLONE/.claude"        "$TARGET/"
-seed  "$CLONE/CLAUDE.md"      "$TARGET/CLAUDE.md"
-seed  "$CLONE/.mcp.json"      "$TARGET/.mcp.json"
-seed  "$CLONE/.gitignore"     "$TARGET/.gitignore"
-seed  "$CLONE/.gitattributes" "$TARGET/.gitattributes"
-cp -r "$CLONE/scripts"        "$TARGET/"   # detect-env.py (SessionStart hook) -- REQUIRED, hook fails silently without it
-cp -r "$CLONE/templates"      "$TARGET/"   # FULL templates/ -- /bootstrap Mode A needs all of it
-seed  "$CLONE/templates/docker-compose.yml" "$TARGET/docker-compose.yml"   # also at root (devcontainer entrypoint)
-seed  "$CLONE/templates/Makefile"           "$TARGET/Makefile"             # make help/test/up/...
-mkdir -p "$TARGET/.github/workflows"
-for wf in "$CLONE"/templates/.github/workflows/*; do
-  seed "$wf" "$TARGET/.github/workflows/$(basename "$wf")"
-done
-ok "copied"
+# --- 4. Apply exactly the preflighted per-file seed inventory ----------------
+python "$CLONE/scripts/seed_preflight.py" --target "$TARGET" --apply \
+  || die "Seed conflicts require a reviewed update; --force does not override ownership."
+ok "delivered explicit seed manifest; workflow templates remain inactive"
+# Real .env, project memory/language, and existing .github remain untouched.
 
-# --- 4b. Seed .env so the project is runnable right away ----------------------
-# Mirror /bootstrap's dual-destination for env: ship the committed key list at the
-# project root and create a local .env from it (placeholders only -- fill real
-# secrets before running services). Never clobbers an existing .env (may hold secrets).
-# NOTE: session-start.py re-seeds a missing .env on every launch -- this early copy
-# is a UX convenience so secrets can be filled before the first `claude` launch.
-ENV_SRC="$CLONE/templates/.env.example"
-if [ -f "$ENV_SRC" ]; then
-  [ -f "$TARGET/.env.example" ] || cp "$ENV_SRC" "$TARGET/.env.example"
-  if [ -f "$TARGET/.env" ]; then
-    warn ".env already present -- left as-is (no secrets touched)"
-  else
-    cp "$ENV_SRC" "$TARGET/.env"
-    ok "created .env from .env.example -- fill in real secrets before running services"
-  fi
-fi
-
-# --- 5. Wipe transient state (regenerated by the SessionStart hook) ----------
-rm -f "$TARGET/.claude/memory/env-detect.json" "$TARGET/.claude/memory/command-log.jsonl"
-# Reset output-language so a derived project re-asks the language on first
-# interaction (the template ships the maintainer's filled rule; a clone must
-# start fresh, per CLAUDE.md IMPORTANT #0).
-rm -f "$TARGET/.claude/rules/output-language.md"
-sed -i '\#^@\.claude/rules/output-language\.md$#d' "$TARGET/CLAUDE.md"
-ok "wiped transient memory"
+# --- 5. Preserve project memory and language (never seeded from maintainer) ---
+ok "preserved project memory and language"
+python "$TARGET/scripts/ai/generate_adapters.py" --root "$TARGET" --check \
+  || die "Installed instruction adapters failed verification."
 
 # --- 6. Runner check + next steps ---------------------------------------------
 echo
@@ -189,3 +147,4 @@ case "$OS" in
     echo "  3) launch:  claude" ;;
 esac
 echo "  4) in the session:  /doctor   ->   /bootstrap   ->   /preflight"
+echo "     Codex: read AGENTS.md and use the bootstrap skill; explicit procedures are local."
