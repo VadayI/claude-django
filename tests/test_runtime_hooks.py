@@ -28,6 +28,11 @@ class RuntimeHookTests(unittest.TestCase):
             self.assertEqual(module.main(), 7)
             self.assertEqual(run.call_count, 1)
             self.assertEqual(run.call_args.args[0][1], str(ROOT / "scripts/detect-env.py"))
+        with mock.patch.object(module.os, "environ", {"AI_PYTHON": "C:/Python314/python.exe"}), mock.patch.object(
+            module.subprocess, "run", return_value=mock.Mock(returncode=0)
+        ) as run:
+            self.assertEqual(module.main(), 0)
+            self.assertEqual(run.call_args.args[0][0], "C:/Python314/python.exe")
 
     def test_stop_has_no_mutating_hook(self):
         """Reject automatic global format or lint fixes on session stop.

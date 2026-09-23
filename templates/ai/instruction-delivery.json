@@ -548,7 +548,7 @@
     },
     "docs/ai/generated/adapters-manifest.json": {
       "ownership": "template",
-      "sha256": "9f853d884a961cefce612a62b70e96d4ef2ee12adaef7fad377af7fe8fb670c7"
+      "sha256": "a1cfccfa378466489a77c1b0dae8ed330b6c885edad9288cf4fe6570d08bc333"
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
@@ -684,7 +684,7 @@
     },
     "docs/ai/workflows/bootstrap.md": {
       "ownership": "template",
-      "sha256": "0078b5d6d47b33fef593f156ea16528c5fb85fd8c3b66e969d50d9df7a106f6f"
+      "sha256": "3fd9d6248bd81eae90645f0c1012277cddfe57eb592e5a2d877b731ebc3ed8d4"
     },
     "docs/ai/workflows/orchestrate.md": {
       "ownership": "template",
