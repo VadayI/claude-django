@@ -692,7 +692,7 @@
     },
     "scripts/ai/backend_policy.py": {
       "ownership": "template",
-      "sha256": "a6045144cf040d290b7370f4e27db30cbf33cfc92413aebce0ca126b8ac288d2"
+      "sha256": "e42fe36d75ed6ac1df71802d6d1badc0b356b208c142c355ec673f71b84fc550"
     },
     "scripts/ai/backend_prereq.py": {
       "ownership": "template",

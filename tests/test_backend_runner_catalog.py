@@ -82,6 +82,33 @@ class BackendRunnerCatalogTests(unittest.TestCase):
                                encoding="utf-8")
             self.assertEqual(backend_policy.verify(candidate, base, context), 0)
 
+    def test_policy_rejects_nested_pin_removal_and_unsafe_paths(self):
+        """Reject removed nested contract pins and paths escaping Git exports.
+
+        Args: None; creates temporary base, candidate, and context fixtures.
+        Returns: None after pin deletion and invalid-path assertions.
+        Raises: AssertionError if deletion passes or unsafe paths are accepted.
+        Side effects: Writes temporary files only; no DB or network access.
+        Business rule: A review note cannot authorize deleting the public pin.
+        """
+        with tempfile.TemporaryDirectory(prefix="django nested policy ") as directory:
+            root = Path(directory)
+            base = root / "base"
+            candidate = root / "candidate"
+            (base / "backend").mkdir(parents=True)
+            (candidate / "backend").mkdir(parents=True)
+            (base / "backend/.env.example").write_text("CONTRACT_VERSION=v1\n", encoding="utf-8")
+            context = root / "context.json"
+            changed = ["backend/.env.example", "docs/reviews/pin.md"]
+            context.write_text(json.dumps({"changed_files": changed}), encoding="utf-8")
+            self.assertEqual(backend_policy.verify(candidate, base, context), 1)
+            (candidate / "backend/.env.example").write_text("CONTRACT_VERSION=v2\n", encoding="utf-8")
+            self.assertEqual(backend_policy.verify(candidate, base, context), 0)
+            for unsafe in ("../.env.example", "C:/.env.example", "backend\\.env.example", "/.env.example"):
+                context.write_text(json.dumps({"changed_files": [unsafe]}), encoding="utf-8")
+                with self.subTest(path=unsafe), self.assertRaises(ValueError):
+                    backend_policy.verify(candidate, base, context)
+
 
 if __name__ == "__main__":
     unittest.main()
