@@ -102,22 +102,6 @@
         ]
       }
     ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python scripts/policy/auto_format.py format",
-            "statusMessage": "Formatting Python (ruff format)..."
-          },
-          {
-            "type": "command",
-            "command": "python scripts/policy/auto_format.py check",
-            "statusMessage": "Auto-fixing lint (ruff --fix)..."
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
