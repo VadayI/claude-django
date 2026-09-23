@@ -7,13 +7,28 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 ---
 
-## Shared Claude/Codex runtime delivery (P04 checkpoint)
+## Shared Claude/Codex runtime delivery (P05 downstream candidate)
 
-The initial delivery used integrated contract core commit
-`b6d1b3d3582c4a18545050be6f475d270f53bc48`. Python 3.13+ and its standard library
+This review branch uses development-pinned contract core commit
+`ec719b9f0cbe3bffb9556931587233415c7566c2`; it is not claimed integrated.
+Python 3.13+ and its standard library
 are sufficient; no sibling checkout or marketplace is needed for core tooling.
 Run `python scripts/ai/core_sync.py --check` to verify installed file digests.
 The receipt and ownership manifest are `docs/ai/core-source.json`.
+
+The stack-owned `templates/ai/checks/django.json` catalogs the four existing
+family-core workflow checks as literal argv arrays: receipt drift, autonomous
+delivery unittest, adapter drift, and instruction-manifest drift. Run an exact
+committed candidate with a new output path below `.ai-runtime`:
+
+```text
+python scripts/ai/runner.py --repository . --candidate FULL_COMMIT_SHA --base FULL_BASE_SHA --catalog templates/ai/checks/django.json --output .ai-runtime/results/django.json
+```
+
+The runner exports a pristine tree per check. Missing mandatory implementations
+or prerequisites produce `NOT_VERIFIED` and a nonzero exit, never PASS. The
+catalog is delivered by the instruction component manifest, not duplicated in
+the seed inventory.
 
 Fresh `scripts/install.sh` includes the runtime and its docs. To update only this
 component in an existing project, use the reviewed template checkout:
@@ -37,7 +52,7 @@ process environment as described in [launcher configuration](docs/ai/launchers.m
 The `cc` launcher now uses the compatibility adapter described below; legacy bootstrap remains pending migration.
 
 Core delivery is not full Django/Codex support: legacy role/procedure migration,
-shared detector/runner and runnable derived-backend acceptance remain outstanding.
+full CI-mode materialization and runnable derived-backend/DB acceptance remain outstanding.
 The older support statements below describe the legacy Claude workflow.
 
 ---
@@ -379,8 +394,11 @@ The PAT/GH_TOKEN precedence and blank-placeholder fallback are preserved only in
 the child process; PowerShell caller variables remain unchanged. CLI arguments and
 exit status are forwarded. Applications load their own runtime environment.
 
-This candidate uses integrated core commit 485bb7ae64e5c09ce046ea5cae6e92fd641a7ffe from merged contract PR #57. Delivery was regenerated and checked. Exact known template wrappers migrate by hash;
-custom wrappers conflict and remain unchanged. Full bootstrap/CI migration pending.
+This review branch uses development-pinned core commit
+`ec719b9f0cbe3bffb9556931587233415c7566c2`; it is not claimed integrated.
+Delivery was regenerated and checked. Exact known template wrappers migrate by
+hash; custom wrappers conflict and remain unchanged. Full bootstrap/CI migration
+remains pending.
 
 ## Shared Django instructions (P04)
 
@@ -396,5 +414,6 @@ language, MCP or personal settings. For instruction updates use
 `python <reviewed-template>/scripts/install_ai.py --target <project>` to preview,
 then `--apply`; reconcile conflicts as a reviewed diff. No automatic merge.
 Codex can invoke the bootstrap skill or read `docs/ai/workflows/bootstrap.md`
-explicitly. P05 detector, P06 CI choice and P12 full role migration remain pending;
+explicitly. The P05 detector and exact-candidate runner are delivered; full P05
+cross-stack gate coverage, P06 CI choice and P12 full role migration remain pending;
 this checkpoint does not establish runnable backend or deployment acceptance.
