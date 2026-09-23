@@ -345,7 +345,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
        pytest selects it via `DJANGO_SETTINGS_MODULE = "config.settings.test"` in `backend/pyproject.toml` `[tool.pytest.ini_options]` (already set in the template). Do NOT put `MIGRATION_MODULES` in `dev.py` or `staging.py` — production `common` ships no models, and the dev server should not pay for the test-only redirect.
      - **`staging.py`** must be production-hardened for gunicorn behind a reverse proxy: `DEBUG = False`; `ALLOWED_HOSTS` from `DJANGO_ALLOWED_HOSTS` env (the staging subdomain); `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")` so Django trusts the proxy's TLS termination; `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE = True`. Static files: collect to `STATIC_ROOT` (serve via WhiteNoise or the proxy). Verify it passes `python manage.py check --deploy`.
    - `docker compose exec -T backend python manage.py migrate`
-   - **Pull the external API contract** (ADR 0017): ensure `CONTRACT_VERSION` is set in `.env`, then `bash scripts/pull_contract.sh` (writes `docs/api/openapi.yml` from `claude-api-contract@CONTRACT_VERSION`). If the contract repo/tag does not exist yet, skip and note it — the first feature pulls once the contract is published. **Arm the CI drift gate**: `gh variable set CONTRACT_VERSION --body "vX.Y.Z"` (same value as `.env`; plus `gh variable set CONTRACT_REPO --body "owner/repo"` when not the default) — `backend-ci.yml` runs the drift gate only `if: vars.CONTRACT_VERSION != ''`, so without this variable the gate is silently skipped; re-set it on every pin raise (ADR `0021`/`0025`). `drf-spectacular` still serves Swagger UI/Redoc from live code, but is NOT the canonical schema.
+   - **Pull the external API contract** (ADR 0017): ensure `CONTRACT_VERSION` is set in `.env`, then `bash scripts/pull_contract.sh` (writes `docs/api/openapi.yml` from `claude-api-contract@CONTRACT_VERSION`). If the contract repo/tag does not exist yet, record the missing pin as unresolved. **Configure the CI drift gate**: `gh variable set CONTRACT_VERSION --body "vX.Y.Z"` (same value as `.env`; plus `gh variable set CONTRACT_REPO --body "owner/repo"` when not the default). `backend-ci.yml` runs the drift gate unconditionally and fails when the pin is missing; re-set it on every pin raise (ADR `0021`/`0025`). `drf-spectacular` still serves Swagger UI/Redoc from live code, but is NOT the canonical schema.
    - Ask the user interactively whether to run `createsuperuser` now.
 
 4. **Initial commit + push; register checks only in GitHub mode** — dispatch `devops`:
@@ -392,9 +392,16 @@ Run AFTER preflight passes but BEFORE any side-effects.
 
    ```bash
    OWNER=$(gh api user --jq .login)
-   if gh api "repos/$OWNER/$SLUG/branches/main/protection" >/dev/null 2>&1; then
+   set +e
+   PROTECTION_PROBE=$(gh api "repos/$OWNER/$SLUG/branches/main/protection" 2>&1)
+   PROTECTION_PROBE_CODE=$?
+   set -e
+   if [ "$PROTECTION_PROBE_CODE" -eq 0 ]; then
      echo "Existing branch protection requires read/merge review; leave it unchanged here."
      echo "Preserve unrelated required checks and rules, then apply a reviewed targeted update."
+     exit 2
+   elif ! printf '%s' "$PROTECTION_PROBE" | grep -q 'HTTP 404'; then
+     echo "Cannot prove branch protection is absent; stop without a PUT."
      exit 2
    fi
    CI_MODE=$(python -c 'import json; print(json.load(open("docs/project-state/project.json", encoding="utf-8"))["ci"]["execution"])')
