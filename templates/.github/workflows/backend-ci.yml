@@ -73,14 +73,15 @@ jobs:
       - name: Contract drift gate (vendored copy matches pinned tag)
         id: drift
         working-directory: ${{ github.workspace }}
-        # Armed only when the repository variable exists: /bootstrap sets it via
-        # `gh variable set CONTRACT_VERSION` and it must be re-set on every pin raise
-        # (ADR 0021/0025) — without the variable this gate is silently skipped.
-        if: vars.CONTRACT_VERSION != ''
+        # A missing pin is an unverified prerequisite, never a skipped success.
         env:
           CONTRACT_VERSION: ${{ vars.CONTRACT_VERSION }}
           CONTRACT_REPO: ${{ vars.CONTRACT_REPO || 'VadayI/claude-api-contract' }}
         run: |
+          if [ -z "$CONTRACT_VERSION" ]; then
+            echo "::error::CONTRACT_VERSION is missing; set the reviewed contract pin before GitHub CI."
+            exit 1
+          fi
           bash scripts/pull_contract.sh --check || {
             echo "::error ::openapi.yml differs from pinned ${CONTRACT_REPO}@${CONTRACT_VERSION}. Re-run 'bash scripts/pull_contract.sh' and commit."
             exit 1

@@ -11,6 +11,7 @@
     "scripts/check_nul_bytes.sh": "scripts/check_nul_bytes.sh",
     "scripts/detect-env.py": "scripts/detect-env.py",
     "scripts/install.sh": "scripts/install.sh",
+    "scripts/ci_mode.py": "scripts/ci_mode.py",
     "scripts/policy/auto_format.py": "scripts/policy/auto_format.py",
     "scripts/policy/block_protected_edits.py": "scripts/policy/block_protected_edits.py",
     "scripts/policy/check_command_gate.py": "scripts/policy/check_command_gate.py",

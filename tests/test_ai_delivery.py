@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import install_ai
 import seed_preflight
 import build_instruction_manifest
+import ci_mode
 
 
 LEGACY_FIXTURE = ROOT / "tests/fixtures/legacy-delivery.json"
@@ -68,6 +69,58 @@ def legacy_files() -> dict[str, bytes]:
 
 class DeliveryTests(unittest.TestCase):
     """Use disposable project trees, preserving the reviewed source checkout."""
+
+    def test_ci_mode_explicit_local_switch_and_owned_conflict(self):
+        """Materialize manual Django workflows and preserve foreign edits.
+
+        Args: None; uses a disposable derived root.
+        Returns: None after local/GitHub trigger and no-write assertions.
+        Raises: AssertionError if mode, ownership, or project data changes.
+        Side effects: Writes temporary workflow/project fixture files only;
+            no database, network, branch API, or registration run.
+        """
+        with tempfile.TemporaryDirectory(prefix="django ci mode ") as directory:
+            target = Path(directory)
+            pending, conflicts = ci_mode.plan(ROOT, target, "local")
+            self.assertEqual(conflicts, [])
+            self.assertEqual(len(pending), 4)
+            for name, content in pending.items():
+                path = target / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8", newline="\n")
+            self.assertEqual(ci_mode.plan(ROOT, target, "local"), ({}, []))
+            for filename in ci_mode.WORKFLOWS:
+                active = (target / ".github/workflows" / filename).read_text(encoding="utf-8")
+                self.assertIn("  workflow_dispatch:", active)
+                self.assertNotIn("  pull_request:", active)
+                self.assertNotIn("  push:", active)
+                self.assertNotIn("  merge_group:", active)
+            project_path = target / ci_mode.PROJECT
+            project = json.loads(project_path.read_text(encoding="utf-8"))
+            project["extensions"] = {"owner": "fixture"}
+            project_path.write_text(json.dumps(project, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+            pending, conflicts = ci_mode.plan(ROOT, target, "github")
+            self.assertEqual(conflicts, [])
+            for name, content in pending.items():
+                path = target / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8", newline="\n")
+            self.assertEqual(ci_mode.plan(ROOT, target, "github"), ({}, []))
+            hosted_ci = (target / ".github/workflows/backend-ci.yml").read_text(encoding="utf-8")
+            self.assertNotIn("if: vars.CONTRACT_VERSION != ''", hosted_ci)
+            self.assertIn("CONTRACT_VERSION is missing", hosted_ci)
+            self.assertEqual(json.loads(project_path.read_text(encoding="utf-8"))["extensions"],
+                             {"owner": "fixture"})
+            workflow = target / ".github/workflows/backend-ci.yml"
+            workflow.write_text(workflow.read_text(encoding="utf-8") + "# local edit\n", encoding="utf-8")
+            snapshot = {path.relative_to(target).as_posix(): path.read_bytes()
+                        for path in target.rglob("*") if path.is_file()}
+            result = subprocess.run([sys.executable, str(ROOT / "scripts/ci_mode.py"),
+                                     "--target", str(target), "--mode", "local", "--apply"],
+                                    capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertEqual(snapshot, {path.relative_to(target).as_posix(): path.read_bytes()
+                                        for path in target.rglob("*") if path.is_file()})
 
     def test_django_runner_catalog_matches_current_workflow_inventory(self):
         """Bind the stack catalog to all four existing workflow commands.

@@ -30,7 +30,13 @@ or prerequisites produce `NOT_VERIFIED` and a nonzero exit, never PASS. The
 catalog is delivered by the instruction component manifest, not duplicated in
 the seed inventory.
 
-Fresh `scripts/install.sh` includes the runtime and its docs. To update only this
+Fresh `scripts/install.sh` includes the runtime and its docs. Bootstrap now
+requires an explicit `local` or `github` CI choice before linking the remote or
+pushing. `python scripts/ci_mode.py --target . --mode local --apply` materializes
+manual-only backend workflows; `--mode github` enables their automatic triggers.
+The choice is saved in `docs/project-state/project.json`, and customized active
+workflows block replacement. Local mode does not register or require hosted
+backend statuses. To update only this
 component in an existing project, use the reviewed template checkout:
 
 ```text
