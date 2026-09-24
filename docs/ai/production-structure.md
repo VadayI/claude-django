@@ -39,9 +39,23 @@ extends the four delivery checks with the eight blocking backend code gates
 and the contract-pin review policy. CI and pre-push use this same catalog.
 PostgreSQL, a live conformance server, and a checked-in public contract pin
 are explicit prerequisites; absence is `NOT_VERIFIED`, not a skipped success.
-The current runner cannot attest ownership of a temporary DB/server, so
-pytest and live conformance return `NOT_VERIFIED` without opening localhost
-connections. Do not count catalog presence as a passing backend test.
+For GitHub's `family-core` job, `backend_fixture.py start` creates a fresh
+`postgres:18` container on a Docker-assigned loopback port. A private TMPDIR
+marker binds its full ID, random label token and password. The P05 runner
+passes only TMPDIR; each DB-backed adapter checks Docker inspect ID, image,
+label, running state and actual port before constructing a child-only DSN.
+It never reads an inherited `DATABASE_URL` or probes a fixed local port.
+The runner step has an EXIT trap and the workflow also calls `stop` with
+`if: always()`; cleanup removes only the identity-matched container. A failed
+identity check refuses removal and fails the job. A host crash or forced job
+termination can bypass both, so hosted cleanup still needs a real run check.
+The Docker helper pins the local Linux socket so inherited remote
+contexts cannot redirect it. Without the marker/Docker (including ordinary
+local pre-push on this Windows host), DB gates return 75 `NOT_VERIFIED`.
+Strict MVP/production conformance still returns 75 until a run-owned live
+application server is available; early-stage response conformance can use
+the owned DB fixture. Hosted execution remains unverified until an actual
+Actions run proves startup, cleanup and required contexts.
 
 Catalog dependency lists include the full referenced closure. Worker packs
 conservatively contain every non-coordinator rule. The coordinator workflow is

@@ -1,7 +1,9 @@
 """Check derived backend gate mapping and unavailable-prerequisite honesty."""
 
 import json
+import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -11,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/ai"))
 import backend_policy
 import backend_prereq
+import backend_fixture
 import runner
 
 
@@ -36,6 +39,9 @@ class BackendRunnerCatalogTests(unittest.TestCase):
         })
         workflow = (ROOT / "templates/.github/workflows/backend-ci.yml").read_text(encoding="utf-8")
         self.assertIn("--catalog templates/ai/checks/django-backend.json", workflow)
+        self.assertIn("python scripts/ai/backend_fixture.py start --directory", workflow)
+        self.assertIn("python scripts/ai/backend_fixture.py stop --directory", workflow)
+        self.assertIn("if: always()", workflow)
         for item in catalog["checks"]:
             self.assertTrue(item["mandatory"], item["id"])
         for name in ("django.backend-conformance", "django.backend-drift", "django.backend-pytest"):
@@ -49,15 +55,104 @@ class BackendRunnerCatalogTests(unittest.TestCase):
         Returns: None after absent-prerequisite assertions.
         Raises: AssertionError if a missing service or pin reports PASS.
         Side effects: Temporary local files only; subprocess launch mocked;
-            no actual database or network call.
+            no actual Docker, database or network call.
         """
         with tempfile.TemporaryDirectory(prefix="django backend prereq ") as directory:
             root = Path(directory)
             (root / "backend").mkdir()
             self.assertEqual(backend_prereq.run_gate(root, "drift", "bash"), 75)
-            with mock.patch.object(backend_prereq.subprocess, "run", side_effect=AssertionError("unsafe launch")):
-                self.assertEqual(backend_prereq.run_gate(root, "pytest", "bash"), 75)
+            with mock.patch.dict(os.environ, {"TMPDIR": str(root), "DATABASE_URL": "postgres://real"}):
+                with mock.patch.object(backend_prereq.subprocess, "run", side_effect=AssertionError("unsafe launch")):
+                    self.assertEqual(backend_prereq.run_gate(root, "pytest", "bash"), 75)
+                    self.assertEqual(backend_prereq.run_gate(root, "conformance", "bash"), 75)
+
+    def test_owned_fixture_identity_and_cleanup_contract(self):
+        """Bind a random loopback port to an exact labeled container before use.
+
+        Args: None; creates a private marker fixture and mocked Docker output.
+        Returns: None after identity, no-foreign-remove and cleanup assertions.
+        Raises: AssertionError when an unowned container is accepted/removed.
+        Side effects: Temporary local files only; Docker and DB calls mocked.
+        Business rule: A known open port without matching ID/label is insufficient.
+        """
+        identifier = "a" * 64
+        marker = {"schema_version": 1, "container_id": identifier, "name": "ai-django-test",
+                  "token": "b" * 32, "password": "c" * 48}
+        inspected = {"Id": identifier, "Name": "/ai-django-test",
+                     "Config": {"Labels": {backend_fixture.LABEL: marker["token"]}, "Image": "postgres:18"},
+                     "State": {"Running": True},
+                     "NetworkSettings": {"Ports": {"5432/tcp": [{"HostIp": "127.0.0.1", "HostPort": "49152"}]}}}
+        with tempfile.TemporaryDirectory(prefix="django owned fixture ") as directory:
+            root = Path(directory)
+            (root / backend_fixture.MARKER).write_text(json.dumps(marker), encoding="utf-8")
+            with mock.patch.object(backend_fixture, "docker", side_effect=[json.dumps([inspected]), "removed"]) as command:
+                backend_fixture.stop(root)
+                self.assertEqual(command.call_args_list[-1].args, ("rm", "--force", identifier))
+            self.assertFalse((root / backend_fixture.MARKER).exists())
+            (root / backend_fixture.MARKER).write_text(json.dumps(marker), encoding="utf-8")
+            inspected["Config"]["Labels"][backend_fixture.LABEL] = "foreign"
+            with mock.patch.object(backend_fixture, "docker", return_value=json.dumps([inspected])) as command:
+                with self.assertRaises(ValueError):
+                    backend_fixture.stop(root)
+                self.assertEqual(command.call_count, 1)
+            self.assertTrue((root / backend_fixture.MARKER).exists())
+
+    def test_fixture_start_cleans_failed_container(self):
+        """Create a unique fixture and remove only its ID after readiness fails.
+
+        Args: None; temporary empty TMPDIR and mocked Docker responses.
+        Returns: None after successful marker and failed-start cleanup checks.
+        Raises: AssertionError when a failed start leaves an owned container.
+        Side effects: Temporary files only; Docker/DB/network are mocked.
+        Business rule: Failure cannot turn an unready service into a marker.
+        """
+        identifier = "a" * 64
+        with tempfile.TemporaryDirectory(prefix="django fixture start ") as directory:
+            root = Path(directory)
+            with (mock.patch.object(backend_fixture.secrets, "token_hex", side_effect=["b" * 32, "c" * 48]),
+                  mock.patch.object(backend_fixture, "inspect", return_value=49152),
+                  mock.patch.object(backend_fixture, "docker", side_effect=[identifier, "ready"])):
+                backend_fixture.start(root)
+            marker = backend_fixture.read_marker(root)
+            self.assertEqual(marker["container_id"], identifier)
+            (root / backend_fixture.MARKER).unlink()
+            failure = subprocess.CalledProcessError(1, ["docker", "exec"])
+            responses = [identifier, *([failure] * 20), "removed"]
+            with (mock.patch.object(backend_fixture.secrets, "token_hex", side_effect=["b" * 32, "c" * 48]),
+                  mock.patch.object(backend_fixture, "inspect", return_value=49152),
+                  mock.patch.object(backend_fixture.time, "sleep"),
+                  mock.patch.object(backend_fixture, "docker", side_effect=responses) as command):
+                with self.assertRaises(ValueError):
+                    backend_fixture.start(root)
+                self.assertEqual(command.call_args_list[-1].args, ("rm", "--force", identifier))
+            self.assertFalse((root / backend_fixture.MARKER).exists())
+
+    def test_db_gate_uses_only_verified_fixture_dsn(self):
+        """Pass a newly verified fixture DSN and drop inherited real DB values.
+
+        Args: None; temporary candidate and mocked marker/inspect/subprocess.
+        Returns: None after selected DSN and strict-conformance assertions.
+        Raises: AssertionError for unsafe inherited DB or unverified strict pass.
+        Side effects: Temporary files only; no actual Docker/DB/network call.
+        """
+        with tempfile.TemporaryDirectory(prefix="django db gate ") as directory:
+            root = Path(directory)
+            (root / "backend").mkdir()
+            (root / "docs").mkdir()
+            marker = {"container_id": "a" * 64, "password": "c" * 48, "token": "b" * 32}
+            with (mock.patch.dict(os.environ, {"TMPDIR": str(root), "DATABASE_URL": "postgres://real"}),
+                  mock.patch.object(backend_prereq, "read_marker", return_value=marker),
+                  mock.patch.object(backend_prereq, "inspect", return_value=49152),
+                  mock.patch.object(backend_prereq, "docker", return_value="ready"),
+                  mock.patch.object(backend_prereq.subprocess, "run") as process):
+                process.return_value.returncode = 0
+                self.assertEqual(backend_prereq.run_gate(root, "pytest", "bash"), 0)
+                self.assertEqual(process.call_args.kwargs["env"]["DATABASE_URL"],
+                                 f"postgres://app:{marker['password']}@127.0.0.1:49152/app")
+                self.assertEqual(process.call_args.kwargs["cwd"], root / "backend")
+                (root / "docs/PROJECT.md").write_text("**Maturity stage:** production\n", encoding="utf-8")
                 self.assertEqual(backend_prereq.run_gate(root, "conformance", "bash"), 75)
+                self.assertEqual(process.call_count, 1)
 
     def test_policy_uses_exact_base_and_candidate_paths(self):
         """Require a review note for an actual public pin change.

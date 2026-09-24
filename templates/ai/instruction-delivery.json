@@ -576,7 +576,7 @@
     },
     "docs/ai/production-structure.md": {
       "ownership": "template",
-      "sha256": "f77d95d07504f2623acbcde112b15ec6065ab1156b3b7320767be3164c87e57b"
+      "sha256": "d46d5885a82385e715afd66bb1da6ccfda0e40da2823c2883e44c608f05d5e57"
     },
     "docs/ai/roles/api-architect.md": {
       "ownership": "template",
@@ -690,13 +690,17 @@
       "ownership": "template",
       "sha256": "1d4227ad077482a10bb7c376c0f791cf0027187d0a7e924a36aa7454b0099325"
     },
+    "scripts/ai/backend_fixture.py": {
+      "ownership": "template",
+      "sha256": "75245048e6068500cb2e1ceb65bf99fbc0f73373609c8a711db0bd52d92f8cd8"
+    },
     "scripts/ai/backend_policy.py": {
       "ownership": "template",
       "sha256": "e42fe36d75ed6ac1df71802d6d1badc0b356b208c142c355ec673f71b84fc550"
     },
     "scripts/ai/backend_prereq.py": {
       "ownership": "template",
-      "sha256": "165de16223348a03d4e15bfb108a324ad3a8033e21199d8f8fb31e3b3e786b21"
+      "sha256": "9901643050afc1f4795ec68cdb83e6a003132f50c4f0ab7ff5fba6c20d4f1ddd"
     },
     "scripts/ai/delivery_selftest.py": {
       "ownership": "template",
@@ -716,7 +720,7 @@
     },
     "scripts/build_instruction_manifest.py": {
       "ownership": "template",
-      "sha256": "37a5f64d524d8699435659c986107e4a7b41e64b8c52337a58dc2c111a5fb903"
+      "sha256": "7362c48f480c12f310a39c581c732f30a7b137b56255fc61e5a11fe436c0e2d2"
     },
     "scripts/install_ai.py": {
       "legacy_sha256": [
@@ -735,7 +739,7 @@
     },
     "templates/ai/checks/django-backend.json": {
       "ownership": "template",
-      "sha256": "5b45b074117894f0e64cfd28d7ec08edfa31ac45399b8b58ff1ecac995fbdfc7"
+      "sha256": "25a655964c8d70000f3fbb23d6e843fe1ea1cfec6a0d118c044f90cd064e51ba"
     },
     "templates/ai/checks/django.json": {
       "ownership": "template",
@@ -747,7 +751,7 @@
     },
     "templates/ai/seed-inputs.json": {
       "ownership": "template",
-      "sha256": "db6ab8433b69c4aad6310307f8fc91445a5129801bb527cdcdd28446c40f22bd"
+      "sha256": "471357be6232327ccec1bd97a6778a4a29ab4fb1687d2d0506228ff1a2af1a48"
     }
   },
   "schema_version": 1
