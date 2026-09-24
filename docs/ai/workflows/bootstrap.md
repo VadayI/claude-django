@@ -246,6 +246,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
      - `templates/docker-compose.yml` -> `docker-compose.yml`
      - `templates/docker-compose.staging.yml` -> `docker-compose.staging.yml` (staging runtime: gunicorn in a container behind a reverse proxy; see `docs/ai/rules/docker-commands.md` Staging section)
      - `templates/gunicorn.conf.py` -> `backend/gunicorn.conf.py` (gunicorn config the staging compose mounts at `/app/gunicorn.conf.py`)
+     - `templates/settings_conformance.py` -> `backend/config/settings/conformance.py` (CI-only live contract-conformance settings; inherits dev and raises DRF throttle rates for Schemathesis traffic; never use for pytest, staging, or production)
      - `templates/settings_test.py` -> `backend/config/settings/test.py` (test settings: inherits dev, adds the test-only `MIGRATION_MODULES` override + a fast password hasher; pytest uses it via `DJANGO_SETTINGS_MODULE=config.settings.test`)
      - `templates/Makefile` -> `Makefile` (dev-loop command shortcuts; see `docs/ai/rules/docker-commands.md`)
      - `templates/PROJECT_README.md` -> `README.md` (project root README — replace `{SLUG}`, `{DATE_ISO}`, `{OWNER}` with real values; leave `{TODO}` markers for the user to fill, especially `## License`)
@@ -337,7 +338,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
        > current `drf-spectacular` docs (Context7) before relying on it.
      - mount `SpectacularAPIView`, `SpectacularSwaggerView`, `SpectacularRedocView` at `/api/schema/...`
      - mount the cross-cutting health route: in `config/urls.py` add `path("api/v1/", include("apps.common.urls"))` so the public probe `GET /api/v1/health/` (apps.common.views.HealthView) is live — the staging container healthcheck and post-deploy smoke depend on it.
-   - **Settings split:** generate `base.py`, `dev.py`, `staging.py`, **and** `test.py`.
+   - **Settings split:** generate `base.py`, `dev.py`, `staging.py`, **and** the separate `test.py` and `conformance.py` modules.
      - Copy `templates/settings_test.py` -> `config/settings/test.py`. It inherits `dev` and owns the test-only `common` migration redirect plus a fast password hasher:
        ```python
        from config.settings.dev import *  # noqa: F401,F403
@@ -349,6 +350,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
        PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
        ```
        pytest selects it via `DJANGO_SETTINGS_MODULE = "config.settings.test"` in `backend/pyproject.toml` `[tool.pytest.ini_options]` (already set in the template). Do NOT put `MIGRATION_MODULES` in `dev.py` or `staging.py` — production `common` ships no models, and the dev server should not pay for the test-only redirect.
+     - Copy `templates/settings_conformance.py` -> `config/settings/conformance.py`. It inherits `dev.py` and raises the configured DRF throttle rates only for the live CI conformance server, so Schemathesis traffic is not stopped by development limits. The workflow uses it for migration and server startup; it is never used for pytest, staging, or production.
      - **`staging.py`** must be production-hardened for gunicorn behind a reverse proxy: `DEBUG = False`; `ALLOWED_HOSTS` from `DJANGO_ALLOWED_HOSTS` env (the staging subdomain); `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")` so Django trusts the proxy's TLS termination; `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE = True`. Static files: collect to `STATIC_ROOT` (serve via WhiteNoise or the proxy). Verify it passes `python manage.py check --deploy`.
    - `docker compose exec -T backend python manage.py migrate`
    - **Pull the external API contract** (ADR 0017): ensure `CONTRACT_VERSION` is set in `.env`, then `bash scripts/pull_contract.sh` (writes `docs/api/openapi.yml` from `claude-api-contract@CONTRACT_VERSION`). If the contract repo/tag does not exist yet, record the missing pin as unresolved. **Configure the CI drift gate**: `gh variable set CONTRACT_VERSION --body "vX.Y.Z"` (same value as `.env`; plus `gh variable set CONTRACT_REPO --body "owner/repo"` when not the default). `backend-ci.yml` runs the drift gate unconditionally and fails when the pin is missing; re-set it on every pin raise (ADR `0021`/`0025`). `drf-spectacular` still serves Swagger UI/Redoc from live code, but is NOT the canonical schema.

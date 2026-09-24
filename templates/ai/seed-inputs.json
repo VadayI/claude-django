@@ -81,6 +81,7 @@
     "templates/scripts/check_nul_bytes.sh": "templates/scripts/check_nul_bytes.sh",
     "templates/scripts/check_stubs.sh": "templates/scripts/check_stubs.sh",
     "templates/scripts/pull_contract.sh": "templates/scripts/pull_contract.sh",
+    "templates/settings_conformance.py": "templates/settings_conformance.py",
     "templates/settings_test.py": "templates/settings_test.py",
     "templates/todo.md": "templates/todo.md",
     "templates/verify_TEMPLATE.md": "templates/verify_TEMPLATE.md"

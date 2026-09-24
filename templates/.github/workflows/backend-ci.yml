@@ -96,7 +96,7 @@ jobs:
           --health-cmd "pg_isready -U app" --health-interval 5s
           --health-timeout 3s --health-retries 5
     env:
-      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DJANGO_SETTINGS_MODULE: config.settings.conformance
       DATABASE_URL: postgres://app:app@localhost:5432/app
       DJANGO_SECRET_KEY: ci-secret
     defaults:
@@ -200,6 +200,8 @@ jobs:
         run: bash scripts/check_file_size.sh
       - name: Tests + coverage
         id: pytest
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
         run: pytest --cov=apps --cov-report=term-missing
       - name: Job summary
         if: always()
