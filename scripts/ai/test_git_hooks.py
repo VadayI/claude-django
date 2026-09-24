@@ -15,6 +15,38 @@ import install_git_hooks
 class GitHookTests(unittest.TestCase):
     """Exercise hook behavior without changing the source repository."""
 
+    def test_candidate_tooling_binds_fixture_and_server_bytes(self):
+        """Reject uncommitted changes to every DB verification helper.
+
+        Args: None; an isolated temporary Git repository with reviewed paths.
+        Returns: None after clean and altered-helper assertions.
+        Raises: AssertionError if candidate binding misses fixture/server code.
+        Side effects: Temporary Git files/commit only; no DB or network.
+        """
+        names = ("scripts/ai/git_hooks.py", "scripts/ai/runner.py",
+                 "scripts/ai/backend_prereq.py", "scripts/ai/backend_fixture.py",
+                 "scripts/ai/backend_server.py", "scripts/ai/backend_policy.py",
+                 "templates/ai/checks/django-backend.json")
+        with tempfile.TemporaryDirectory(prefix="django tooling bind ") as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            for name in names:
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(f"reviewed {name}\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(root), "-c", "user.name=Fixture",
+                            "-c", "user.email=fixture@example.invalid", "commit", "-qm", "fixture"], check=True)
+            commit = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"],
+                                    check=True, capture_output=True, text=True).stdout.strip()
+            git_hooks.assert_candidate_tooling(root, commit)
+            for name in ("scripts/ai/backend_fixture.py", "scripts/ai/backend_server.py"):
+                path = root / name
+                path.write_text("altered\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, name.replace(".", r"\.")):
+                    git_hooks.assert_candidate_tooling(root, commit)
+                path.write_text(f"reviewed {name}\n", encoding="utf-8")
+
     def test_precommit_checks_staged_patch_only(self):
         """Reject staged whitespace errors while ignoring unstaged edits.
 

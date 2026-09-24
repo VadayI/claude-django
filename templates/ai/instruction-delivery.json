@@ -712,7 +712,7 @@
     },
     "scripts/ai/git_hooks.py": {
       "ownership": "template",
-      "sha256": "71cbd1c226ddc9dc6abc75f57e718626fa7c1a331c43a8bcc6aae4f8d632f48b"
+      "sha256": "d3aade6a06de0fc5d70d5a31937ac40126baf679450035c4066c56cae675b199"
     },
     "scripts/ai/install_git_hooks.py": {
       "ownership": "template",
@@ -720,7 +720,7 @@
     },
     "scripts/ai/test_git_hooks.py": {
       "ownership": "template",
-      "sha256": "77b71a969c3434e6615907ef576620d2c385f6ff928dd226d25e9c0eeae75de5"
+      "sha256": "e31528a5c9d5c6677fcd52be859117692b7d33f4bc028aff3834558911c23f10"
     },
     "scripts/build_instruction_manifest.py": {
       "ownership": "template",

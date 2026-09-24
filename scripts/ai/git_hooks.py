@@ -86,13 +86,14 @@ def assert_candidate_tooling(root: Path, commit: str) -> None:
     Args: root is local repository; commit is the exact candidate OID.
     Returns: None when all local execution inputs equal committed blobs.
     Raises: ValueError for dirty/stale tooling; Git errors propagate.
-    Side effects: Reads five working files and exact Git blobs; no writes,
+    Side effects: Reads seven working files and exact Git blobs; no writes,
         database, network, or Git ref/index mutation.
     Business rule: A dirty local catalog or runner cannot claim a result for
         different committed verification logic.
     """
     for name in ("scripts/ai/git_hooks.py", "scripts/ai/runner.py",
-                 "scripts/ai/backend_prereq.py", "scripts/ai/backend_policy.py",
+                 "scripts/ai/backend_prereq.py", "scripts/ai/backend_fixture.py",
+                 "scripts/ai/backend_server.py", "scripts/ai/backend_policy.py",
                  "templates/ai/checks/django-backend.json"):
         committed = git(root, "show", f"{commit}:{name}")
         if (root / name).read_text(encoding="utf-8").encode("utf-8") != committed:
