@@ -2,11 +2,12 @@
 
 import json
 import os
-from pathlib import Path
+import stat
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +21,119 @@ import runner
 
 class BackendRunnerCatalogTests(unittest.TestCase):
     """Compare exact runner gates to the reviewed hosted backend inventory."""
+
+    def test_file_digests_for_directory_are_deterministic_and_track_paths_and_contents(self):
+        """Digest directory descendants deterministically by relative path and bytes.
+
+        Args: None; uses a temporary candidate directory with nested files.
+        Returns: None after repeatability and mutation assertions.
+        Raises: AssertionError if descendant paths or contents do not affect the digest.
+        Side effects: Writes temporary local files only; no DB, network, or subprocess.
+        """
+        with tempfile.TemporaryDirectory(prefix="django directory digest ") as directory:
+            root = Path(directory)
+            backend = root / "backend"
+            nested = backend / "apps" / "sample"
+            nested.mkdir(parents=True)
+            first = nested / "one.py"
+            first.write_text("value = 1\n", encoding="utf-8")
+
+            original = runner.file_digests(root, ["backend"])
+            self.assertEqual(runner.file_digests(root, ["backend"]), original)
+
+            first.write_text("value = 2\n", encoding="utf-8")
+            changed_contents = runner.file_digests(root, ["backend"])
+            self.assertNotEqual(changed_contents, original)
+
+            first.rename(nested / "renamed.py")
+            changed_name = runner.file_digests(root, ["backend"])
+            self.assertNotEqual(changed_name, changed_contents)
+
+    def test_file_digests_for_directory_track_nested_file_additions_and_removals(self):
+        """Change the directory digest when nested files are added or removed.
+
+        Args: None; uses a temporary candidate directory with one nested file.
+        Returns: None after add/remove digest assertions.
+        Raises: AssertionError if the subtree digest ignores membership changes.
+        Side effects: Writes temporary local files only; no DB, network, or subprocess.
+        """
+        with tempfile.TemporaryDirectory(prefix="django directory membership ") as directory:
+            root = Path(directory)
+            nested = root / "backend" / "apps" / "sample"
+            nested.mkdir(parents=True)
+            retained = nested / "retained.py"
+            retained.write_text("value = 1\n", encoding="utf-8")
+            original = runner.file_digests(root, ["backend"])
+
+            added = nested / "added.py"
+            added.write_text("value = 2\n", encoding="utf-8")
+            with_added_file = runner.file_digests(root, ["backend"])
+            self.assertNotEqual(with_added_file, original)
+
+            added.unlink()
+            self.assertEqual(runner.file_digests(root, ["backend"]), original)
+
+    def test_file_digests_for_directory_bind_executable_bits_and_reject_special_files(self):
+        """Bind executable metadata and reject non-regular descendants.
+
+        Args: None; creates a temporary candidate directory and one regular file.
+        Returns: None after executable-bit digest and optional FIFO assertions.
+        Raises: AssertionError if executable metadata or special-file checks regress.
+        Side effects: Writes temporary local files/FIFO only; no DB or network.
+        """
+        with tempfile.TemporaryDirectory(prefix="django directory modes ") as directory:
+            root = Path(directory)
+            backend = root / "backend"
+            backend.mkdir()
+            script = backend / "run.py"
+            script.write_text("print('fixture')\n", encoding="utf-8")
+            original = runner.file_digests(root, ["backend"])
+
+            script.chmod(script.stat().st_mode | stat.S_IXUSR)
+            if not script.stat().st_mode & stat.S_IXUSR:
+                self.skipTest("This platform does not expose executable mode bits")
+            self.assertNotEqual(runner.file_digests(root, ["backend"]), original)
+
+            if not hasattr(os, "mkfifo"):
+                self.skipTest("This platform cannot create FIFO special files")
+            os.mkfifo(backend / "pipe")
+            with self.assertRaises(ValueError):
+                runner.file_digests(root, ["backend"])
+
+    def test_file_digests_for_directory_reject_nested_symlinks_and_escapes(self):
+        """Reject symlinks anywhere in a dynamic backend subtree.
+
+        Args: None; uses a temporary candidate, an in-tree target, and an outside target.
+        Returns: None after internal and escaping symlink assertions.
+        Raises: AssertionError if symlink creation succeeds but the runner accepts it.
+        Side effects: Writes temporary files and symlinks only; no DB, network, or subprocess.
+        """
+        with tempfile.TemporaryDirectory(prefix="django directory links ") as directory:
+            root = Path(directory)
+            backend = root / "backend"
+            nested = backend / "apps" / "sample"
+            nested.mkdir(parents=True)
+            inside_target = nested / "target.py"
+            inside_target.write_text("value = 1\n", encoding="utf-8")
+            outside_target = root / "outside.py"
+            outside_target.write_text("value = 2\n", encoding="utf-8")
+
+            # Establish that the directory is a supported input before testing links.
+            runner.file_digests(root, ["backend"])
+
+            for name, target in (("inside-link.py", inside_target), ("escape-link.py", outside_target)):
+                link = nested / name
+                try:
+                    link.symlink_to(target)
+                except OSError as error:
+                    if os.name == "nt" and (
+                        isinstance(error, PermissionError) or getattr(error, "winerror", None) == 1314
+                    ):
+                        self.skipTest("Windows does not permit symlink creation for this user")
+                    raise
+                with self.subTest(link=name), self.assertRaises(ValueError):
+                    runner.file_digests(root, ["backend"])
+                link.unlink()
 
     def test_catalog_covers_every_blocking_backend_gate(self):
         """Bind all code/policy checks to the same exact runner catalog.

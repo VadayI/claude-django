@@ -71,7 +71,24 @@ elif [ -z "${CONFORMANCE_BASE_URL:-}" ]; then
     echo "conformance-gate: CONFORMANCE_BASE_URL not set - level 1 skipped (start the server and export it to enable)"
   fi
 else
-  schemathesis run "$CONTRACT" --url "$CONFORMANCE_BASE_URL" --checks all || rc=1
+  conformance_tmp="$(mktemp -d "${TMPDIR:-/tmp}/django-contract-conformance.XXXXXX")" || exit 1
+  trap 'rm -rf -- "$conformance_tmp"' EXIT
+  export HYPOTHESIS_STORAGE_DIRECTORY="$conformance_tmp/.hypothesis"
+  cat > "$conformance_tmp/schemathesis.toml" <<'EOF'
+[cache]
+enabled = false
+
+[generation]
+database = ":memory:"
+
+# Registration may apply contextual password checks beyond the portable schema.
+# Its 400 response is documented and will still be checked against the error schema.
+[[operations]]
+include-name = "POST /auth/register"
+checks.positive_data_acceptance.expected-statuses = ["2xx", "400", "401", "403", "404", "409", "429", "5xx"]
+EOF
+  schemathesis --config-file "$conformance_tmp/schemathesis.toml" run \
+    "$CONTRACT" --url "$CONFORMANCE_BASE_URL" --checks all || rc=1
 fi
 
 if [ "$rc" -eq 0 ]; then

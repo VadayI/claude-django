@@ -10,7 +10,7 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 ## Shared Claude/Codex runtime delivery (P05 downstream candidate)
 
 This review branch uses development-pinned contract core commit
-`ec719b9f0cbe3bffb9556931587233415c7566c2`; it is not claimed integrated.
+`90fdafde68454d665a53de78dc8f5fd8420465c2`; it is not claimed integrated.
 Python 3.13+ and its standard library
 are sufficient; no sibling checkout or marketplace is needed for core tooling.
 Run `python scripts/ai/core_sync.py --check` to verify installed file digests.
@@ -401,7 +401,7 @@ the child process; PowerShell caller variables remain unchanged. CLI arguments a
 exit status are forwarded. Applications load their own runtime environment.
 
 This review branch uses development-pinned core commit
-`ec719b9f0cbe3bffb9556931587233415c7566c2`; it is not claimed integrated.
+`90fdafde68454d665a53de78dc8f5fd8420465c2`; it is not claimed integrated.
 Delivery was regenerated and checked. Exact known template wrappers migrate by
 hash; custom wrappers conflict and remain unchanged. Full bootstrap/CI migration
 remains pending.

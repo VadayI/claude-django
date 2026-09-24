@@ -96,7 +96,7 @@ jobs:
           --health-cmd "pg_isready -U app" --health-interval 5s
           --health-timeout 3s --health-retries 5
     env:
-      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DJANGO_SETTINGS_MODULE: config.settings.conformance
       DATABASE_URL: postgres://app:app@localhost:5432/app
       DJANGO_SECRET_KEY: ci-secret
     defaults:
@@ -120,17 +120,60 @@ jobs:
         id: stub
         working-directory: ${{ github.workspace }}
         run: bash scripts/check_stubs.sh
+      - name: Migrate test database and start Django for conformance
+        id: conformance_server
+        run: |
+          set -euo pipefail
+          python manage.py migrate --noinput
+
+          server_log="$RUNNER_TEMP/django-conformance.log"
+          server_pid="$RUNNER_TEMP/django-conformance.pid"
+          nohup python manage.py runserver 127.0.0.1:8000 --noreload >"$server_log" 2>&1 &
+          echo "$!" > "$server_pid"
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/api/v1/health/ >/dev/null; then
+              echo "Django conformance server is ready."
+              exit 0
+            fi
+            if ! kill -0 "$(cat "$server_pid")" 2>/dev/null; then
+              cat "$server_log"
+              echo "::error::Django conformance server exited before becoming healthy."
+              exit 1
+            fi
+            sleep 2
+          done
+
+          cat "$server_log"
+          echo "::error::Django conformance server did not become healthy within 60 seconds."
+          exit 1
       - name: Contract conformance gate
         id: conformance
         working-directory: ${{ github.workspace }}
-        # Level 1 (schemathesis) needs a live server: at stage MVP/production the
-        # gate is STRICT and fails without CONFORMANCE_BASE_URL (ADR 0025). Enable it
-        # by starting the stack in CI and exporting the URL, e.g.:
-        #   - run: docker compose up -d
-        #   - run: curl -fsS --retry 20 --retry-delay 3 --retry-all-errors http://localhost:8000/api/v1/health/
-        #   then add to this step:  env: { CONFORMANCE_BASE_URL: "http://localhost:8000" }
-        # demo/prototype/PoC stages run level 2 (django-contract-tester) without it.
+        env:
+          CONFORMANCE_BASE_URL: http://127.0.0.1:8000
         run: bash scripts/check_contract_conformance.sh
+      - name: Stop Django conformance server
+        if: always()
+        working-directory: ${{ github.workspace }}/backend
+        run: |
+          set -euo pipefail
+          server_pid="$RUNNER_TEMP/django-conformance.pid"
+          if [ ! -f "$server_pid" ]; then
+            exit 0
+          fi
+
+          pid="$(cat "$server_pid")"
+          if kill -0 "$pid" 2>/dev/null; then
+            kill "$pid" 2>/dev/null || true
+            for attempt in $(seq 1 10); do
+              kill -0 "$pid" 2>/dev/null || break
+              sleep 1
+            done
+            if kill -0 "$pid" 2>/dev/null; then
+              kill -KILL "$pid" 2>/dev/null || true
+            fi
+          fi
       - name: Contract drift gate (vendored copy matches pinned tag)
         id: drift
         working-directory: ${{ github.workspace }}
@@ -157,6 +200,8 @@ jobs:
         run: bash scripts/check_file_size.sh
       - name: Tests + coverage
         id: pytest
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
         run: pytest --cov=apps --cov-report=term-missing
       - name: Job summary
         if: always()
