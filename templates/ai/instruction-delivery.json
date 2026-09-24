@@ -576,7 +576,7 @@
     },
     "docs/ai/production-structure.md": {
       "ownership": "template",
-      "sha256": "8a93093e3ecf47fead2202ead064798db8def6f2d75f0f29d52cb58f4b6a6f06"
+      "sha256": "e57217d811ee288f13a0314bc501bce4fd05802f1b2c443c484ca6ed390f3a67"
     },
     "docs/ai/roles/api-architect.md": {
       "ownership": "template",
@@ -700,7 +700,7 @@
     },
     "scripts/ai/backend_prereq.py": {
       "ownership": "template",
-      "sha256": "2c23ac4ff596bc9858145579e208e0be00eeee6a74c496659c7c65bbceb4df8f"
+      "sha256": "61839efcd669082f52194fc6850510e0224ce0eb67cb9cb9ae970970357b8917"
     },
     "scripts/ai/backend_server.py": {
       "ownership": "template",

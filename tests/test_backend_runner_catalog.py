@@ -194,6 +194,7 @@ class BackendRunnerCatalogTests(unittest.TestCase):
                 self.assertEqual(backend_prereq.run_live_conformance(root, env, "bash", "b" * 32), 0)
                 listener.bind.assert_called_once_with(("127.0.0.1", 0))
                 self.assertEqual(spawned.call_args.kwargs["pass_fds"], (42,))
+                self.assertEqual(spawned.call_args.kwargs["env"]["PYTHONPATH"], str(root / "backend"))
                 self.assertEqual(command.call_args_list[-1].kwargs["env"]["CONFORMANCE_BASE_URL"],
                                  "http://127.0.0.1:49152")
                 health.assert_called_once()

@@ -54,6 +54,8 @@ contexts cannot redirect it. Without the marker/Docker (including ordinary
 local pre-push on this Windows host), DB gates return 75 `NOT_VERIFIED`.
 Strict MVP/production conformance migrates only the marker-bound DB, then
 passes a parent-bound loopback socket to a child candidate Django WSGI server.
+The child PYTHONPATH points at the exact candidate export's `backend/`, so
+an editable host checkout cannot silently supply its `config` or `apps`.
 The wrapper accepts `/api/v1/health/` only with status 200, `{"status":"ok"}`
 and a per-run response token added by that exact child. It passes the proven
 URL to schemathesis and terminates that exact process in `finally`; failure

@@ -47,7 +47,8 @@ def run_live_conformance(root: Path, env: dict[str, str], shell: str, token: str
     try:
         listener.bind(("127.0.0.1", 0))
         port = listener.getsockname()[1]
-        child_env = {**env, "AI_FIXTURE_TOKEN": token}
+        child_env = {**env, "AI_FIXTURE_TOKEN": token,
+                     "PYTHONPATH": str(root / "backend")}
         process = subprocess.Popen(
             [sys.executable, "scripts/ai/backend_server.py", "--fd", str(listener.fileno())],
             cwd=root, env=child_env, pass_fds=(listener.fileno(),),
