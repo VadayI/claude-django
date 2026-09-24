@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "scripts/ai"))
 import backend_policy
 import backend_prereq
 import backend_fixture
+import backend_server
 import runner
 
 
@@ -153,6 +154,89 @@ class BackendRunnerCatalogTests(unittest.TestCase):
                 (root / "docs/PROJECT.md").write_text("**Maturity stage:** production\n", encoding="utf-8")
                 self.assertEqual(backend_prereq.run_gate(root, "conformance", "bash"), 75)
                 self.assertEqual(process.call_count, 1)
+
+    def test_live_conformance_owns_socket_and_exact_child_cleanup(self):
+        """Bind and attest one candidate WSGI child, then terminate its PID.
+
+        Args: None; mocked socket, process, HTTP health and shell calls.
+        Returns: None after successful flow and no-health failure assertions.
+        Raises: AssertionError if port reuse, token check or cleanup regresses.
+        Side effects: Temporary manage.py fixture only; no DB/network/process.
+        Business rule: Only a token-bearing owned health response can launch
+            strict conformance, and the exact child is stopped in finally.
+        """
+        with tempfile.TemporaryDirectory(prefix="django live conformance ") as directory:
+            root = Path(directory)
+            (root / "backend").mkdir()
+            with (mock.patch.object(backend_prereq.sys, "platform", "linux"),
+                  mock.patch.object(backend_prereq.subprocess, "run", side_effect=AssertionError("no process")),
+                  mock.patch.object(backend_prereq.urlrequest, "urlopen", side_effect=AssertionError("no network"))):
+                self.assertEqual(backend_prereq.run_live_conformance(root, {}, "bash", "b" * 32), 75)
+            (root / "backend/manage.py").write_text("# fixture\n", encoding="utf-8")
+            env = {"DATABASE_URL": "postgres://ephemeral"}
+            listener = mock.Mock()
+            listener.getsockname.return_value = ("127.0.0.1", 49152)
+            listener.fileno.return_value = 42
+            process = mock.Mock()
+            process.poll.return_value = None
+            response = mock.Mock()
+            response.status = 200
+            response.headers.get.return_value = "b" * 32
+            response.read.return_value = b'{"status":"ok"}'
+            response_context = mock.MagicMock()
+            response_context.__enter__.return_value = response
+            with (mock.patch.object(backend_prereq.sys, "platform", "linux"),
+                  mock.patch.object(backend_prereq.socket, "socket", return_value=listener),
+                  mock.patch.object(backend_prereq.subprocess, "Popen", return_value=process) as spawned,
+                  mock.patch.object(backend_prereq.subprocess, "run") as command,
+                  mock.patch.object(backend_prereq.urlrequest, "urlopen", return_value=response_context) as health):
+                command.return_value.returncode = 0
+                self.assertEqual(backend_prereq.run_live_conformance(root, env, "bash", "b" * 32), 0)
+                listener.bind.assert_called_once_with(("127.0.0.1", 0))
+                self.assertEqual(spawned.call_args.kwargs["pass_fds"], (42,))
+                self.assertEqual(command.call_args_list[-1].kwargs["env"]["CONFORMANCE_BASE_URL"],
+                                 "http://127.0.0.1:49152")
+                health.assert_called_once()
+                self.assertEqual(health.call_args.args[0], "http://127.0.0.1:49152/api/v1/health/")
+                process.terminate.assert_called_once()
+
+                process.wait.assert_called_once_with(timeout=5)
+            process.reset_mock()
+            response.headers.get.return_value = "foreign"
+            with (mock.patch.object(backend_prereq.sys, "platform", "linux"),
+                  mock.patch.object(backend_prereq.socket, "socket", return_value=listener),
+                  mock.patch.object(backend_prereq.subprocess, "Popen", return_value=process),
+                  mock.patch.object(backend_prereq.subprocess, "run") as command,
+                  mock.patch.object(backend_prereq.urlrequest, "urlopen", return_value=response_context),
+                  mock.patch.object(backend_prereq.time, "sleep")):
+                command.return_value.returncode = 0
+                self.assertEqual(backend_prereq.run_live_conformance(root, env, "bash", "b" * 32), 75)
+                self.assertEqual(command.call_count, 1)
+                process.terminate.assert_called_once()
+
+    def test_server_marks_only_its_own_wsgi_response(self):
+        """Attach the run token to the actual candidate WSGI response.
+
+        Args: None; synthetic WSGI app and response callback.
+        Returns: None after status/body/header assertions.
+        Raises: AssertionError if the token header is absent or altered.
+        Side effects: In-process mocks only; no DB, subprocess or network.
+        """
+        def application(environ, start_response):
+            """Respond with a synthetic health body for middleware testing.
+
+            Args: environ is unused WSGI metadata; start_response sends headers.
+            Returns: One body chunk iterable.
+            Raises: Errors from start_response propagate.
+            Side effects: Calls the response callback; no DB/network/writes.
+            """
+            start_response("200 OK", [("Content-Type", "application/json")])
+            return [b'{"status":"ok"}']
+
+        started = mock.Mock()
+        body = backend_server.TokenApplication(application, "b" * 32)({}, started)
+        self.assertEqual(body, [b'{"status":"ok"}'])
+        self.assertIn(("X-AI-Fixture-Token", "b" * 32), started.call_args.args[1])
 
     def test_policy_uses_exact_base_and_candidate_paths(self):
         """Require a review note for an actual public pin change.

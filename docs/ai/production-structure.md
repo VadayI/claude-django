@@ -52,10 +52,16 @@ termination can bypass both, so hosted cleanup still needs a real run check.
 The Docker helper pins the local Linux socket so inherited remote
 contexts cannot redirect it. Without the marker/Docker (including ordinary
 local pre-push on this Windows host), DB gates return 75 `NOT_VERIFIED`.
-Strict MVP/production conformance still returns 75 until a run-owned live
-application server is available; early-stage response conformance can use
-the owned DB fixture. Hosted execution remains unverified until an actual
-Actions run proves startup, cleanup and required contexts.
+Strict MVP/production conformance migrates only the marker-bound DB, then
+passes a parent-bound loopback socket to a child candidate Django WSGI server.
+The wrapper accepts `/api/v1/health/` only with status 200, `{"status":"ok"}`
+and a per-run response token added by that exact child. It passes the proven
+URL to schemathesis and terminates that exact process in `finally`; failure
+to start or prove health returns 75. A candidate without `manage.py` or the
+documented health route is `NOT_VERIFIED`. Forced host termination can still
+bypass process cleanup. Hosted execution remains unverified until an actual
+Actions run proves startup, migration, health, conformance, cleanup and
+required contexts.
 
 Catalog dependency lists include the full referenced closure. Worker packs
 conservatively contain every non-coordinator rule. The coordinator workflow is

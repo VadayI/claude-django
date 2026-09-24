@@ -10,6 +10,7 @@
     "templates/ai/checks/django-backend.json",
     "scripts/ai/backend_prereq.py",
     "scripts/ai/backend_fixture.py",
+    "scripts/ai/backend_server.py",
     "scripts/ai/backend_policy.py",
     "backend",
     "docs/api/openapi.yml"
@@ -99,7 +100,7 @@
     },
     {
       "id": "django.backend-conformance",
-      "description": "Run response conformance with a verified run-owned PostgreSQL fixture; strict live-server stage remains unverified.",
+      "description": "Run response and strict live conformance only with verified run-owned PostgreSQL and Django server identities.",
       "argv": ["{python}", "scripts/ai/backend_prereq.py", "conformance", "{git_bash}"],
       "cwd": ".", "mandatory": true, "timeout_seconds": 600,
       "prerequisites": ["python", "git-bash"],

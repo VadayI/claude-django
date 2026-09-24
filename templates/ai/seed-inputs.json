@@ -16,6 +16,7 @@
     ".githooks/pre-push": ".githooks/pre-push",
     "scripts/ai/git_hooks.py": "scripts/ai/git_hooks.py",
     "scripts/ai/backend_fixture.py": "scripts/ai/backend_fixture.py",
+    "scripts/ai/backend_server.py": "scripts/ai/backend_server.py",
     "scripts/ai/install_git_hooks.py": "scripts/ai/install_git_hooks.py",
     "scripts/ai/test_git_hooks.py": "scripts/ai/test_git_hooks.py",
     "scripts/policy/auto_format.py": "scripts/policy/auto_format.py",

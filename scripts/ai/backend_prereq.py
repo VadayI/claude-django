@@ -9,12 +9,81 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
 import sys
+import time
+from urllib import error as urlerror
+from urllib import request as urlrequest
 
 from backend_fixture import docker, inspect, read_marker
 
 NOT_VERIFIED = 75
+
+
+def run_live_conformance(root: Path, env: dict[str, str], shell: str, token: str) -> int:
+    """Migrate the owned DB and run strict conformance on an inherited socket.
+
+    Args: root is the disposable candidate export; env contains only a verified
+        fixture DSN and allowlisted runtime values; shell is runner Bash;
+        token is the verified marker's random service identity.
+    Returns: Conformance exit code, or 75 if server/health is unavailable.
+    Raises: OSError for unexpected local socket or process setup errors.
+    Side effects: Applies migrations only to the verified ephemeral DB, starts
+        one candidate WSGI child on a parent-bound loopback socket, probes its
+        documented health route, then terminates that exact child in finally.
+    Business rule: Health must return 200/ok plus this process's token header;
+        no arbitrary localhost service or inherited DATABASE_URL is accepted.
+    """
+    if not sys.platform.startswith("linux") or not (root / "backend/manage.py").is_file():
+        print("backend gate: Linux candidate manage.py unavailable", file=sys.stderr)
+        return NOT_VERIFIED
+    migrated = subprocess.run([sys.executable, "manage.py", "migrate", "--noinput"],
+                              cwd=root / "backend", env=env, check=False, timeout=120)
+    if migrated.returncode:
+        return migrated.returncode
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    process = None
+    try:
+        listener.bind(("127.0.0.1", 0))
+        port = listener.getsockname()[1]
+        child_env = {**env, "AI_FIXTURE_TOKEN": token}
+        process = subprocess.Popen(
+            [sys.executable, "scripts/ai/backend_server.py", "--fd", str(listener.fileno())],
+            cwd=root, env=child_env, pass_fds=(listener.fileno(),),
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        listener.close()
+        healthy = False
+        for _ in range(20):
+            if process.poll() is not None:
+                break
+            try:
+                with urlrequest.urlopen(f"http://127.0.0.1:{port}/api/v1/health/", timeout=1) as response:
+                    healthy = (response.status == 200
+                               and response.headers.get("X-AI-Fixture-Token") == token
+                               and json.loads(response.read(128)) == {"status": "ok"})
+            except (OSError, ValueError, urlerror.URLError):
+                pass
+            if healthy and process.poll() is None:
+                break
+            healthy = False
+            time.sleep(0.25)
+        if not healthy:
+            print("backend gate: run-owned live health route unavailable", file=sys.stderr)
+            return NOT_VERIFIED
+        child_env["CONFORMANCE_BASE_URL"] = f"http://127.0.0.1:{port}"
+        return subprocess.run([shell, "scripts/check_contract_conformance.sh"],
+                              cwd=root, env=child_env, check=False, timeout=420).returncode
+    finally:
+        listener.close()
+        if process is not None:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
 
 
 def pinned_version(path: Path) -> str | None:
@@ -78,8 +147,7 @@ def run_gate(root: Path, name: str, shell: str) -> int:
             stage_file = root / "docs/PROJECT.md"
             stage = stage_file.read_text(encoding="utf-8") if stage_file.is_file() else ""
             if re.search(r"(?im)^\*\*Maturity stage:\*\*.*\b(MVP|production)\b", stage):
-                print("backend gate: strict live conformance server unavailable", file=sys.stderr)
-                return NOT_VERIFIED
+                return run_live_conformance(root, env, shell, marker["token"])
             command = [shell, "scripts/check_contract_conformance.sh"]
             cwd = root
     elif name == "drift":
