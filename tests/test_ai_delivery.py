@@ -201,12 +201,12 @@ class DeliveryTests(unittest.TestCase):
                                       for path in target.rglob("*") if path.is_file()})
 
     def test_django_runner_catalog_matches_current_workflow_inventory(self):
-        """Bind the stack catalog to all four existing workflow commands.
+        """Bind stack checks to workflow commands and the exact development pin.
 
         No arguments or return value. Reads the versioned catalog, core receipt,
         and instruction manifest without writes, subprocesses, DB, or network.
         Assertions prevent command/dependency drift, seed duplication, or an
-        provenance drift after the reviewed source was integrated on main.
+        inaccurate claim that the reviewed local core commit is integrated.
         """
         catalog_path = "templates/ai/checks/django.json"
         catalog = json.loads((ROOT / catalog_path).read_text(encoding="utf-8"))
@@ -224,9 +224,9 @@ class DeliveryTests(unittest.TestCase):
             ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
         ])
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
-        self.assertEqual(receipt["source_commit"], "2e985eeb4883ccb79151c6c5834d6f82186d46a1")
-        self.assertEqual(receipt["pin_status"], "integrated")
-        self.assertEqual(receipt["observed_upstream_main"], receipt["source_commit"])
+        self.assertEqual(receipt["source_commit"], "90fdafde68454d665a53de78dc8f5fd8420465c2")
+        self.assertEqual(receipt["pin_status"], "development")
+        self.assertNotIn("observed_upstream_main", receipt)
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))
         seed = json.loads((ROOT / "templates/ai/seed-inputs.json").read_text(encoding="utf-8"))
         self.assertIn(catalog_path, instruction["files"])

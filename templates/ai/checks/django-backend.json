@@ -80,8 +80,8 @@
     },
     {
       "id": "django.backend-ruff",
-      "description": "Run the same Ruff lint gate as backend-ci.",
-      "argv": ["ruff", "check", "."],
+      "description": "Run the same Ruff lint gate as backend-ci without writing cache files.",
+      "argv": ["ruff", "check", "--no-cache", "."],
       "cwd": "backend", "mandatory": true, "timeout_seconds": 180,
       "prerequisites": ["ruff"],
       "applicability": {"path_exists": "backend", "missing_status": "NOT_VERIFIED"},

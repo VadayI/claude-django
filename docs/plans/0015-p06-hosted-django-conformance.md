@@ -46,6 +46,8 @@ Keep workflow triggers, jobs, job names, permissions, and the exact-candidate ru
 
 - 2026-09-24 — plan seeded; source repository clean on main; feature branch created locally.
 - 2026-09-24 — canonical workflow updated; YAML structure and added Bash snippets validated; diff check clean. Hosted behavior remains unverified pending a derived-project run.
+- 2026-09-24 — RED: focused `file_digests` directory regression tests fail as expected because the runner rejects the `backend` directory input.
+- 2026-09-24 — GREEN: synced reviewed core commit `90fdafde68454d665a53de78dc8f5fd8420465c2`; directory digest and no-cache Ruff catalog checks pass locally. Fixture exact runner passes Ruff; PostgreSQL conformance/pytest remain `NOT_VERIFIED`, and public drift fetch is blocked by local Windows Schannel.
 
 ## Amendments
 
