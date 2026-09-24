@@ -7,10 +7,11 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 
 ---
 
-## Shared Claude/Codex runtime delivery (P05 downstream candidate)
+## Shared Claude/Codex runtime delivery
 
-This review branch uses development-pinned contract core commit
-`90fdafde68454d665a53de78dc8f5fd8420465c2`; it is not claimed integrated.
+The vendored family core is pinned to integrated contract main commit
+`9db26a0c65b970c223ab034750f3019ac59c5e2e` (`docs/ai/core-source.json`,
+`pin_status: integrated`); `python scripts/ai/core_sync.py --check` verifies it.
 Python 3.13+ and its standard library
 are sufficient; no sibling checkout or marketplace is needed for core tooling.
 Run `python scripts/ai/core_sync.py --check` to verify installed file digests.
@@ -204,8 +205,9 @@ Then launch `claude` → `/doctor` → `/bootstrap`. To upgrade an *already-seed
 python scripts/seed_preflight.py --target "/path/to/new project"
 python scripts/seed_preflight.py --target "/path/to/new project" --apply
 
-# Workflow definitions stay under templates/.github/workflows/. P06 will
-# materialize the selected local/GitHub mode; this seed does not activate them.
+# Workflow definitions stay under templates/.github/workflows/. This seed does not
+# activate them; after the explicit CI choice run
+#   python scripts/ci_mode.py --target . --mode local|github --apply
 
 # WSL2 only: confirm `claude` is the Linux-native CLI, not the Windows `claude.exe` (no shadowing on native Windows).
 which claude    # WSL2/Linux/macOS: expect /home/... or /usr/...  (if /mnt/c/..., see step 1 / step 5 above)
@@ -440,6 +442,8 @@ language, MCP or personal settings. For instruction updates use
 `python <reviewed-template>/scripts/install_ai.py --target <project>` to preview,
 then `--apply`; reconcile conflicts as a reviewed diff. No automatic merge.
 Codex can invoke the bootstrap skill or read `docs/ai/workflows/bootstrap.md`
-explicitly. The P05 detector and exact-candidate runner are delivered; full P05
-cross-stack gate coverage, P06 CI choice and P12 full role migration remain pending;
-this checkpoint does not establish runnable backend or deployment acceptance.
+explicitly. The P05 detector and exact-candidate runner, the P06 explicit CI
+choice (`scripts/ci_mode.py`) and owned Git hooks are delivered; a hosted run of
+the derived backend catalog passed 13/13 on a representative fixture (2026-09-24).
+P07 shared project state, P08 Git lifecycle and P12 full role migration remain
+pending; delivery alone does not establish deployment readiness.

@@ -201,7 +201,7 @@ class DeliveryTests(unittest.TestCase):
                                       for path in target.rglob("*") if path.is_file()})
 
     def test_django_runner_catalog_matches_current_workflow_inventory(self):
-        """Bind stack checks to workflow commands and the exact development pin.
+        """Bind stack checks to workflow commands and the exact integrated pin.
 
         No arguments or return value. Reads the versioned catalog, core receipt,
         and instruction manifest without writes, subprocesses, DB, or network.
@@ -224,9 +224,9 @@ class DeliveryTests(unittest.TestCase):
             ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
         ])
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
-        self.assertEqual(receipt["source_commit"], "90fdafde68454d665a53de78dc8f5fd8420465c2")
-        self.assertEqual(receipt["pin_status"], "development")
-        self.assertNotIn("observed_upstream_main", receipt)
+        self.assertEqual(receipt["source_commit"], "9db26a0c65b970c223ab034750f3019ac59c5e2e")
+        self.assertEqual(receipt["pin_status"], "integrated")
+        self.assertEqual(receipt["observed_upstream_main"], receipt["source_commit"])
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))
         seed = json.loads((ROOT / "templates/ai/seed-inputs.json").read_text(encoding="utf-8"))
         self.assertIn(catalog_path, instruction["files"])
