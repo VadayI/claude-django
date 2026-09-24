@@ -71,7 +71,7 @@ class DeliveryTests(unittest.TestCase):
     """Use disposable project trees, preserving the reviewed source checkout."""
 
     def test_ci_mode_explicit_local_switch_and_owned_conflict(self):
-        """Materialize manual Django workflows and preserve foreign edits.
+        """Materialize one manual exact-runner workflow and preserve edits.
 
         Args: None; uses a disposable derived root.
         Returns: None after local/GitHub trigger and no-write assertions.
@@ -83,12 +83,13 @@ class DeliveryTests(unittest.TestCase):
             target = Path(directory)
             pending, conflicts = ci_mode.plan(ROOT, target, "local")
             self.assertEqual(conflicts, [])
-            self.assertEqual(len(pending), 4)
+            self.assertEqual(len(pending), 3)
             for name, content in pending.items():
                 path = target / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(content, encoding="utf-8", newline="\n")
             self.assertEqual(ci_mode.plan(ROOT, target, "local"), ({}, []))
+            self.assertFalse((target / ".github/workflows/backend-policy.yml").exists())
             for filename in ci_mode.WORKFLOWS:
                 active = (target / ".github/workflows" / filename).read_text(encoding="utf-8")
                 self.assertIn("  workflow_dispatch:", active)
@@ -111,6 +112,7 @@ class DeliveryTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(content, encoding="utf-8", newline="\n")
             self.assertEqual(ci_mode.plan(ROOT, target, "github"), ({}, []))
+            self.assertFalse((target / ".github/workflows/backend-policy.yml").exists())
             hosted_ci = (target / ".github/workflows/backend-ci.yml").read_text(encoding="utf-8")
             self.assertEqual(local_ci.split("\njobs:\n", 1)[1], hosted_ci.split("\njobs:\n", 1)[1])
             self.assertNotIn("if: vars.CONTRACT_VERSION != ''", hosted_ci)
@@ -127,6 +129,46 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
             self.assertEqual(snapshot, {path.relative_to(target).as_posix(): path.read_bytes()
                                         for path in target.rglob("*") if path.is_file()})
+
+    def test_ci_mode_retires_only_receipt_owned_policy_workflow(self):
+        """Remove a previously owned active policy job without touching source.
+
+        Args: None; disposable derived target and prior ownership receipt.
+        Returns: None after owned migration and custom-conflict no-write checks.
+        Raises: AssertionError if a custom active workflow is removed or passes.
+        Side effects: Temporary target files and CLI subprocess only; no DB,
+            network, GitHub registration, branch rule, or source mutation.
+        Business rule: All active policy checks are now in backend-ci catalog.
+        """
+        with tempfile.TemporaryDirectory(prefix="django retired policy ") as directory:
+            target = Path(directory)
+            name = ".github/workflows/backend-policy.yml"
+            active = target / name
+            active.parent.mkdir(parents=True)
+            legacy = (ROOT / "templates/.github/workflows/backend-policy.yml").read_text(encoding="utf-8")
+            active.write_text(legacy, encoding="utf-8")
+            receipt = target / ci_mode.RECEIPT
+            receipt.parent.mkdir(parents=True)
+            receipt.write_text(json.dumps({"schema_version": 1, "mode": "local",
+                                           "files": {name: ci_mode.digest(legacy)}}), encoding="utf-8")
+            pending, conflicts = ci_mode.plan(ROOT, target, "local")
+            self.assertEqual(conflicts, [])
+            self.assertIsNone(pending[name])
+            result = subprocess.run([sys.executable, str(ROOT / "scripts/ci_mode.py"),
+                                     "--target", str(target), "--mode", "local", "--apply"],
+                                    capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertFalse(active.exists())
+            self.assertEqual(ci_mode.plan(ROOT, target, "local"), ({}, []))
+            active.write_text("name: custom policy\n", encoding="utf-8")
+            before = {path.relative_to(target).as_posix(): path.read_bytes()
+                      for path in target.rglob("*") if path.is_file()}
+            result = subprocess.run([sys.executable, str(ROOT / "scripts/ci_mode.py"),
+                                     "--target", str(target), "--mode", "github", "--apply"],
+                                    capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertEqual(before, {path.relative_to(target).as_posix(): path.read_bytes()
+                                      for path in target.rglob("*") if path.is_file()})
 
     def test_django_runner_catalog_matches_current_workflow_inventory(self):
         """Bind the stack catalog to all four existing workflow commands.

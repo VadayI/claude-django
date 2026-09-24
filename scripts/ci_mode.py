@@ -11,7 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "ai"))
 from core_paths import contained
 from core_sync import target_root
 
-WORKFLOWS = ("backend-ci.yml", "backend-policy.yml")
+WORKFLOWS = ("backend-ci.yml",)
+OBSOLETE = ("backend-policy.yml",)
 PROJECT = "docs/project-state/project.json"
 RECEIPT = "docs/ai/ci-workflow-receipt.json"
 
@@ -52,9 +53,7 @@ def render(source: Path, filename: str, mode: str) -> str:
         raise ValueError(f"Missing canonical job structure: {filename}")
     end = min(ends)
     original_events = set(re.findall(r"^  ([a-z_]+):", canonical[start:end], re.MULTILINE))
-    expected = ({"pull_request", "push", "workflow_dispatch", "merge_group"}
-                if filename == "backend-ci.yml" else
-                {"pull_request", "workflow_dispatch", "merge_group"})
+    expected = {"pull_request", "push", "workflow_dispatch", "merge_group"}
     if original_events != expected or "\njobs:\n" not in canonical[end:]:
         raise ValueError(f"Unreviewed canonical events or jobs: {filename}")
     if mode == "github":
@@ -93,15 +92,16 @@ def project_text(target: Path, mode: str) -> str:
     return json.dumps(config, indent=2, sort_keys=True) + "\n"
 
 
-def plan(source: Path, target: Path, mode: str) -> tuple[dict[str, str], list[str]]:
-    """Preflight both owned workflows and the saved choice before writing.
+def plan(source: Path, target: Path, mode: str) -> tuple[dict[str, str | None], list[str]]:
+    """Preflight the exact-runner workflow and obsolete policy migration.
 
     Args: source is reviewed template root; target is derived root; mode explicit.
-    Returns: Pending path/text writes and sorted ownership conflicts.
+    Returns: Pending path/text writes (None means owned deletion) and conflicts.
     Raises: ValueError for malformed receipts, linked paths or invalid mode.
     Side effects: Reads source/target only; no writes, database, or network.
     Business rule: Foreign/custom workflows and receipt edits block the whole
-        switch; project-owned fields and unrelated workflows are preserved.
+        switch. Only a hash-matched previously owned backend-policy workflow
+        may be removed; inert upstream source and unrelated files remain.
     """
     source, target = target_root(source), target_root(target)
     receipt_path = contained(target, RECEIPT)
@@ -109,6 +109,15 @@ def plan(source: Path, target: Path, mode: str) -> tuple[dict[str, str], list[st
     if prior and (prior.get("schema_version") != 1 or not isinstance(prior.get("files"), dict)):
         raise ValueError("Invalid CI ownership receipt")
     pending, conflicts, files = {}, [], {}
+    for filename in OBSOLETE:
+        name = f".github/workflows/{filename}"
+        path = contained(target, name)
+        if path.exists():
+            previous = prior.get("files", {}).get(name)
+            if previous and digest(path.read_text(encoding="utf-8")) == previous:
+                pending[name] = None
+            else:
+                conflicts.append(name)
     for filename in WORKFLOWS:
         name = f".github/workflows/{filename}"
         incoming = render(source, filename, mode)
@@ -137,7 +146,8 @@ def main() -> int:
     Args: CLI --target selects derived root; --mode is mandatory; --apply writes.
     Returns: 0 for safe plan/apply, 1 for ownership conflicts, 2 for bad input.
     Raises: None; supported filesystem/metadata errors become exit two.
-    Side effects: Apply writes only preflighted files; no DB, network, Git,
+    Side effects: Apply writes only preflighted files and may remove a
+        hash-matched obsolete active policy workflow. No DB, network, Git,
         branch-protection changes, registration runs, push, or merge.
     """
     parser = argparse.ArgumentParser(description=__doc__)
@@ -148,14 +158,24 @@ def main() -> int:
     try:
         target = target_root(args.target)
         pending, conflicts = plan(Path(__file__).resolve().parents[1], target, args.mode)
-        print(json.dumps({"writes": sorted(pending), "conflicts": conflicts}))
+        print(json.dumps({"writes": sorted(name for name, content in pending.items() if content is not None),
+                          "deletes": sorted(name for name, content in pending.items() if content is None),
+                          "conflicts": conflicts}))
         if conflicts:
             return 1
         if args.apply:
             for name, content in pending.items():
                 path = contained(target, name)
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(content, encoding="utf-8", newline="\n")
+                if content is None:
+                    receipt_path = contained(target, RECEIPT)
+                    prior = json.loads(receipt_path.read_text(encoding="utf-8"))
+                    expected = prior.get("files", {}).get(name)
+                    if not expected or digest(path.read_text(encoding="utf-8")) != expected:
+                        raise ValueError(f"Obsolete workflow ownership changed: {name}")
+                    path.unlink()
+                else:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(content, encoding="utf-8", newline="\n")
         return 0
     except (OSError, ValueError, KeyError) as error:
         print(f"CI mode error: {error}", file=sys.stderr)

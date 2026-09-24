@@ -160,9 +160,9 @@ Run AFTER preflight passes but BEFORE any side-effects.
    ```bash
    python -c "import os; print(os.path.basename(os.getcwd()))"
    ```
-3. **CI execution mode.** Ask `local` (recommended) or `github` before linking a remote or pushing. Save the answer with `python scripts/ci_mode.py --target . --mode local --apply` or `--mode github`. A non-interactive run without an explicit mode stops here. `local` creates only manual `workflow_dispatch` active workflows; the user may request those runs separately. Do not infer a choice from installed template files. A fresh project starts at conservative `experiment` maturity; `contract.source=repo_pin` and `docs/api/openapi.yml` identify the template's expected route, but the actual pin remains unresolved until the contract is selected. GitHub mode fails its drift gate when `CONTRACT_VERSION` is missing.
+3. **CI execution mode.** Ask `local` (recommended) or `github` before linking a remote or pushing. Save the answer with `python scripts/ci_mode.py --target . --mode local --apply` or `--mode github`. A non-interactive run without an explicit mode stops here. `local` creates only the manual `workflow_dispatch` active `backend-ci.yml`; the user may request a run separately. Do not infer a choice from installed template files. A fresh project starts at conservative `experiment` maturity; `contract.source=repo_pin` and `docs/api/openapi.yml` identify the template's expected route, but the actual pin remains unresolved until the contract is selected. GitHub mode fails its drift gate when `CONTRACT_VERSION` is missing.
 
-After `git init`, connect delivered project hooks with `python scripts/ai/install_git_hooks.py --target . --apply`. Use `AI_PYTHON` to select Python 3.13+ if `python` resolves older. The connector preserves a foreign `core.hooksPath` or active default hook for manual chaining. The short pre-commit check reads the staged patch only. Pre-push verifies every updated branch against the exact candidate and a verified base through the P05 runner; for a first branch push it requires a named remote with current tracking `main`. The derived backend catalog includes code/policy gates. Its pytest/conformance gates remain NOT_VERIFIED until a run-owned isolated DB/server handle exists; the hook never probes arbitrary localhost services or establishes deployment readiness.
+After `git init`, connect delivered project hooks with `python scripts/ai/install_git_hooks.py --target . --apply`. Use `AI_PYTHON` to select Python 3.13+ if `python` resolves older. The connector preserves a foreign `core.hooksPath` or active default hook for manual chaining. The short pre-commit check reads the staged patch only. Pre-push verifies every updated branch against the exact candidate and a verified base through the P05 runner; for a first branch push it requires a named remote with current tracking `main`. The derived backend catalog includes code and policy gates. Its pytest/conformance gates return NOT_VERIFIED without a verified run-owned isolated DB/server marker; the hook never probes arbitrary localhost services or establishes deployment readiness.
 
 Claude `SessionStart` runs `scripts/detect-env.py` through `scripts/session-start.py` and exposes a failed probe. Set `AI_PYTHON` to Python 3.13+ if bare `python` resolves older. It never removes `.git/index.lock`, seeds `.env`, starts Docker, or installs dependencies. There is no automatic Stop/SessionEnd formatter or push; finish with an explicit reviewed handoff. A crashed session may not run an end hook. Codex has no verified equivalent trusted tool-hook interface here, so shared procedures and Git/CI checks remain the portable path. Claude tool hooks are early policy feedback, including only the tool payload they receive; shell writes are outside their complete coverage.
 
@@ -183,7 +183,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
 ## Mode A — fresh start (delegate; never edit application source code yourself)
 
 1. **GitHub repo — link to the one you created (Mode A never creates it).** Per ADR `0008` the repo is created by hand (empty) before bootstrap. Ensure `origin` points at it and the token can reach it:
-   First verify `docs/project-state/project.json` records the explicitly selected CI mode and `python scripts/ci_mode.py --target . --mode <selected> --apply` has materialized both active workflows. If the choice is missing, stop before this remote step.
+   First verify `docs/project-state/project.json` records the explicitly selected CI mode and `python scripts/ci_mode.py --target . --mode <selected> --apply` has materialized the sole active `backend-ci.yml`. If the choice is missing, stop before this remote step.
    ```bash
    OWNER=$(gh api user --jq .login)
 
@@ -242,7 +242,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
      - `templates/.env.example` -> **TWO destinations**:
        1. `.env.example` (committed; the canonical key list for new clones)
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent; fallback: `scripts/session-start.py` re-seeds a missing `.env` on every launch)
-     - Keep `templates/.github/workflows/backend-ci.yml` and `backend-policy.yml` inert. After the explicit CI choice, `python scripts/ci_mode.py --target . --mode <local|github> --apply` materializes both active workflow files with ownership receipts; never copy the inert templates directly.
+     - Keep `templates/.github/workflows/backend-ci.yml` and historical `backend-policy.yml` inert. After the explicit CI choice, `python scripts/ci_mode.py --target . --mode <local|github> --apply` materializes only active `backend-ci.yml` with an ownership receipt. A previously receipt-owned active `backend-policy.yml` is removed after hash verification; a custom one blocks the switch without writes. Never copy inert templates directly.
      - `templates/docker-compose.yml` -> `docker-compose.yml`
      - `templates/docker-compose.staging.yml` -> `docker-compose.staging.yml` (staging runtime: gunicorn in a container behind a reverse proxy; see `docs/ai/rules/docker-commands.md` Staging section)
      - `templates/gunicorn.conf.py` -> `backend/gunicorn.conf.py` (gunicorn config the staging compose mounts at `/app/gunicorn.conf.py`)
@@ -375,9 +375,6 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
      REGISTER_SHA="$(git rev-parse HEAD)"
      gh workflow run backend-ci.yml --ref main -f base="$REGISTER_SHA" 2>/dev/null \
        || echo "i workflow_dispatch not yet available; the push trigger above will register it"
-     echo "Triggering initial backend-policy run to register the status check..."
-     gh workflow run backend-policy.yml --ref main 2>/dev/null \
-       || echo "i backend-policy will register on the first PR (pull_request trigger)"
      # Give GitHub ~8s to register the run before Step 5 references the check.
      sleep 8
      ```
@@ -387,7 +384,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
      a hosted run confirms its actual name. Existing backend jobs remain
      separate until hosted parity is verified. The derived catalog covers their
      blocking checks, but unavailable prerequisites remain NOT_VERIFIED.
-     In `local` mode do not run either registration command, do not wait for hosted statuses, and do not install a local cron or Task Scheduler job.
+     In `local` mode do not run the registration command, do not wait for hosted statuses, and do not install a local cron or Task Scheduler job.
 
    > **Documented exception:** this single push to `main` is the ONLY direct-main push allowed in the whole project — see `docs/ai/rules/git-operations.md` *Documented exception*. Step 5 immediately enables branch protection so the iron rule kicks back in.
 
@@ -399,7 +396,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
 
 5. **Branch protection** — dispatch `ci-cd-engineer`:
 
-   In `local` mode preserve available PR/no-force-push rules but omit `required_status_checks` (use `null` in the API body). Never require `backend-ci` or `backend-policy` when no automatic run exists. In `github` mode inspect successful exact-head check runs and their actual check context names before placing them in `required_status_checks`; do not assume a workflow name equals a check context. Preserve unrelated existing required checks and rules during an update rather than replacing the entire remote rule blindly. If the API cannot enforce protection, report that state explicitly.
+   In `local` mode preserve available PR/no-force-push rules but omit `required_status_checks` (use `null` in the API body). Never require `backend-ci` when no automatic run exists. In `github` mode inspect successful exact-head check runs and their actual check context names before placing them in `required_status_checks`; do not assume a workflow name equals a check context. Preserve unrelated existing required checks and rules during an update rather than replacing the entire remote rule blindly. If the API cannot enforce protection, report that state explicitly.
 
    Always **attempt the API call first**, regardless of the front-loaded `HAS_ADMIN` flag. `HAS_ADMIN` is a best-effort prediction (and is always false for fine-grained PATs that don't expose scopes), but the real authority lives on GitHub. A repo can fail protection setup for several reasons even when the prediction looked fine: token doesn't own the repo, organization policy overrides, rule already exists with a different shape, etc. Try, capture the HTTP status, branch on the result.
 
@@ -548,7 +545,7 @@ Run each probe; if it fails, that piece is missing.
 
 1. **drf-spectacular in settings.** `grep -q "drf_spectacular" backend/config/settings/base.py` (or wherever settings live).
 2. **OpenAPI schema.** `test -f docs/api/openapi.yml`.
-3. **Backend CI workflow.** `test -f .github/workflows/backend-ci.yml && test -f .github/workflows/backend-policy.yml`.
+3. **Backend CI workflow.** `test -f .github/workflows/backend-ci.yml && test ! -e .github/workflows/backend-policy.yml`.
 4. **Gate scripts.** `test -f scripts/check_stubs.sh && test -f scripts/check_contract_conformance.sh && test -f scripts/pull_contract.sh && test -f scripts/check_app_readmes.sh && test -f scripts/check_file_size.sh && test -f scripts/check_nul_bytes.sh`.
 5. **Branch protection.** `gh api repos/{owner}/{repo}/branches/main/protection` returns 200.
 6. **Env file (committed key list).** `test -f .env.example`. The `.env` file itself is gitignored and machine-local, so its absence here is **not** a Mode B blocker — `.env.example` is the durable, committed contract. If `.env` is missing locally, print a one-liner for the user: `cp .env.example .env && $EDITOR .env` (fill in secrets).
