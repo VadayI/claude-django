@@ -39,7 +39,7 @@ if [ -n "$CONTRACT_URL" ] && [ "$CHECK_MODE" -eq 0 ]; then
 else
   if [ -z "$CONTRACT_VERSION" ]; then
     echo "pull-contract: set CONTRACT_VERSION (a tag like v0.1.0) or CONTRACT_URL (an online openapi.yml URL)."
-    echo "  In .env:  CONTRACT_VERSION=v0.1.0                    # GitHub raw, pinned (default)"
+    echo "  In .env:  CONTRACT_VERSION=v2.0.0                    # GitHub raw, pinned (default)"
     echo "       or:  CONTRACT_URL=http://host:port/openapi.yml  # online source (fetch only)"
     if [ "$CHECK_MODE" -eq 1 ]; then echo "  note: --check always validates against the pinned tag (ADR 0025) — CONTRACT_URL is ignored here."; fi
     exit 1

@@ -12,7 +12,7 @@
 | 1. Review CI workflow and conformance requirements | done | ci-cd-engineer |
 | 2. Add DB migration, loopback Django startup/readiness, conformance URL, and cleanup | done | ci-cd-engineer |
 | 3. Validate YAML and inspect focused diff | done | ci-cd-engineer |
-| 4. Run the hosted workflow on a derived Django project | blocked | user / orchestrator |
+| 4. Run the hosted workflow on a derived Django project | in progress — see Amendment #1 | user / orchestrator |
 
 ## Goal
 
@@ -53,4 +53,12 @@ Keep workflow triggers, jobs, job names, permissions, and the exact-candidate ru
 
 > Append-only. When a decision in the body changes, do NOT delete the original — add an entry here and an inline pointer next to the original paragraph (`> ⚠️ Changed — see Amendment #k`). Keeps the decision history transparent.
 
-_(none yet)_
+### Amendment #1 — first exact-candidate hosted run (2026-09-24)
+
+The fixture repository and branch are `VadayI/p06-django-derived-fixture-2026-09-24` / `feat/p06-derived-django-backend`. Run `36034509602` on candidate `54904a5f83251f157cd0ebd5d07aacdefab237a4` and base `948454cbedd7910e58fb8b2b72c3db2ed2eafba1` exercised the hosted PostgreSQL and live server successfully, then failed conformance on two generated cases: NUL in a login password was allowed by the schema but rejected by Django, and the derived registration password validators rejected a schema-shaped value with a documented 400 response. This amendment keeps contextual registration validators outside the portable schema while teaching the template gate to accept and schema-check the documented 400 on registration. The reusable contract now prohibits NUL in auth passwords and will be released as v2.0.0. P06 remains open pending a fresh hosted PASS and preserved runner artifact.
+
+> ⚠️ Updated — see Amendment #2 for the v2.0.0 pin and latest hosted-run state.
+
+### Amendment #2 — contract NUL rule and contextual registration validation (2026-09-24)
+
+The reusable contract change is committed locally as `fa6d87d220a70e1287dd2b7bf96147223faebbca` and tagged `v2.0.0`; publication is still pending. The Django template conformance gate now forbids Hypothesis cache writes outside its temporary directory and accepts a documented 400 only for `POST /auth/register`, while retaining response-schema checks. The private fixture's previous exact-candidate run `36034509602` passed PostgreSQL, pytest, and every exact catalog check except live Schemathesis conformance. P06 remains open until the updated template and v2.0.0 pin are pushed and a fresh hosted run passes with its runner artifact preserved.
