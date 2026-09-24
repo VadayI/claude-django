@@ -1,0 +1,3 @@
+# Project runtime adapter. Inherit the user's model, approval and trust settings.
+# Native custom-role discovery depends on the installed Codex release.
+# Explicit full role-pack reads are documented in AGENTS.md as a fallback.

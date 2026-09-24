@@ -8,6 +8,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent / "ai"))
 from core_paths import contained, digest
 from core_sync import PIN, preview, safe_name, target_root, verify
+from instruction_delivery import plan as instruction_plan
 
 
 def launcher_plan(source: Path, target: Path) -> tuple[dict[str, str], list[str]]:
@@ -64,7 +65,13 @@ def plan(source: Path, target: Path) -> tuple[dict[str, str], list[str]]:
              for name in metadata["files"]}
     pending, conflicts = preview(target, metadata, files)
     wrappers, wrapper_conflicts = launcher_plan(source, target)
-    return {**pending, **wrappers}, sorted(conflicts + wrapper_conflicts)
+    instructions, instruction_conflicts = instruction_plan(source, target)
+    for component in (wrappers, instructions):
+        for name, content in component.items():
+            if name in pending and pending[name] != content:
+                raise ValueError(f"Conflicting delivery components: {name}")
+            pending[name] = content
+    return pending, sorted(set(conflicts + wrapper_conflicts + instruction_conflicts))
 
 
 def main() -> int:

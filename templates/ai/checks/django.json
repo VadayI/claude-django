@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "catalog_id": "django.current-core",
+  "profile": "full",
+  "policy": {"allow_mandatory_not_applicable": false},
+  "invalidation_paths": [
+    "docs/ai/core-source.json",
+    "docs/ai/generated/adapters-manifest.json",
+    "templates/ai/instruction-delivery.json",
+    "templates/ai/checks/django.json"
+  ],
+  "checks": [
+    {
+      "id": "django.core-receipt",
+      "description": "Verify the vendored family-core receipt and managed payload.",
+      "argv": ["{python}", "scripts/ai/core_sync.py", "--check"],
+      "cwd": ".",
+      "mandatory": true,
+      "timeout_seconds": 120,
+      "prerequisites": ["python"],
+      "applicability": {"path_exists": "scripts/ai/core_sync.py", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [],
+      "dependencies": [],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.delivery-unittest",
+      "description": "Exercise downstream-safe fresh, repeat, custom-conflict, update, and autonomous delivery.",
+      "argv": ["{python}", "scripts/ai/delivery_selftest.py"],
+      "cwd": ".",
+      "mandatory": true,
+      "timeout_seconds": 180,
+      "prerequisites": ["python"],
+      "applicability": {"path_exists": "scripts/ai/delivery_selftest.py", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [],
+      "dependencies": ["django.core-receipt"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.adapter-drift",
+      "description": "Verify canonical Django runtime adapters and role packs.",
+      "argv": ["{python}", "scripts/ai/generate_adapters.py", "--root", ".", "--check"],
+      "cwd": ".",
+      "mandatory": true,
+      "timeout_seconds": 120,
+      "prerequisites": ["python"],
+      "applicability": {"path_exists": "scripts/ai/generate_adapters.py", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [],
+      "dependencies": ["django.core-receipt", "django.delivery-unittest"],
+      "allowed_side_effects": ["evidence"]
+    },
+    {
+      "id": "django.instruction-manifest",
+      "description": "Verify the stack-owned instruction delivery manifest.",
+      "argv": ["{python}", "scripts/build_instruction_manifest.py", "--check"],
+      "cwd": ".",
+      "mandatory": true,
+      "timeout_seconds": 120,
+      "prerequisites": ["python"],
+      "applicability": {"path_exists": "scripts/build_instruction_manifest.py", "missing_status": "NOT_VERIFIED"},
+      "expected_artifacts": [],
+      "dependencies": ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
+      "allowed_side_effects": ["evidence"]
+    }
+  ]
+}
