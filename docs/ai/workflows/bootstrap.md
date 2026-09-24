@@ -242,7 +242,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
      - `templates/.env.example` -> **TWO destinations**:
        1. `.env.example` (committed; the canonical key list for new clones)
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent; fallback: `scripts/session-start.py` re-seeds a missing `.env` on every launch)
-     - Keep `templates/.github/workflows/backend-ci.yml` and historical `backend-policy.yml` inert. After the explicit CI choice, `python scripts/ci_mode.py --target . --mode <local|github> --apply` materializes only active `backend-ci.yml` with an ownership receipt. A previously receipt-owned active `backend-policy.yml` is removed after hash verification; a custom one blocks the switch without writes. Never copy inert templates directly.
+     - Keep `templates/.github/workflows/backend-ci.yml` and historical `backend-policy.yml` inert. After the explicit CI choice, `python scripts/ci_mode.py --target . --mode <local|github> --apply` materializes only active `backend-ci.yml` with an ownership receipt. A previously receipt-owned active `backend-policy.yml` is removed only after all replacement content writes and a second hash check; a failed write leaves it intact. A custom one blocks the switch without writes. Never copy inert templates directly.
      - `templates/docker-compose.yml` -> `docker-compose.yml`
      - `templates/docker-compose.staging.yml` -> `docker-compose.staging.yml` (staging runtime: gunicorn in a container behind a reverse proxy; see `docs/ai/rules/docker-commands.md` Staging section)
      - `templates/gunicorn.conf.py` -> `backend/gunicorn.conf.py` (gunicorn config the staging compose mounts at `/app/gunicorn.conf.py`)

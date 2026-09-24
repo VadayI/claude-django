@@ -170,6 +170,36 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(before, {path.relative_to(target).as_posix(): path.read_bytes()
                                       for path in target.rglob("*") if path.is_file()})
 
+    def test_ci_mode_write_failure_preserves_obsolete_active_policy(self):
+        """Keep the old active policy file when a replacement write fails.
+
+        Args: None; disposable target with a receipt-owned legacy workflow.
+        Returns: None after injected write failure and byte-snapshot check.
+        Raises: AssertionError if migration deletes before successful writes.
+        Side effects: Temporary fixture files only; no DB/network/GitHub API.
+        Business rule: The obsolete unlink is last after all new content writes.
+        """
+        with tempfile.TemporaryDirectory(prefix="django ci failure ") as directory:
+            target = Path(directory)
+            name = ".github/workflows/backend-policy.yml"
+            active = target / name
+            active.parent.mkdir(parents=True)
+            legacy = (ROOT / "templates/.github/workflows/backend-policy.yml").read_text(encoding="utf-8")
+            active.write_text(legacy, encoding="utf-8")
+            receipt = target / ci_mode.RECEIPT
+            receipt.parent.mkdir(parents=True)
+            receipt.write_text(json.dumps({"schema_version": 1, "mode": "local",
+                                           "files": {name: ci_mode.digest(legacy)}}), encoding="utf-8")
+            before = {path.relative_to(target).as_posix(): path.read_bytes()
+                      for path in target.rglob("*") if path.is_file()}
+            pending, conflicts = ci_mode.plan(ROOT, target, "local")
+            self.assertEqual(conflicts, [])
+            with mock.patch.object(Path, "write_text", side_effect=OSError("injected write failure")):
+                with self.assertRaisesRegex(OSError, "injected write failure"):
+                    ci_mode.apply_plan(ROOT, target, "local", pending)
+            self.assertEqual(before, {path.relative_to(target).as_posix(): path.read_bytes()
+                                      for path in target.rglob("*") if path.is_file()})
+
     def test_django_runner_catalog_matches_current_workflow_inventory(self):
         """Bind the stack catalog to all four existing workflow commands.
 

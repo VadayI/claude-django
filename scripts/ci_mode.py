@@ -140,6 +140,44 @@ def plan(source: Path, target: Path, mode: str) -> tuple[dict[str, str | None], 
     return pending, sorted(conflicts)
 
 
+def apply_plan(source: Path, target: Path, mode: str, pending: dict[str, str | None]) -> None:
+    """Apply a stable CI plan with obsolete workflow deletion last.
+
+    Args: source is reviewed template root; target is the derived project;
+        mode is explicit CI choice; pending is a prior conflict-free plan.
+    Returns: None after reviewed writes and owned obsolete removal.
+    Raises: ValueError/OSError if paths, ownership or writes change/fail.
+    Side effects: Writes planned workflow/receipt/project files, then removes
+        only hash-matched obsolete active policy files; no DB/network/Git.
+    Business rule: Revalidate every planned path and deletion before mutation.
+        A write failure leaves the previous active policy workflow intact.
+    """
+    current, conflicts = plan(source, target, mode)
+    if conflicts or current != pending:
+        raise ValueError("CI plan changed before apply")
+    receipt_path = contained(target, RECEIPT)
+    prior = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.exists() else {}
+    deletions = {}
+    for name, content in pending.items():
+        path = contained(target, name)
+        if content is None:
+            expected = prior.get("files", {}).get(name)
+            if not expected or digest(path.read_text(encoding="utf-8")) != expected:
+                raise ValueError(f"Obsolete workflow ownership changed: {name}")
+            deletions[name] = expected
+    for name, content in pending.items():
+        if content is None:
+            continue
+        path = contained(target, name)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8", newline="\n")
+    for name, expected in deletions.items():
+        path = contained(target, name)
+        if digest(path.read_text(encoding="utf-8")) != expected:
+            raise ValueError(f"Obsolete workflow ownership changed: {name}")
+        path.unlink()
+
+
 def main() -> int:
     """Preview or apply an explicit local/GitHub Django CI mode.
 
@@ -164,18 +202,7 @@ def main() -> int:
         if conflicts:
             return 1
         if args.apply:
-            for name, content in pending.items():
-                path = contained(target, name)
-                if content is None:
-                    receipt_path = contained(target, RECEIPT)
-                    prior = json.loads(receipt_path.read_text(encoding="utf-8"))
-                    expected = prior.get("files", {}).get(name)
-                    if not expected or digest(path.read_text(encoding="utf-8")) != expected:
-                        raise ValueError(f"Obsolete workflow ownership changed: {name}")
-                    path.unlink()
-                else:
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    path.write_text(content, encoding="utf-8", newline="\n")
+            apply_plan(Path(__file__).resolve().parents[1], target, args.mode, pending)
         return 0
     except (OSError, ValueError, KeyError) as error:
         print(f"CI mode error: {error}", file=sys.stderr)
