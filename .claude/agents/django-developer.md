@@ -1,6 +1,5 @@
 ---
 name: django-developer
-model: opus
 description: Project django-developer role following the neutral contract.
 tools: [Read, Glob, Grep, Write, Edit, Bash]
 ---

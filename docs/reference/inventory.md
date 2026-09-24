@@ -9,16 +9,18 @@ Complete reference for every agent, rule, skill, command, template, MCP server, 
 | Agent | Purpose | Model |
 | --- | --- | --- |
 | `ba` | Business analysis, user stories, scope, endpoint draft | fable |
-| `api-architect` | REST API contract: **reads** the pinned `docs/api/openapi.yml` and records this PR's routes in `.claude/memory/endpoints.json` — does NOT design the contract | opus |
-| `django-developer` | Django/DRF implementation (GREEN phase) | opus |
-| `tester` | pytest tests, TDD (RED phase) | opus |
+| `api-architect` | REST API contract: **reads** the pinned `docs/api/openapi.yml` and records this PR's routes in `.claude/memory/endpoints.json` — does NOT design the contract | inherits session |
+| `django-developer` | Django/DRF implementation (GREEN phase) | inherits session |
+| `tester` | pytest tests, TDD (RED phase) | inherits session |
 | `dba` | Models, migrations, indexes, PostgreSQL optimization, N+1 | opus |
-| `reviewer` | Code review before PR | fable |
+| `reviewer` | Code review before PR | inherits session |
 | `security-scanner` | Security audit: authz, OWASP, secrets | fable |
 | `debugger` | Bug investigation, root-cause | opus |
 | `devops` | Docker, deploy to VPS staging, reverse-proxy | opus |
 | `ci-cd-engineer` | GitHub Actions CI on every PR | sonnet |
 | `docs-writer` | `docs/api`, OpenAPI sync, ADR, WORKLOG, PR description | sonnet |
+
+Generated adapters (api-architect, django-developer, tester, reviewer) inherit the active session model.
 
 ## Optional agents (11) — opt-in
 

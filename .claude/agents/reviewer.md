@@ -1,6 +1,5 @@
 ---
 name: reviewer
-model: fable
 description: Project reviewer role following the neutral contract.
 tools: [Read, Glob, Grep]
 ---

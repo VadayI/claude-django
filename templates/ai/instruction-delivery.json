@@ -87,7 +87,7 @@
         "05378bb47622680c9170537c48488f5ad4711d85d9983356c5e3d035a27b44e8"
       ],
       "ownership": "template",
-      "sha256": "6c8eee04179a7661f281d44f49b359c830f421710c18239598dac0085b5edb10"
+      "sha256": "0d182087322fce4c49331bbe63249a32022d2738239f840f3c50242e2bc9c3ea"
     },
     ".claude/agents/django-refactoring-expert.md": {
       "legacy_sha256": [
@@ -136,7 +136,7 @@
         "de2ad64c1655deb4385d4d8361f1cf701107755c355969b5ba5505a156721b17"
       ],
       "ownership": "template",
-      "sha256": "ccc81ca6afee5c31ec34d5327e9196b7ffad38d4545254477755249b38d1e975"
+      "sha256": "6fe426439a9bf4986f5aa8659310b974578123659e8a2d95b511563c63793b42"
     },
     ".claude/agents/security-scanner.md": {
       "legacy_sha256": [
