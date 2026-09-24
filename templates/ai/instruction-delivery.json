@@ -24,21 +24,21 @@
         "0d70a3cd593fb0dd6fa24ba738356490bdcc5ffcf6be5fb38d8352296dd98dea"
       ],
       "ownership": "template",
-      "sha256": "0d70a3cd593fb0dd6fa24ba738356490bdcc5ffcf6be5fb38d8352296dd98dea"
+      "sha256": "27c8c30e1181b9bd3829633f1e708460e70d72e0e28d34c81203f13b30109bdb"
     },
     ".claude/agents/brief-synthesizer.md": {
       "legacy_sha256": [
         "8808b2f092b39483f81be5e9f71b10864712516f06e203172e41667a4c587003"
       ],
       "ownership": "template",
-      "sha256": "8808b2f092b39483f81be5e9f71b10864712516f06e203172e41667a4c587003"
+      "sha256": "e0664ae6515a3ae59fb611ba260c3c64682d8ee7b321a17d5777118dd31c2960"
     },
     ".claude/agents/celery-specialist.md": {
       "legacy_sha256": [
         "f3c58886020a6a0b55e2cd4998565c0b8c7b1b75b9de8545eba0d570983551eb"
       ],
       "ownership": "template",
-      "sha256": "f3c58886020a6a0b55e2cd4998565c0b8c7b1b75b9de8545eba0d570983551eb"
+      "sha256": "2cca9fdf0708a0f8fa9b915fa20b55bd18aada7068a40982280e85c3cb3ba63e"
     },
     ".claude/agents/ci-cd-engineer.md": {
       "legacy_sha256": [
@@ -59,35 +59,35 @@
         "5203beabf3d061c1c88b8032315a3f25f22d3a8bf1def4926d6fb0eff96ef4cd"
       ],
       "ownership": "template",
-      "sha256": "5203beabf3d061c1c88b8032315a3f25f22d3a8bf1def4926d6fb0eff96ef4cd"
+      "sha256": "835b93a66762d514b92e6960b8c9b0bd49609059ae4635c60515ccca53b4a625"
     },
     ".claude/agents/debugger.md": {
       "legacy_sha256": [
         "98867bf6699e9ceaeabe3ee1851ad2cae78acb0a8bf2ca070a51f01cd072f03c"
       ],
       "ownership": "template",
-      "sha256": "98867bf6699e9ceaeabe3ee1851ad2cae78acb0a8bf2ca070a51f01cd072f03c"
+      "sha256": "cb9f245bb6463cfebd0d2ccdacb860149a3259832783e43a5b9584bd1a40b249"
     },
     ".claude/agents/devil.md": {
       "legacy_sha256": [
         "dfd716c99d4a9a2352ce5e6323e6c8c398c07bac94dae2db2b4777ba707a0040"
       ],
       "ownership": "template",
-      "sha256": "dfd716c99d4a9a2352ce5e6323e6c8c398c07bac94dae2db2b4777ba707a0040"
+      "sha256": "c2b00f206cd7372fea31cbf1e55a4771877369b82a553ee0bb38b605632a1c5b"
     },
     ".claude/agents/devops.md": {
       "legacy_sha256": [
         "396053b35eb68d83d575077090cb2039450dddf39bd3787b2a63238221d4f928"
       ],
       "ownership": "template",
-      "sha256": "396053b35eb68d83d575077090cb2039450dddf39bd3787b2a63238221d4f928"
+      "sha256": "52884d872760a36908d10fbf716f70479b8fd4ad804bdf67572d26d48ba06616"
     },
     ".claude/agents/django-developer.md": {
       "legacy_sha256": [
         "05378bb47622680c9170537c48488f5ad4711d85d9983356c5e3d035a27b44e8"
       ],
       "ownership": "template",
-      "sha256": "0d182087322fce4c49331bbe63249a32022d2738239f840f3c50242e2bc9c3ea"
+      "sha256": "6c8eee04179a7661f281d44f49b359c830f421710c18239598dac0085b5edb10"
     },
     ".claude/agents/django-refactoring-expert.md": {
       "legacy_sha256": [
@@ -115,14 +115,14 @@
         "3625310a884a32e67ffd0815936e2161f965ab3a34c69983d023169df5c9572e"
       ],
       "ownership": "template",
-      "sha256": "3625310a884a32e67ffd0815936e2161f965ab3a34c69983d023169df5c9572e"
+      "sha256": "d7afe42ae6b5caa34a8d4fe21772b3a48fcf030200679135e36fd3effcdaa70e"
     },
     ".claude/agents/integration-architect.md": {
       "legacy_sha256": [
         "3eab25e72337a49fcd63b9399785e8824801a90d3ccb3a2b3a1985cb87fb0456"
       ],
       "ownership": "template",
-      "sha256": "3eab25e72337a49fcd63b9399785e8824801a90d3ccb3a2b3a1985cb87fb0456"
+      "sha256": "f5d14affa4ae6b68c988d60c3ce838ae8acaef11de8d1dfd6418d90a3250d741"
     },
     ".claude/agents/qa.md": {
       "legacy_sha256": [
@@ -136,14 +136,14 @@
         "de2ad64c1655deb4385d4d8361f1cf701107755c355969b5ba5505a156721b17"
       ],
       "ownership": "template",
-      "sha256": "6fe426439a9bf4986f5aa8659310b974578123659e8a2d95b511563c63793b42"
+      "sha256": "ccc81ca6afee5c31ec34d5327e9196b7ffad38d4545254477755249b38d1e975"
     },
     ".claude/agents/security-scanner.md": {
       "legacy_sha256": [
         "f661a1dfd0f1eaa24f6cca92c1726f2ba8820b3f44293f241bbedeed65fef153"
       ],
       "ownership": "template",
-      "sha256": "f661a1dfd0f1eaa24f6cca92c1726f2ba8820b3f44293f241bbedeed65fef153"
+      "sha256": "6848f84924052521817c35e7de78f74283177f40c87bce384e700a0484bd0c30"
     },
     ".claude/agents/template-sync.md": {
       "legacy_sha256": [
