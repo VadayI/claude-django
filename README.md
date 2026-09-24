@@ -30,7 +30,13 @@ or prerequisites produce `NOT_VERIFIED` and a nonzero exit, never PASS. The
 catalog is delivered by the instruction component manifest, not duplicated in
 the seed inventory.
 
-Fresh `scripts/install.sh` includes the runtime and its docs. To update only this
+Fresh `scripts/install.sh` includes the runtime and its docs. Bootstrap now
+requires an explicit `local` or `github` CI choice before linking the remote or
+pushing. `python scripts/ci_mode.py --target . --mode local --apply` materializes
+manual-only backend workflows; `--mode github` enables their automatic triggers.
+The choice is saved in `docs/project-state/project.json`, and customized active
+workflows block replacement. Local mode does not register or require hosted
+backend statuses. To update only this
 component in an existing project, use the reviewed template checkout:
 
 ```text
@@ -401,6 +407,26 @@ hash; custom wrappers conflict and remain unchanged. Full bootstrap/CI migration
 remains pending.
 
 ## Shared Django instructions (P04)
+
+For a derived project, connect the delivered staged-index and per-ref push
+hooks after `git init` with `python scripts/ai/install_git_hooks.py --target .
+--apply`. The installer preserves existing Git hook configuration. Set
+`AI_PYTHON` to Python 3.13+ when the default interpreter is older. The
+`django.json` core catalog covers delivery integrity; derived projects use
+`django-backend.json` for code and policy gates.
+
+The canonical `backend-ci.yml` includes a `family-core` job invoking the same
+P05 exact-candidate runner in local manual and GitHub modes. The derived
+catalog maps all eight blocking backend code gates and the PR pin policy.
+PostgreSQL, a live conformance target, and a checked-in public contract pin
+are explicit prerequisites; absent inputs report NOT_VERIFIED and block a
+required runner job. Existing bespoke jobs remain until hosted parity is
+verified. A manual dispatch must supply an exact `base` commit; a first push
+with a zero previous OID fails honestly.
+The runner currently has no verified run-owned DB/server identity. Its pytest
+and conformance catalog checks therefore always report NOT_VERIFIED and never
+probe arbitrary localhost services. Full backend parity needs an isolated
+service handle and hosted evidence before replacing the bespoke jobs.
 
 Claude and Codex read `AGENTS.md` and `docs/ai/catalog.json`. Four selected roles
 have full generated packs and runtime entry points; legacy roles and procedures

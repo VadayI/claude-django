@@ -160,8 +160,15 @@ Run AFTER preflight passes but BEFORE any side-effects.
    ```bash
    python -c "import os; print(os.path.basename(os.getcwd()))"
    ```
-3. **GitHub repository (you created it).** Confirm the repo URL / `owner/slug` of the EMPTY GitHub repo you created by hand (per ADR `0008`, `/bootstrap` does NOT create it). Default = `<login>/<slug>` from steps 1–2. Used to link `origin` (Mode A Step 1) and to build the fine-grained token template URL.
-4. **Output language.** **Skip this step if the session declares a preference or `.claude/rules/output-language.md` already exists.** Otherwise ask via the runtime's question interface (header `Language`):
+3. **CI execution mode.** Ask `local` (recommended) or `github` before linking a remote or pushing. Save the answer with `python scripts/ci_mode.py --target . --mode local --apply` or `--mode github`. A non-interactive run without an explicit mode stops here. `local` creates only the manual `workflow_dispatch` active `backend-ci.yml`; the user may request a run separately. Do not infer a choice from installed template files. A fresh project starts at conservative `experiment` maturity; `contract.source=repo_pin` and `docs/api/openapi.yml` identify the template's expected route, but the actual pin remains unresolved until the contract is selected. GitHub mode fails its drift gate when `CONTRACT_VERSION` is missing.
+
+After `git init`, connect delivered project hooks with `python scripts/ai/install_git_hooks.py --target . --apply`. Use `AI_PYTHON` to select Python 3.13+ if `python` resolves older. The connector preserves a foreign `core.hooksPath` or active default hook for manual chaining. The short pre-commit check reads the staged patch only. Pre-push verifies every updated branch against the exact candidate and a verified base through the P05 runner; for a first branch push it requires a named remote with current tracking `main`. The derived backend catalog includes code and policy gates. Its pytest/conformance gates return NOT_VERIFIED without a verified run-owned isolated DB/server marker; the hook never probes arbitrary localhost services or establishes deployment readiness.
+
+Claude `SessionStart` runs `scripts/detect-env.py` through `scripts/session-start.py` and exposes a failed probe. Set `AI_PYTHON` to Python 3.13+ if bare `python` resolves older. It never removes `.git/index.lock`, seeds `.env`, starts Docker, or installs dependencies. There is no automatic Stop/SessionEnd formatter or push; finish with an explicit reviewed handoff. A crashed session may not run an end hook. Codex has no verified equivalent trusted tool-hook interface here, so shared procedures and Git/CI checks remain the portable path. Claude tool hooks are early policy feedback, including only the tool payload they receive; shell writes are outside their complete coverage.
+
+Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/update/delete/move headers, including Windows separators and multi-file payloads. Malformed edit payloads stop rather than pass silently. Arbitrary Bash file writes remain outside this hook's coverage; contract pin and CI drift checks remain required.
+4. **GitHub repository (you created it).** Confirm the repo URL / `owner/slug` of the EMPTY GitHub repo you created by hand (per ADR `0008`, `/bootstrap` does NOT create it). Default = `<login>/<slug>` from steps 1–2. Used to link `origin` (Mode A Step 1) and to build the fine-grained token template URL.
+5. **Output language.** **Skip this step if the session declares a preference or `.claude/rules/output-language.md` already exists.** Otherwise ask via the runtime's question interface (header `Language`):
    - **English** (Recommended) — default; no extra config will be written.
    - **Українська**
    - **Polski**
@@ -176,6 +183,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
 ## Mode A — fresh start (delegate; never edit application source code yourself)
 
 1. **GitHub repo — link to the one you created (Mode A never creates it).** Per ADR `0008` the repo is created by hand (empty) before bootstrap. Ensure `origin` points at it and the token can reach it:
+   First verify `docs/project-state/project.json` records the explicitly selected CI mode and `python scripts/ci_mode.py --target . --mode <selected> --apply` has materialized the sole active `backend-ci.yml`. If the choice is missing, stop before this remote step.
    ```bash
    OWNER=$(gh api user --jq .login)
 
@@ -234,8 +242,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
      - `templates/.env.example` -> **TWO destinations**:
        1. `.env.example` (committed; the canonical key list for new clones)
        2. `.env` (gitignored, local-only; placeholders only — ask user for real secrets at the end, do not invent; fallback: `scripts/session-start.py` re-seeds a missing `.env` on every launch)
-     - `templates/.github/workflows/backend-ci.yml` -> `.github/workflows/backend-ci.yml`
-     - `templates/.github/workflows/backend-policy.yml` -> `.github/workflows/backend-policy.yml`
+     - Keep `templates/.github/workflows/backend-ci.yml` and historical `backend-policy.yml` inert. After the explicit CI choice, `python scripts/ci_mode.py --target . --mode <local|github> --apply` materializes only active `backend-ci.yml` with an ownership receipt. A previously receipt-owned active `backend-policy.yml` is removed only after all replacement content writes and a second hash check; a failed write leaves it intact. A custom one blocks the switch without writes. Never copy inert templates directly.
      - `templates/docker-compose.yml` -> `docker-compose.yml`
      - `templates/docker-compose.staging.yml` -> `docker-compose.staging.yml` (staging runtime: gunicorn in a container behind a reverse proxy; see `docs/ai/rules/docker-commands.md` Staging section)
      - `templates/gunicorn.conf.py` -> `backend/gunicorn.conf.py` (gunicorn config the staging compose mounts at `/app/gunicorn.conf.py`)
@@ -344,10 +351,10 @@ Run AFTER preflight passes but BEFORE any side-effects.
        pytest selects it via `DJANGO_SETTINGS_MODULE = "config.settings.test"` in `backend/pyproject.toml` `[tool.pytest.ini_options]` (already set in the template). Do NOT put `MIGRATION_MODULES` in `dev.py` or `staging.py` — production `common` ships no models, and the dev server should not pay for the test-only redirect.
      - **`staging.py`** must be production-hardened for gunicorn behind a reverse proxy: `DEBUG = False`; `ALLOWED_HOSTS` from `DJANGO_ALLOWED_HOSTS` env (the staging subdomain); `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")` so Django trusts the proxy's TLS termination; `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE = True`. Static files: collect to `STATIC_ROOT` (serve via WhiteNoise or the proxy). Verify it passes `python manage.py check --deploy`.
    - `docker compose exec -T backend python manage.py migrate`
-   - **Pull the external API contract** (ADR 0017): ensure `CONTRACT_VERSION` is set in `.env`, then `bash scripts/pull_contract.sh` (writes `docs/api/openapi.yml` from `claude-api-contract@CONTRACT_VERSION`). If the contract repo/tag does not exist yet, skip and note it — the first feature pulls once the contract is published. **Arm the CI drift gate**: `gh variable set CONTRACT_VERSION --body "vX.Y.Z"` (same value as `.env`; plus `gh variable set CONTRACT_REPO --body "owner/repo"` when not the default) — `backend-ci.yml` runs the drift gate only `if: vars.CONTRACT_VERSION != ''`, so without this variable the gate is silently skipped; re-set it on every pin raise (ADR `0021`/`0025`). `drf-spectacular` still serves Swagger UI/Redoc from live code, but is NOT the canonical schema.
+   - **Pull the external API contract** (ADR 0017): ensure `CONTRACT_VERSION` is set in `.env`, then `bash scripts/pull_contract.sh` (writes `docs/api/openapi.yml` from `claude-api-contract@CONTRACT_VERSION`). If the contract repo/tag does not exist yet, record the missing pin as unresolved. **Configure the CI drift gate**: `gh variable set CONTRACT_VERSION --body "vX.Y.Z"` (same value as `.env`; plus `gh variable set CONTRACT_REPO --body "owner/repo"` when not the default). `backend-ci.yml` runs the drift gate unconditionally and fails when the pin is missing; re-set it on every pin raise (ADR `0021`/`0025`). `drf-spectacular` still serves Swagger UI/Redoc from live code, but is NOT the canonical schema.
    - Ask the user interactively whether to run `createsuperuser` now.
 
-4. **Initial commit + push + register CI** — dispatch `devops`:
+4. **Initial commit + push; register checks only in GitHub mode** — dispatch `devops`:
    - Keep `templates/ai/` and the installer manifests: installed generator/schema checks depend on them. Do not delete templates or project files automatically. Check all scaffold destinations and unresolved substitution tokens.
    - Inspect the index and stage only the explicitly enumerated scaffold files; preserve unrelated staged/unstaged/untracked files.
    - `git commit -m "chore: bootstrap project from claude-django"`
@@ -359,20 +366,25 @@ Run AFTER preflight passes but BEFORE any side-effects.
        git push --set-upstream origin main
      }
      ```
-   - **Trigger an initial CI run** so GitHub registers `backend-ci` as a known
+   - **GitHub mode only:** trigger an initial CI run so GitHub registers `backend-ci` as a known
      status check. Without this, Step 5 (branch protection) would reference a
      check GitHub has never seen, and the very first PR would be permanently
      blocked.
      ```bash
      echo "Triggering initial backend-ci run to register the status check..."
-     gh workflow run backend-ci.yml --ref main 2>/dev/null \
+     REGISTER_SHA="$(git rev-parse HEAD)"
+     gh workflow run backend-ci.yml --ref main -f base="$REGISTER_SHA" 2>/dev/null \
        || echo "i workflow_dispatch not yet available; the push trigger above will register it"
-     echo "Triggering initial backend-policy run to register the status check..."
-     gh workflow run backend-policy.yml --ref main 2>/dev/null \
-       || echo "i backend-policy will register on the first PR (pull_request trigger)"
      # Give GitHub ~8s to register the run before Step 5 references the check.
      sleep 8
      ```
+     `base=REGISTER_SHA` is an explicit self-base registration run; it checks
+     delivery state, not a PR diff. The `family-core` exact-runner job also
+     appears on push/PR/merge-group, but do not add its required context until
+     a hosted run confirms its actual name. Existing backend jobs remain
+     separate until hosted parity is verified. The derived catalog covers their
+     blocking checks, but unavailable prerequisites remain NOT_VERIFIED.
+     In `local` mode do not run the registration command, do not wait for hosted statuses, and do not install a local cron or Task Scheduler job.
 
    > **Documented exception:** this single push to `main` is the ONLY direct-main push allowed in the whole project — see `docs/ai/rules/git-operations.md` *Documented exception*. Step 5 immediately enables branch protection so the iron rule kicks back in.
 
@@ -384,13 +396,36 @@ Run AFTER preflight passes but BEFORE any side-effects.
 
 5. **Branch protection** — dispatch `ci-cd-engineer`:
 
+   In `local` mode preserve available PR/no-force-push rules but omit `required_status_checks` (use `null` in the API body). Never require `backend-ci` when no automatic run exists. In `github` mode inspect successful exact-head check runs and their actual check context names before placing them in `required_status_checks`; do not assume a workflow name equals a check context. Preserve unrelated existing required checks and rules during an update rather than replacing the entire remote rule blindly. If the API cannot enforce protection, report that state explicitly.
+
    Always **attempt the API call first**, regardless of the front-loaded `HAS_ADMIN` flag. `HAS_ADMIN` is a best-effort prediction (and is always false for fine-grained PATs that don't expose scopes), but the real authority lives on GitHub. A repo can fail protection setup for several reasons even when the prediction looked fine: token doesn't own the repo, organization policy overrides, rule already exists with a different shape, etc. Try, capture the HTTP status, branch on the result.
 
    ```bash
    OWNER=$(gh api user --jq .login)
-   RULE_BODY=$(cat <<'JSON'
+   set +e
+   PROTECTION_PROBE=$(gh api "repos/$OWNER/$SLUG/branches/main/protection" 2>&1)
+   PROTECTION_PROBE_CODE=$?
+   set -e
+   if [ "$PROTECTION_PROBE_CODE" -eq 0 ]; then
+     echo "Existing branch protection requires read/merge review; leave it unchanged here."
+     echo "Preserve unrelated required checks and rules, then apply a reviewed targeted update."
+     exit 2
+   elif ! printf '%s' "$PROTECTION_PROBE" | grep -q 'HTTP 404'; then
+     echo "Cannot prove branch protection is absent; stop without a PUT."
+     exit 2
+   fi
+   CI_MODE=$(python -c 'import json; print(json.load(open("docs/project-state/project.json", encoding="utf-8"))["ci"]["execution"])')
+   if [ "$CI_MODE" = local ]; then
+     REQUIRED_STATUS_CHECKS=null
+   elif [ "$CI_MODE" = github ]; then
+     : "${VERIFIED_CHECK_CONTEXTS_JSON:?Inspect exact-head checks and set verified required_status_checks JSON first}"
+     REQUIRED_STATUS_CHECKS="$VERIFIED_CHECK_CONTEXTS_JSON"
+   else
+     echo "CI mode missing or invalid" >&2; exit 2
+   fi
+   RULE_BODY=$(cat <<JSON
    {
-     "required_status_checks": {"strict": true, "checks": [{"context": "backend-ci"}, {"context": "backend-policy"}]},
+     "required_status_checks": $REQUIRED_STATUS_CHECKS,
      "enforce_admins": true,
      "required_pull_request_reviews": {"required_approving_review_count": 0},
      "restrictions": null,
@@ -409,7 +444,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    set -e
 
    if [ $PROT_CODE -eq 0 ]; then
-     echo "✓ Branch protection enabled on $OWNER/$SLUG (backend-ci + backend-policy required, PR required, no bypass)"
+     echo "✓ Branch protection enabled on $OWNER/$SLUG for $CI_MODE mode"
    else
      # Parse HTTP status from gh stderr — gh prints lines like:
      #   "HTTP 403: Resource not accessible by personal access token (...)"
@@ -459,7 +494,7 @@ Run AFTER preflight passes but BEFORE any side-effects.
    2. Click **Add branch protection rule** (or **Add classic branch protection rule** if the new ruleset UI is shown — both work).
    3. Branch name pattern: `main`.
    4. Enable **Require a pull request before merging** — set "Required approvals" to `0` for solo work, raise it later.
-   5. Enable **Require status checks to pass before merging** and pick `backend-ci` and `backend-policy` from the list (it appears only after the workflow has run at least once — Step 4 already triggered it via `workflow_dispatch`; wait up to ~30 s if it's still not visible).
+   5. In `github` mode, enable **Require status checks to pass before merging** and select only contexts observed on the exact candidate after a real run. In `local` mode, leave required hosted checks unset; preserve unrelated existing requirements during an update.
    6. Enable **Do not allow bypassing the above settings**.
    7. Optional: enable **Require linear history** and disable **Allow force pushes** / **Allow deletions** (the API path sets these by default).
    8. Click **Create** / **Save changes**.
@@ -510,7 +545,7 @@ Run each probe; if it fails, that piece is missing.
 
 1. **drf-spectacular in settings.** `grep -q "drf_spectacular" backend/config/settings/base.py` (or wherever settings live).
 2. **OpenAPI schema.** `test -f docs/api/openapi.yml`.
-3. **Backend CI workflow.** `test -f .github/workflows/backend-ci.yml && test -f .github/workflows/backend-policy.yml`.
+3. **Backend CI workflow.** `test -f .github/workflows/backend-ci.yml && test ! -e .github/workflows/backend-policy.yml`.
 4. **Gate scripts.** `test -f scripts/check_stubs.sh && test -f scripts/check_contract_conformance.sh && test -f scripts/pull_contract.sh && test -f scripts/check_app_readmes.sh && test -f scripts/check_file_size.sh && test -f scripts/check_nul_bytes.sh`.
 5. **Branch protection.** `gh api repos/{owner}/{repo}/branches/main/protection` returns 200.
 6. **Env file (committed key list).** `test -f .env.example`. The `.env` file itself is gitignored and machine-local, so its absence here is **not** a Mode B blocker — `.env.example` is the durable, committed contract. If `.env` is missing locally, print a one-liner for the user: `cp .env.example .env && $EDITOR .env` (fill in secrets).

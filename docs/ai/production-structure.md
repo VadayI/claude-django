@@ -33,6 +33,38 @@ versioned reviewed legacy-byte fixture rather than checkout history, so it remai
 autonomous in that export. Missing mandatory paths or prerequisites are
 `NOT_VERIFIED`, never a silent skip or PASS.
 
+Derived backend projects also receive `templates/ai/checks/django-backend.json`
+and its two stack-owned gate adapters through this instruction component. It
+extends the four delivery checks with the eight blocking backend code gates
+and the contract-pin review policy. CI and pre-push use this same catalog.
+PostgreSQL, a live conformance server, and a checked-in public contract pin
+are explicit prerequisites; absence is `NOT_VERIFIED`, not a skipped success.
+For GitHub's `family-core` job, `backend_fixture.py start` creates a fresh
+`postgres:18` container on a Docker-assigned loopback port. A private TMPDIR
+marker binds its full ID, random label token and password. The P05 runner
+passes only TMPDIR; each DB-backed adapter checks Docker inspect ID, image,
+label, running state and actual port before constructing a child-only DSN.
+It never reads an inherited `DATABASE_URL` or probes a fixed local port.
+The runner step has an EXIT trap and the workflow also calls `stop` with
+`if: always()`; cleanup removes only the identity-matched container. A failed
+identity check refuses removal and fails the job. A host crash or forced job
+termination can bypass both, so hosted cleanup still needs a real run check.
+The Docker helper pins the local Linux socket so inherited remote
+contexts cannot redirect it. Without the marker/Docker (including ordinary
+local pre-push on this Windows host), DB gates return 75 `NOT_VERIFIED`.
+Strict MVP/production conformance migrates only the marker-bound DB, then
+passes a parent-bound loopback socket to a child candidate Django WSGI server.
+The child PYTHONPATH points at the exact candidate export's `backend/`, so
+an editable host checkout cannot silently supply its `config` or `apps`.
+The wrapper accepts `/api/v1/health/` only with status 200, `{"status":"ok"}`
+and a per-run response token added by that exact child. It passes the proven
+URL to schemathesis and terminates that exact process in `finally`; failure
+to start or prove health returns 75. A candidate without `manage.py` or the
+documented health route is `NOT_VERIFIED`. Forced host termination can still
+bypass process cleanup. Hosted execution remains unverified until an actual
+Actions run proves startup, migration, health, conformance, cleanup and
+required contexts.
+
 Catalog dependency lists include the full referenced closure. Worker packs
 conservatively contain every non-coordinator rule. The coordinator workflow is
 excluded, including transitive references. Generated Claude rule files direct

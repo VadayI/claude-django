@@ -13,6 +13,11 @@ on:
   # Manual trigger so /bootstrap can register the status check before the first
   # PR exists, via `gh workflow run backend-ci.yml --ref main`.
   workflow_dispatch:
+    inputs:
+      base:
+        description: Exact base commit for manual runner verification
+        required: true
+        type: string
   merge_group:
 
 # Cancel superseded runs for the same PR/branch so a new push stops stale runs.
@@ -21,6 +26,62 @@ concurrency:
   group: backend-ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  family-core:
+    name: Family core exact checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install backend test dependencies
+        if: hashFiles('backend/pyproject.toml') != ''
+        working-directory: backend
+        run: pip install -e ".[dev]"
+      - name: Start run-owned PostgreSQL fixture
+        run: |
+          set -euo pipefail
+          fixture_dir="$(mktemp -d)"
+          echo "TMPDIR=$fixture_dir" >> "$GITHUB_ENV"
+          echo "BACKEND_FIXTURE_DIR=$fixture_dir" >> "$GITHUB_ENV"
+          if [ -d backend ]; then
+            python scripts/ai/backend_fixture.py start --directory "$fixture_dir"
+          fi
+      - name: Run exact-candidate Django backend catalog
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          CI_CANDIDATE: ${{ github.sha }}
+          CI_PR_BASE: ${{ github.event.pull_request.base.sha }}
+          CI_PUSH_BASE: ${{ github.event.before }}
+          CI_MERGE_BASE: ${{ github.event.merge_group.base_sha }}
+          CI_MANUAL_BASE: ${{ inputs.base }}
+        run: |
+          set -euo pipefail
+          trap 'python scripts/ai/backend_fixture.py stop --directory "$TMPDIR"' EXIT
+          case "$CI_EVENT" in
+            pull_request) event=pull_request; base="$CI_PR_BASE" ;;
+            push) event=push; base="$CI_PUSH_BASE" ;;
+            merge_group) event=pull_request; base="$CI_MERGE_BASE" ;;
+            workflow_dispatch) event=manual; base="$CI_MANUAL_BASE" ;;
+            *) echo "Unsupported CI event: $CI_EVENT" >&2; exit 2 ;;
+          esac
+          python scripts/ai/runner.py --repository . --candidate "$CI_CANDIDATE" --base "$base" --event "$event" --network allowed --catalog templates/ai/checks/django-backend.json --output .ai-runtime/results/django.json
+      - name: Stop run-owned PostgreSQL fixture
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -n "${BACKEND_FIXTURE_DIR:-}" ]; then
+            python scripts/ai/backend_fixture.py stop --directory "$BACKEND_FIXTURE_DIR"
+            rmdir "$BACKEND_FIXTURE_DIR"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: django-exact-runner-result
+          path: .ai-runtime/results/django.json
+          if-no-files-found: warn
   test:
     runs-on: ubuntu-latest
     services:
@@ -73,14 +134,15 @@ jobs:
       - name: Contract drift gate (vendored copy matches pinned tag)
         id: drift
         working-directory: ${{ github.workspace }}
-        # Armed only when the repository variable exists: /bootstrap sets it via
-        # `gh variable set CONTRACT_VERSION` and it must be re-set on every pin raise
-        # (ADR 0021/0025) — without the variable this gate is silently skipped.
-        if: vars.CONTRACT_VERSION != ''
+        # A missing pin is an unverified prerequisite, never a skipped success.
         env:
           CONTRACT_VERSION: ${{ vars.CONTRACT_VERSION }}
           CONTRACT_REPO: ${{ vars.CONTRACT_REPO || 'VadayI/claude-api-contract' }}
         run: |
+          if [ -z "$CONTRACT_VERSION" ]; then
+            echo "::error::CONTRACT_VERSION is missing; set the reviewed contract pin before GitHub CI."
+            exit 1
+          fi
           bash scripts/pull_contract.sh --check || {
             echo "::error ::openapi.yml differs from pinned ${CONTRACT_REPO}@${CONTRACT_VERSION}. Re-run 'bash scripts/pull_contract.sh' and commit."
             exit 1

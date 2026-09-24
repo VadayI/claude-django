@@ -522,6 +522,14 @@
       "ownership": "mixed",
       "sha256": "b0062df33974015b73e29b17b680a1f880e8e79d130a70463771cbc2aed3663c"
     },
+    ".githooks/pre-commit": {
+      "ownership": "template",
+      "sha256": "5c59a61b63ed04aef2cdb698acd451d43f682b9bdc93409b6b5b7a5f7261164a"
+    },
+    ".githooks/pre-push": {
+      "ownership": "template",
+      "sha256": "bf61e6ec19ce214b6a9d13635c68d1391e6751a0558ef44aa26ee394563b5d06"
+    },
     "AGENTS.md": {
       "ownership": "mixed",
       "sha256": "9bbe24bf7904e321c9fb5ac72dd743b8ac11f28192cadb6898c6b1582e4ac940"
@@ -540,7 +548,7 @@
     },
     "docs/ai/generated/adapters-manifest.json": {
       "ownership": "template",
-      "sha256": "4ac52b6e0acdd8a9f43a3a9be6b53b4c2a9573ed4ec5e2cdc9ab5de756160099"
+      "sha256": "615680c7d029213ede1d5e6ef4eccafdebe474f820404c3332764fecfa28f687"
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
@@ -568,7 +576,7 @@
     },
     "docs/ai/production-structure.md": {
       "ownership": "template",
-      "sha256": "2c94307b9bca89ca1c13f2de6ae11715983f8b35705a46892f9a0da75e700b03"
+      "sha256": "e57217d811ee288f13a0314bc501bce4fd05802f1b2c443c484ca6ed390f3a67"
     },
     "docs/ai/roles/api-architect.md": {
       "ownership": "template",
@@ -676,19 +684,47 @@
     },
     "docs/ai/workflows/bootstrap.md": {
       "ownership": "template",
-      "sha256": "a52f61359a63cfabeb17b88a36316e60d7592eb1cea017903145caa89aafb3f2"
+      "sha256": "f30effddc2b34e2b10f9654a1c19a98e4e0acc0f13e4be252f33d88b76872930"
     },
     "docs/ai/workflows/orchestrate.md": {
       "ownership": "template",
       "sha256": "1d4227ad077482a10bb7c376c0f791cf0027187d0a7e924a36aa7454b0099325"
     },
+    "scripts/ai/backend_fixture.py": {
+      "ownership": "template",
+      "sha256": "75245048e6068500cb2e1ceb65bf99fbc0f73373609c8a711db0bd52d92f8cd8"
+    },
+    "scripts/ai/backend_policy.py": {
+      "ownership": "template",
+      "sha256": "e42fe36d75ed6ac1df71802d6d1badc0b356b208c142c355ec673f71b84fc550"
+    },
+    "scripts/ai/backend_prereq.py": {
+      "ownership": "template",
+      "sha256": "61839efcd669082f52194fc6850510e0224ce0eb67cb9cb9ae970970357b8917"
+    },
+    "scripts/ai/backend_server.py": {
+      "ownership": "template",
+      "sha256": "6070c781d4c78ca06a53c5f21083e0c2fb18dffcccd25f240167447059de12cf"
+    },
     "scripts/ai/delivery_selftest.py": {
       "ownership": "template",
       "sha256": "93a0e1c139d8c77d0de69297934f655a26c858163e8199d4b73135a98069c048"
     },
+    "scripts/ai/git_hooks.py": {
+      "ownership": "template",
+      "sha256": "d3aade6a06de0fc5d70d5a31937ac40126baf679450035c4066c56cae675b199"
+    },
+    "scripts/ai/install_git_hooks.py": {
+      "ownership": "template",
+      "sha256": "d3a1a232b8fdaf57f20bce1367d87178bdcccd76a159d0ab34ed3e6e95c4bb3e"
+    },
+    "scripts/ai/test_git_hooks.py": {
+      "ownership": "template",
+      "sha256": "e31528a5c9d5c6677fcd52be859117692b7d33f4bc028aff3834558911c23f10"
+    },
     "scripts/build_instruction_manifest.py": {
       "ownership": "template",
-      "sha256": "327cdb458c91f5f6014ad39dc427de4bfa70c57842428b691ade84c7b89fd94b"
+      "sha256": "e3a0eddc343c408ba891f8a9c824856777633122bd8fdcac17e684d20938b8bf"
     },
     "scripts/install_ai.py": {
       "legacy_sha256": [
@@ -705,6 +741,10 @@
       "ownership": "template",
       "sha256": "c921b560ed02a2843c303fce2c567bfc639557eceec0d71de83ff6ca6f3e575c"
     },
+    "templates/ai/checks/django-backend.json": {
+      "ownership": "template",
+      "sha256": "c53e6b8d2833e997fff16b649a8f533f5743e0e5b572ddba0547e1c0029608a3"
+    },
     "templates/ai/checks/django.json": {
       "ownership": "template",
       "sha256": "d51232fb52272ed5875bacaa1b99d8c1759bad9ac1f46b4ea8899893850161e4"
@@ -715,7 +755,7 @@
     },
     "templates/ai/seed-inputs.json": {
       "ownership": "template",
-      "sha256": "03a74e9e29d7a5861336d562c8454245bcd745e57474e46613228b1067d7c514"
+      "sha256": "d64ecfd912dcaec14374a7757c949bc4d64e02b9db1171793b2ec71dd84e3948"
     }
   },
   "schema_version": 1
