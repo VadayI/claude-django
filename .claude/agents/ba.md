@@ -1,7 +1,7 @@
 ---
 name: ba
 description: "[claude-django] Business analyst: requirements, user stories, scope, endpoint descriptions before any code.\n\nTrigger: requirements, user story, describe feature, what should we build, scope, define the task.\n\n<example>\nuser: 'We need user registration'\nassistant: 'Using ba: I formulate user stories, scope, and the list of endpoints for registration.'\n</example>"
-model: opus
+model: fable
 color: purple
 tools: [Read, Glob, Grep, Write, Edit, SendMessage]
 ---

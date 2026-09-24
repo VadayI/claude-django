@@ -1,7 +1,7 @@
 ---
 name: brief-synthesizer
 description: "[claude-django] Synthesizes docs/PROJECT.md from raw input documents in docs/**. Invoked by /synthesize-brief.\n\nTrigger: synthesize brief, generate PROJECT.md, consolidate docs, read briefs, project description, ТЗ, техзавдання, project brief.\n\n<example>\nuser: '/synthesize-brief'\nassistant: 'Using brief-synthesizer: recursive read of docs/**, structured synthesis into docs/PROJECT.md.'\n</example>"
-model: sonnet
+model: opus
 color: purple
 tools: [Read, Glob, Grep, Write, Bash, SendMessage]
 ---
