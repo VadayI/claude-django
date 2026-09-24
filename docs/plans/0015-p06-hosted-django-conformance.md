@@ -1,6 +1,6 @@
 # Plan 0015 — P06 hosted Django conformance
 
-> Status: 🟡 IN PROGRESS · seeded 2026-09-24 · Driver: P06 hosted Django backend runner validation
+> Status: ✅ COMPLETE · closed 2026-09-24 · Driver: P06 hosted Django backend runner validation
 > Type: config-template change. No backend application code; the canonical inert CI workflow must boot its test Django app before strict live contract conformance.
 >
 > **Living plan** — discipline in `.claude/rules/living-plan.md`.
@@ -12,7 +12,7 @@
 | 1. Review CI workflow and conformance requirements | done | ci-cd-engineer |
 | 2. Add DB migration, loopback Django startup/readiness, conformance URL, and cleanup | done | ci-cd-engineer |
 | 3. Validate YAML and inspect focused diff | done | ci-cd-engineer |
-| 4. Run the hosted workflow on a derived Django project | in progress — see Amendment #1 | user / orchestrator |
+| 4. Run the hosted workflow on a derived Django project | done — run 36040082142 passed; see Amendment #4 | user / orchestrator |
 
 ## Goal
 
@@ -34,11 +34,11 @@ Keep workflow triggers, jobs, job names, permissions, and the exact-candidate ru
 - Parse the edited workflow as YAML (accounting for GitHub Actions' `on` key semantics).
 - Inspect `git diff --check` and the exact diff to verify only the intended workflow and plan changed.
 - Confirm the existing `family-core` job and `test` job names are unchanged.
-- Hosted runner behavior, database connectivity, and real contract conformance require a separate GitHub Actions run against a derived project and remain unverified here.
+- Hosted runner behavior, database connectivity, and real contract conformance were verified by run 36040082142 against the derived project; see Amendment #4.
 
 ## Open questions
 
-- [ ] Which derived Django repository and branch will host the workflow run?
+- [x] Which derived Django repository and branch will host the workflow run? `VadayI/p06-django-derived-fixture-2026-09-24` / `feat/p06-derived-django-backend`.
 
 ## Execution log
 
@@ -66,3 +66,9 @@ The reusable contract change is committed locally as `fa6d87d220a70e1287dd2b7bf9
 ### Amendment #3 — isolate test settings from live conformance (2026-09-24)
 
 Hosted run `36038160215` passed contract conformance, drift, and the exact-candidate runner, but `Tests + coverage` failed. The job-level `DJANGO_SETTINGS_MODULE=config.settings.conformance` overrode the pytest default from `backend/pyproject.toml`; as a result, the test-only `common_sampleitem` migration was not loaded and the conformance throttle rates (`100000/min`) bypassed the throttling assertions. The canonical workflow now keeps `config.settings.conformance` at job scope for migration and the live server, and sets `config.settings.test` only on the pytest step. Added the reusable conformance settings template and bootstrap delivery mapping so new projects receive the module required by that workflow. P06 remains open pending the follow-up hosted run.
+
+### Amendment #4 — hosted P06 acceptance and closeout (2026-09-24)
+
+Run [`36040082142`](https://github.com/VadayI/p06-django-derived-fixture-2026-09-24/actions/runs/36040082142) passed both GitHub Actions jobs for candidate `cf22e8fd900b605ce95f9238e967e78aa81ce8fc` against base `948454cbedd7910e58fb8b2b72c3db2ed2eafba1`. The `test` job passed PostgreSQL startup, live contract conformance, contract drift, README/file-size gates, and `Tests + coverage`; the `Family core exact checks` job completed all 13 mandatory catalog checks with `PASS` and uploaded `django-exact-runner-result`. The artifact was downloaded locally under `p06-evidence-36040082142/` in the derived fixture workspace.
+
+The reusable Django template fix is merged as PR #43 (merge commit `63943e2c2f391e137f733f5c515c5ac65e097dac`), including the separately delivered `config.settings.conformance` template. Reusable auth-validation defaults and generated instructions are merged as API PR #64 (merge commit `9db26a0c65b970c223ab034750f3019ac59c5e2e`). PR #63 was closed without merging because its conflict would restore project-specific `spec/` and `openapi.yml` files that the reusable template intentionally excludes; the `v2.0.0` contract tag remains available to the derived fixture. P06 is complete.
