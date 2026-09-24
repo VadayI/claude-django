@@ -1,3 +1,16 @@
+# 2026-09-24 — P07 core delivered with a development pin
+
+Branch `feat/p07-shared-memory` on top of `fix/p06-django-consistency`. The
+rebased P07 core (contract `feat/p07-shared-memory` head
+`1235a23f8f77d7dff4e91e039cf60877ae794ce9`, manifest digest `512798fc…`) is
+vendored with `pin_status: development`: `scripts/ai/project_state.py`,
+`docs/ai/project-state-migration.md`, updated `docs/ai/{schemas,launchers}.md`.
+Do not call this integrated. After the contract P07 PR merges, repin with
+`core_sync.py --integrated-pin` and restore the integrated assertions in
+`tests/test_ai_delivery.py`. Consumer adoption (registry checks, env/log
+writers, seed/update ownership, docs) is the remaining P07 work; no legacy
+migration has been run against project data.
+
 # 2026-09-24 — post-P06 consistency, integrated core 9db26a0
 
 Branch `fix/p06-django-consistency` on top of `main` `9b7b867` (P06 merged via
