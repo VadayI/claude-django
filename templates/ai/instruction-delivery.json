@@ -304,7 +304,7 @@
         "888961861f448a6be89bb03a044a5800bc6854cb164dabddf599a48acad2a337"
       ],
       "ownership": "template",
-      "sha256": "5d1572c1686a4b826e0c840ff2dcab3926a763390d23a93ee2c3bee072252d83"
+      "sha256": "d34002c3863fe2b31603c37700b91bec5224278945d8fc23800150bfc555edbd"
     },
     ".claude/rules/api-docs.md": {
       "legacy_sha256": [
@@ -548,23 +548,23 @@
     },
     "docs/ai/generated/adapters-manifest.json": {
       "ownership": "template",
-      "sha256": "2e4aabe250a318ccd0ee92de95166e85f7674cedfb379123866af1524402bcc5"
+      "sha256": "bddc82e38edabaa64db80a219e603da5e9f475455fcfc5d7cc15b41d415e33ad"
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
-      "sha256": "0f765d49c2a630ad10cbf2851aa2400e902076333cd7f0cb34a343621f8e190f"
+      "sha256": "77c407b1f81ffda68798999c75ba68dfaf53157e3208108f37c1750116152c46"
     },
     "docs/ai/generated/role-packs/django-developer.md": {
       "ownership": "template",
-      "sha256": "fc822e4ed3a837d5e163568b1a2b11c50f76917838b190b23821ee91abe089a9"
+      "sha256": "581b17b81896b187cb0c10576925ba60b926006e651667976b47409a63951203"
     },
     "docs/ai/generated/role-packs/reviewer.md": {
       "ownership": "template",
-      "sha256": "a909dab6d7a1ae616757f6bdb3f594e70843e03736682552a62678d161d06a77"
+      "sha256": "c2b8af07c5cf2107eec6022c902f6388bd479ba0dafd116e0543a2ddeef16e01"
     },
     "docs/ai/generated/role-packs/tester.md": {
       "ownership": "template",
-      "sha256": "c6a6779926211b45a3ea6124916d157ca17d9a25cc776f75145f3a94686abb21"
+      "sha256": "4f1448031be4d452958ee32fc0e5bca14130b6caed4747cf78d1dd72c9df48cf"
     },
     "docs/ai/legacy-inventory.json": {
       "ownership": "template",
@@ -576,7 +576,7 @@
     },
     "docs/ai/production-structure.md": {
       "ownership": "template",
-      "sha256": "d93942ebccfeeeb32f498ab40882ab7951103e6544c5dcf1e2ed681268a7789d"
+      "sha256": "d9a65fb68ed92966ae644cf906fad7c0606b3a1be798fc5e6ba7a7ab713f626f"
     },
     "docs/ai/roles/api-architect.md": {
       "ownership": "template",
@@ -624,7 +624,7 @@
     },
     "docs/ai/rules/git-operations.md": {
       "ownership": "template",
-      "sha256": "cceb8350b149b536b0139bd9de7d2c57246b941887ec2a214409e22880cec6c8"
+      "sha256": "49020796d73116f1da03eb22f547a4a80c5ec00bf100d22b66393665f071ee73"
     },
     "docs/ai/rules/living-plan.md": {
       "ownership": "template",

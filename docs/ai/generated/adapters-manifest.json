@@ -130,19 +130,19 @@
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
-      "sha256": "0f765d49c2a630ad10cbf2851aa2400e902076333cd7f0cb34a343621f8e190f"
+      "sha256": "77c407b1f81ffda68798999c75ba68dfaf53157e3208108f37c1750116152c46"
     },
     "docs/ai/generated/role-packs/django-developer.md": {
       "ownership": "template",
-      "sha256": "fc822e4ed3a837d5e163568b1a2b11c50f76917838b190b23821ee91abe089a9"
+      "sha256": "581b17b81896b187cb0c10576925ba60b926006e651667976b47409a63951203"
     },
     "docs/ai/generated/role-packs/reviewer.md": {
       "ownership": "template",
-      "sha256": "a909dab6d7a1ae616757f6bdb3f594e70843e03736682552a62678d161d06a77"
+      "sha256": "c2b8af07c5cf2107eec6022c902f6388bd479ba0dafd116e0543a2ddeef16e01"
     },
     "docs/ai/generated/role-packs/tester.md": {
       "ownership": "template",
-      "sha256": "c6a6779926211b45a3ea6124916d157ca17d9a25cc776f75145f3a94686abb21"
+      "sha256": "4f1448031be4d452958ee32fc0e5bca14130b6caed4747cf78d1dd72c9df48cf"
     }
   },
   "generator": "family-core",
@@ -161,7 +161,7 @@
     "docs/ai/rules/deviation-register.md": "0940d8cd41dd5680a4c967884226eda6ee0b10ecabb29e0d0b22d2e5d9abcfbf",
     "docs/ai/rules/docker-commands.md": "1a46c42a03ac87dd4e40dd4251e426b8f8f3bda59cf393b1466742753880aefb",
     "docs/ai/rules/environment.md": "856c0b91cdd24603d526bef0ec8793249d6deef45805e19deb0ae0fcc7f3f9ab",
-    "docs/ai/rules/git-operations.md": "cceb8350b149b536b0139bd9de7d2c57246b941887ec2a214409e22880cec6c8",
+    "docs/ai/rules/git-operations.md": "49020796d73116f1da03eb22f547a4a80c5ec00bf100d22b66393665f071ee73",
     "docs/ai/rules/living-plan.md": "53f4b247c4bac6a6bf8176a6993b7e2880c0f56881df7ef21a08bdb1ad060fd3",
     "docs/ai/rules/mcp-stack.md": "9ed71f1488604dfc9b050ee730867d53ebed857b1891cb7414f0b061e82de41a",
     "docs/ai/rules/migrations-tasks.md": "9e3dc81e26782de61bd81a2dc04857bba014a0b89428efccef1fb4b59af7a7a3",

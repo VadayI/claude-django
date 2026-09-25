@@ -71,4 +71,4 @@ At the end of a session, update and commit the context files: the session record
 
 ## Shared session policy
 
-Commit/push/draft PR are part of an authorized task. Merge requires a new explicit user command. Preserve unrelated index/worktree changes, refs, stash and worktrees; never reset/clean/stash automatically or stage all files. A failed/unknown network result requires remote-state inspection before retrying. No release/deploy is implied.
+Commit/push/draft PR are part of an authorized task; use `python scripts/ai/git_lifecycle.py` (`inspect`, `commit --path`, `verify`, `share`, `merge --pr N --expect-head SHA`, `cleanup`; docs/ai/git-lifecycle.md). Merge requires a new explicit user command. Preserve unrelated index/worktree changes, refs, stash and worktrees; never reset/clean/stash automatically or stage all files. A failed/unknown network result requires remote-state inspection before retrying. No release/deploy is implied.
