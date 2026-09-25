@@ -1,3 +1,30 @@
+# 2026-09-24 — post-P06 consistency, integrated core 9db26a0
+
+Branch `fix/p06-django-consistency` on top of `main` `9b7b867` (P06 merged via
+PR #42, hosted conformance closeout via #43/#44). Integrated so far: P04
+instruction seed, P05 detector/exact-candidate runner, P06 explicit CI mode
+(`scripts/ci_mode.py`), owned Git hooks and the derived backend catalog with one
+representative hosted PASS (run 36040082142, 13/13). Not delivered: P07 shared
+project state, P08 Git lifecycle, P10/P11 roles, P12 full Codex role/command
+parity, P13 acceptance.
+
+- Core receipt repinned from `pin_status: development` / `90fdafd` (a branch
+  commit already merged through contract PR #62) to integrated contract main
+  `9db26a0c65b970c223ab034750f3019ac59c5e2e`; payload bytes unchanged
+  (manifest digest `131f17e9…`).
+- `.gitignore` now excludes `/.ai-runtime/`, where `scripts/ai/runner.py`
+  writes results; derived projects seeded from this file no longer risk
+  committing runner evidence.
+- `docs/ai/workflows/bootstrap.md`, `docs/ai/production-structure.md` and
+  `README.md` no longer describe the CI choice as future P05/P06 work.
+- Verified on Linux Python 3.13.15: `core_sync --check`,
+  `generate_adapters --check`, `build_instruction_manifest --check` PASS;
+  `tests/` 36 OK, `scripts/ai/test_git_hooks.py` 5 OK.
+- Next: P07 delivery of the rebased shared-state core (development pin until
+  the contract P07 PR is merged), then P08. Merge only on the user's command.
+
+Earlier handoffs follow as historical context.
+
 # 2026-09-20 — P04 family runtime checkpoint
 
 Base: 7adc1d154978628b08b8a472c05b243f0a74adee; task branch

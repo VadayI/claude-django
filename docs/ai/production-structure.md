@@ -83,8 +83,9 @@ The top-level seeder uses `templates/ai/seed-inputs.json` as its only explicit
 target-to-source inventory and combines it with the same component plans before
 any write. Every listed source is resolved and read even when its target is
 absent. It never recursively copies a directory. Workflow files are delivered
-only below `templates/.github/workflows/`; materializing `.github/workflows/`
-belongs to P06 after CI-mode selection. `--force` permits a checked repeat of the
+only below `templates/.github/workflows/`; `scripts/ci_mode.py` materializes
+`.github/workflows/backend-ci.yml` only after the explicit CI-mode selection.
+`--force` permits a checked repeat of the
 fresh seeder but does not permit overwriting customized or mixed-owned files.
 `docs/ai/seed-source.json` records the exact installed source digests. Later
 template-owned seed updates accept only that receipt or the explicitly recorded
@@ -111,11 +112,12 @@ not asserted complete by generating files.
 Claude `/bootstrap` and Codex bootstrap skill enter the same complete procedure.
 It explicitly probes the actual host instead of requiring a Claude hook and
 retains `templates/ai/` during scaffold cleanup. The legacy detector report
-remains transitional alongside the shared P05 detector. CI choice/workflow
-materialization is P06: fresh bootstrap
-must stop before activation/push until the explicit choice is implemented and
-verified. Backend/DB acceptance, full role model sessions and P13 install/adopt/
-rollback acceptance remain separate obligations. The existing legacy commands
+remains transitional alongside the shared P05 detector until the P07
+project-state migration. Fresh bootstrap stops before activation/push until the
+explicit CI choice is recorded through `scripts/ci_mode.py`. Full role model
+sessions and P13 install/adopt/rollback acceptance remain separate obligations;
+the derived backend catalog has one representative hosted PASS (2026-09-24), not
+acceptance of every derived application. The existing legacy commands
 doctor/adopt/update-from-template remain available; use the component installer
 for this instruction bundle and retain project state when those workflows run.
 

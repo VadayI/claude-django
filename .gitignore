@@ -42,4 +42,7 @@ dist/
 # Session lock files — runtime only (e.g. scheduled_tasks.lock); never tracked.
 .claude/*.lock
 
+# Exact-candidate runner results and evidence (scripts/ai/runner.py) — local, per run.
+/.ai-runtime/
+
 # Last reviewed/updated: 2026-05-30

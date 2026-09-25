@@ -5,10 +5,10 @@ Before any scaffold writes, run `python scripts/ai/core_sync.py --check` and
 `python scripts/ai/generate_adapters.py --check`. Preserve canonical sources,
 adapters, `templates/ai/`, overrides and receipts during scaffold/resume.
 The commands below are Bash examples: native Windows uses explicit Git Bash.
-Coordinator scope is D02; every write is delegated. CI choice/materialization
-and exact-candidate verification remain P06/P05 work: do not activate workflows
-or push a fresh project until its explicit local/github choice is implemented
-and verified. This delivery checkpoint is not runnable-backend acceptance.
+Coordinator scope is D02; every write is delegated. Never activate workflows or
+push a fresh project before its explicit local/github CI choice is recorded with
+`python scripts/ci_mode.py --target . --mode <local|github> --apply` (step 3 of
+the fresh path); a non-interactive run without that choice stops there.
 
 Bootstrap a Django backend project from this template config. Two modes:
 
@@ -55,7 +55,7 @@ else:
 
 ## Hard preflight (refuse to start if any blocker is true)
 
-> **Runtime policy.** Run `python scripts/detect-env.py` explicitly in the actual execution environment before mode detection. The legacy report is transitional until P05; never fabricate it, infer host capabilities from a sandbox, or require a Claude hook when an explicit probe succeeds. Python 3.13+ is required.
+> **Runtime policy.** Run `python scripts/detect-env.py` explicitly in the actual execution environment before mode detection. The legacy report is transitional until the P07 project-state migration; never fabricate it, infer host capabilities from a sandbox, or require a Claude hook when an explicit probe succeeds. Python 3.13+ is required.
 
 Read `.claude/memory/env-detect.json` first (the `SessionStart` hook keeps it fresh).
 
