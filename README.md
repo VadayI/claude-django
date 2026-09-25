@@ -10,8 +10,10 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 ## Shared Claude/Codex runtime delivery
 
 The vendored family core is pinned to integrated contract main commit
-`db342b78ee8d085b6f5b854cabd217d69176d99c` (`docs/ai/core-source.json`,
-`pin_status: integrated`); `python scripts/ai/core_sync.py --check` verifies it.
+`db342b78ee8d085b6f5b854cabd217d69176d99c` on `main`. This review branch
+(P08) uses the development pin `7d0571de2f36fa4f7e74864f35353a199ac3d69a`
+(`docs/ai/core-source.json`, `pin_status: development`) until the contract P08 PR
+merges; `python scripts/ai/core_sync.py --check` verifies the installed files.
 Python 3.13+ and its standard library
 are sufficient; no sibling checkout or marketplace is needed for core tooling.
 Run `python scripts/ai/core_sync.py --check` to verify installed file digests.
@@ -444,5 +446,6 @@ Codex can invoke the bootstrap skill or read `docs/ai/workflows/bootstrap.md`
 explicitly. The P05 detector and exact-candidate runner, the P06 explicit CI
 choice (`scripts/ci_mode.py`) and owned Git hooks are delivered; a hosted run of
 the derived backend catalog passed 13/13 on a representative fixture (2026-09-24).
-P07 shared project state, P08 Git lifecycle and P12 full role migration remain
-pending; delivery alone does not establish deployment readiness.
+P07 shared project state is delivered; the P08 Git lifecycle CLI
+(`scripts/ai/git_lifecycle.py`, docs/ai/git-lifecycle.md) is on review, and P12 full
+role migration remains pending; delivery alone does not establish deployment readiness.

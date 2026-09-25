@@ -12,13 +12,11 @@ Optional `$ARGUMENTS`: a short note about the session focus/outcome. If empty, i
 
 1. **Summarize the session** — concise: what changed, key decisions, open items / blockers.
 
-2. **Verify merge status BEFORE writing anything** (never record intent as fact):
+2. **Verify Git and PR state BEFORE writing anything** (never record intent as fact):
    ```bash
-   BRANCH=$(git branch --show-current)
-   gh pr list --head "$BRANCH" --state all --json number,state,mergedAt 2>/dev/null || echo "[]"
-   git branch --merged origin/main 2>/dev/null
+   python scripts/ai/git_lifecycle.py inspect --fetch
    ```
-   Wording rule for the WORKLOG/summary: a branch whose PR has **no `mergedAt`** is described as **"open / not merged"**, NEVER as "merged" or "shipped to main". If `gh` is unavailable, fall back to `git branch --merged origin/main` and tag the statement **"(unverified - gh unavailable)"**. Do not claim a PR is merged without one of these confirmations.
+   It reports the state (for example `BRANCH_SYNCED / MERGE_PENDING`, `MERGED / CLEANUP_PENDING`, `NOT_VERIFIED`), the PR and the next step (docs/ai/git-lifecycle.md). Describe a branch as merged only when the report shows a MERGED PR; `git branch --merged` is not evidence (squash merges). If gh is unavailable the report says `NOT_VERIFIED` — record it that way.
 
 3. **Persist context** (delegate to `docs-writer`, or do it directly if trivial):
    - Create this session's record (docs/ai/session-continuity.md) and fill every section — Task, Changes, Decisions (ADR links), Checks (exact commands, results, candidate/base), Limitations, Next step — using the verified status from step 2:
@@ -46,10 +44,10 @@ Optional `$ARGUMENTS`: a short note about the session focus/outcome. If empty, i
    git --no-pager diff --stat
    ```
 
-6. **Propose** a Conventional-Commits message for the pending changes (it MUST include the doc files from step 5 — session record + HANDOFF + lessons/ADR). Do NOT commit or push automatically; the user reviews the diff and commits. After that commit, `python scripts/ai/session_context.py --root . --check` must PASS (an uncommitted record is invisible to another machine or agent).
+6. **Propose** a Conventional-Commits message for the pending changes (it MUST include the doc files from step 5 — session record + HANDOFF + lessons/ADR). Do NOT commit or push automatically; the user reviews the diff and commits. When the user authorizes it, commit exactly the task paths with `python scripts/ai/git_lifecycle.py commit --path <path> ... --message "..."` (other staged work stays staged; staged task hunks need `--staged`) and share with `git_lifecycle.py share --title ... --body-file ...` (push without force, one PR). After that commit, `python scripts/ai/session_context.py --root . --check` must PASS (an uncommitted record is invisible to another machine or agent).
 
 7. **Remind the rules:** never push to `main`; open work via `/create-pr`. Finish with a one-line "session wrapped" summary and the suggested next step.
 
 > Pair with `/create-pr` when ready to open a PR. Tests/lint/stub failures here are informational — fix via the normal pipeline, not inside this command.
 
-<!-- Last reviewed/updated: 2026-09-25 (P07: session record instead of concurrent WORKLOG appends, auto-memory transfer, continuity check) -->
+<!-- Last reviewed/updated: 2026-09-25 (P08: git_lifecycle.py inspect/commit/share; P07: session record, auto-memory transfer, continuity check) -->
