@@ -1,3 +1,11 @@
+# 2026-09-25 — P07 session continuity (development core)
+
+Branch `feat/p07-shared-memory` (draft PR #46); commit `f564a08` on top of `769ad91`, development pin `6fb703a`. Nothing is merged (D01).
+
+- Start every session with `python scripts/ai/session_context.py --root .` (branch/HEAD, settings, documentation map, latest record, snapshot diff; no `.ai-runtime` needed). End with `--new-record --agent <runtime>` and, after the commit, `--check` (docs/ai/session-continuity.md).
+- This session: `docs/sessions/20260925T075805Z-claude-615ac5.md` (task, checks, limitations, next step).
+- Next: After contract #66 is merged on the user's command: `core_sync.py --integrated-pin` to the integrated core, restore the assertions marked «Tymczasowy pin deweloperski» in `tests/test_ai_delivery.py`, then merge #45 → #46. After that, P08.
+
 # 2026-09-24 — P07 consumers adopted (draft PR #46, development core)
 
 Branch `feat/p07-shared-memory` on top of `fix/p06-django-consistency` (PR #45).
