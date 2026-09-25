@@ -21,9 +21,9 @@ Each `docs/plans/NNNN-*.md` carries three managed sections on top of the ordinar
 - **Executor agents** (`ba`, `api-architect`, `django-developer`, `tester`, `docs-writer`) — after finishing their phase, **append** a one-line confirmation to the active plan's Execution log (via an append-only file update, never a full-file rewrite).
 - **Gate agents** (`reviewer`, `security-scanner`, `dba`) — do NOT edit the plan; they stay read-only over both code and plan. They **report the gate result to the orchestrator**, which records the Execution log entry. This preserves the "gate agents only read and report" invariant.
 
-## Boundary with WORKLOG
+## Boundary with session records
 
-**Execution log ≠ WORKLOG.** The Execution log is an in-plan journal of confirmations during one task. `docs/WORKLOG.md` is the cross-session chronicle, single owner `/wrap-up`. They do not duplicate: the plan records the course of one task, WORKLOG the session summary.
+**Execution log ≠ session record.** The Execution log is an in-plan journal of confirmations during one task. The session record (`docs/sessions/`, one file per session, written at `/wrap-up`) is the cross-session summary; `docs/WORKLOG.md` is the earlier chronicle. They do not duplicate: the plan records the course of one task, the record the session summary.
 
 ## Binds these agents (rule is auto-loaded)
 

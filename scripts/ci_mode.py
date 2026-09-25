@@ -15,6 +15,12 @@ WORKFLOWS = ("backend-ci.yml",)
 OBSOLETE = ("backend-policy.yml",)
 PROJECT = "docs/project-state/project.json"
 RECEIPT = "docs/ai/ci-workflow-receipt.json"
+# Jawna mapa ról dokumentacji nowego projektu Django (docs/ai/session-continuity.md).
+DOCUMENTATION = {"readme": "README.md", "project": "docs/PROJECT.md",
+                 "architecture": "docs/ai/rules/architecture.md",
+                 "decisions": "docs/decisions", "handoff": "docs/HANDOFF.md",
+                 "sessions": "docs/sessions", "backlog": "docs/todo.md",
+                 "lessons": "docs/lessons.md", "worklog": "docs/WORKLOG.md"}
 
 
 def digest(content: str) -> str:
@@ -72,7 +78,8 @@ def project_text(target: Path, mode: str) -> str:
     Raises: ValueError for invalid mode or unsupported existing configuration.
     Side effects: Reads project.json if present; no writes, DB, or network.
     Business rule: New projects start at experiment maturity; later onboarding
-        may record a verified maturity and contract source.
+        may record a verified maturity and contract source. A fresh file names
+        the actual documentation paths; an existing map, even empty, is kept.
     """
     if mode not in {"local", "github"}:
         raise ValueError("CI mode must be local or github")
@@ -87,7 +94,7 @@ def project_text(target: Path, mode: str) -> str:
                   "orchestration": {"coordinator_read": "reported_files_only"},
                   "maturity": {"stage": "experiment"},
                   "contract": {"source": "repo_pin", "artifact": "docs/api/openapi.yml"},
-                  "documentation": {}, "features": [], "deployment": {}}
+                  "documentation": dict(DOCUMENTATION), "features": [], "deployment": {}}
     config["ci"]["execution"] = mode
     return json.dumps(config, indent=2, sort_keys=True) + "\n"
 

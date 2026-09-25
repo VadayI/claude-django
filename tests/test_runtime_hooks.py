@@ -28,7 +28,7 @@ class RuntimeHookTests(unittest.TestCase):
         return module
 
     def test_session_start_runs_shared_detector_then_stack_probe(self):
-        """Keep SessionStart limited to two visible detector results.
+        """Keep SessionStart to two visible detector results plus the session context.
 
         Args: None; loads the local reviewed hook module.
         Returns: None after checking exact subprocess argv and exit status.
@@ -36,12 +36,14 @@ class RuntimeHookTests(unittest.TestCase):
         Side effects: No project, Git, DB, or network writes; subprocess mocked.
         """
         module = self.load("scripts/session-start.py", "django_session_start")
-        with mock.patch.object(module.subprocess, "run", side_effect=[mock.Mock(returncode=7), mock.Mock(returncode=0)]) as run:
+        with mock.patch.object(module.subprocess, "run", side_effect=[
+                mock.Mock(returncode=7), mock.Mock(returncode=0), mock.Mock(returncode=0)]) as run:
             self.assertEqual(module.main(), 7)
-            self.assertEqual(run.call_count, 2)
-            shared, stack = (call.args[0] for call in run.call_args_list)
+            self.assertEqual(run.call_count, 3)
+            shared, stack, context = (call.args[0] for call in run.call_args_list)
             self.assertEqual(shared[1:], [str(ROOT / "scripts/ai/detector.py"), "--repository", str(ROOT), "--write"])
             self.assertEqual(stack[1], str(ROOT / "scripts/detect-env.py"))
+            self.assertEqual(context[1:], [str(ROOT / "scripts/ai/session_context.py"), "--root", str(ROOT)])
         with mock.patch.object(module.os, "environ", {"AI_PYTHON": "C:/Python314/python.exe"}), mock.patch.object(
             module.subprocess, "run", return_value=mock.Mock(returncode=0)
         ) as run:

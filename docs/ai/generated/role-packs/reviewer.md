@@ -579,7 +579,7 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 <!-- END SOURCE docs/ai/rules/environment.md -->
 
 
-<!-- SOURCE docs/ai/rules/git-operations.md SHA256 1c5ea9a41b22e457c687d92cfc18e005be427bdf3345ee79b3431edbecdd3c9b -->
+<!-- SOURCE docs/ai/rules/git-operations.md SHA256 cceb8350b149b536b0139bd9de7d2c57246b941887ec2a214409e22880cec6c8 -->
 
 # Git operations
 
@@ -643,7 +643,7 @@ Edge cases, risks, next steps.
 
 ## Context sync between machines
 
-At the end of a session, update and commit the context files: `docs/HANDOFF.md` (the rolling "where we are / what's next" snapshot — read first on a new machine), `docs/WORKLOG.md` (the append-only "what we did" chronicle), and if needed `docs/todo.md` (cross-session backlog), `docs/lessons.md`, `docs/project-state/*` and ADRs `docs/decisions/NNNN-*.md`. This is how Claude's work history travels between computers via a plain `git pull`. Regenerate `HANDOFF.md` via `/wrap-up` (or `/handoff` alone).
+At the end of a session, update and commit the context files: the session record in `docs/sessions/` (created by `python scripts/ai/session_context.py --root . --new-record --agent <runtime>`; one file per session, so parallel sessions merge without conflicts), `docs/HANDOFF.md` (the rolling "where we are / what's next" snapshot — read first on a new machine, merged by content, never `merge=union`), and if needed `docs/todo.md` (cross-session backlog), `docs/lessons.md`, `docs/project-state/*` and ADRs `docs/decisions/NNNN-*.md`. `docs/WORKLOG.md` remains the pre-P07 history. This is how the work history travels between computers and agents via a plain `git pull`; `python scripts/ai/session_context.py --root . --check` must PASS after the commit (docs/ai/session-continuity.md). Regenerate `HANDOFF.md` via `/wrap-up` (or `/handoff` alone).
 
 ## Prohibitions
 
@@ -659,7 +659,7 @@ Commit/push/draft PR are part of an authorized task. Merge requires a new explic
 <!-- END SOURCE docs/ai/rules/git-operations.md -->
 
 
-<!-- SOURCE docs/ai/rules/living-plan.md SHA256 2de9e6f8a0fb14d4f17406a37440c5bac39603a83ed2e8e1e0e6a2dfec88f763 -->
+<!-- SOURCE docs/ai/rules/living-plan.md SHA256 53f4b247c4bac6a6bf8176a6993b7e2880c0f56881df7ef21a08bdb1ad060fd3 -->
 
 # Living plan (agents keep `docs/plans/NNNN-*.md` current as work runs)
 
@@ -684,9 +684,9 @@ Each `docs/plans/NNNN-*.md` carries three managed sections on top of the ordinar
 - **Executor agents** (`ba`, `api-architect`, `django-developer`, `tester`, `docs-writer`) — after finishing their phase, **append** a one-line confirmation to the active plan's Execution log (via an append-only file update, never a full-file rewrite).
 - **Gate agents** (`reviewer`, `security-scanner`, `dba`) — do NOT edit the plan; they stay read-only over both code and plan. They **report the gate result to the orchestrator**, which records the Execution log entry. This preserves the "gate agents only read and report" invariant.
 
-## Boundary with WORKLOG
+## Boundary with session records
 
-**Execution log ≠ WORKLOG.** The Execution log is an in-plan journal of confirmations during one task. `docs/WORKLOG.md` is the cross-session chronicle, single owner `/wrap-up`. They do not duplicate: the plan records the course of one task, WORKLOG the session summary.
+**Execution log ≠ session record.** The Execution log is an in-plan journal of confirmations during one task. The session record (`docs/sessions/`, one file per session, written at `/wrap-up`) is the cross-session summary; `docs/WORKLOG.md` is the earlier chronicle. They do not duplicate: the plan records the course of one task, the record the session summary.
 
 ## Binds these agents (rule is auto-loaded)
 

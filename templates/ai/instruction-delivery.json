@@ -101,7 +101,7 @@
         "f51a77cd33b50b62d4f2820da201b398a3ec95539b0813731f9227bd4e3e0635"
       ],
       "ownership": "template",
-      "sha256": "72d14f3c8efd4905ac95cb58c7fe376fc63613ba6562c7e2617ce5f4fad3358b"
+      "sha256": "af1477d1383ca385f057a18356def535728f66d404eee869331bbcfc9fedeb34"
     },
     ".claude/agents/domain-architect.md": {
       "legacy_sha256": [
@@ -220,7 +220,7 @@
         "16ac20b97f3c3fe231869e50f36c969e11f0a63c3b4723112145546ddb1a387b"
       ],
       "ownership": "template",
-      "sha256": "16ac20b97f3c3fe231869e50f36c969e11f0a63c3b4723112145546ddb1a387b"
+      "sha256": "41a263528b2fff8cfd6c43ac8a37709616e8b805d8121dcbcc188fff86883e5e"
     },
     ".claude/commands/plugins.md": {
       "legacy_sha256": [
@@ -283,7 +283,7 @@
         "36e53c25afbfc1413f38b1da3c8480ff2d14b406963fc6aaadccb1fb1011891a"
       ],
       "ownership": "template",
-      "sha256": "36e53c25afbfc1413f38b1da3c8480ff2d14b406963fc6aaadccb1fb1011891a"
+      "sha256": "1a06887ecc52b576d8f71498c671695e2b1e44c7752a5f5b636c435cd7ef9cdf"
     },
     ".claude/commands/update-from-template.md": {
       "legacy_sha256": [
@@ -304,7 +304,7 @@
         "888961861f448a6be89bb03a044a5800bc6854cb164dabddf599a48acad2a337"
       ],
       "ownership": "template",
-      "sha256": "a356e568f3ace289315c3857a22d3d6a2ab5381cfb9d042143d845be3bfd525c"
+      "sha256": "5d1572c1686a4b826e0c840ff2dcab3926a763390d23a93ee2c3bee072252d83"
     },
     ".claude/rules/api-docs.md": {
       "legacy_sha256": [
@@ -532,7 +532,7 @@
     },
     "AGENTS.md": {
       "ownership": "mixed",
-      "sha256": "9bbe24bf7904e321c9fb5ac72dd743b8ac11f28192cadb6898c6b1582e4ac940"
+      "sha256": "83b268b114fe9c4b8058444200528359438f0749d9a97ff36fbe607c1ab5e37a"
     },
     "CLAUDE.md": {
       "legacy_sha256": [
@@ -548,23 +548,23 @@
     },
     "docs/ai/generated/adapters-manifest.json": {
       "ownership": "template",
-      "sha256": "306df0158b3f47059065e66b23ba026311d3957594a217a81b3386bddd742520"
+      "sha256": "c38d20f5ec243af07822a007f52b6fceee2f50fa78e55aca0a8ec6cffd96da3a"
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
-      "sha256": "8e72cc7575f2756401bda371684bb5e73f441ee48d15cc560b0d970cce136e61"
+      "sha256": "cab694b3ce70de7b473b0bde5d0fe13371219f3ac4f9f82567e597bb32e03ec8"
     },
     "docs/ai/generated/role-packs/django-developer.md": {
       "ownership": "template",
-      "sha256": "2aeeef466bd0a56544fb8fe0e46900f526ed20b0378fdf3d8b7eab67442c6fff"
+      "sha256": "77a915d1db72cf04a5b8831bfca458e1819917aa67f213c8df12136f093cdd61"
     },
     "docs/ai/generated/role-packs/reviewer.md": {
       "ownership": "template",
-      "sha256": "6be999e298b0869b559c0062c75957cba3ae0840f479c0bb5b33b6ad50d4beef"
+      "sha256": "92cdaeabcbe5a1e2838b7042284a28102ed1d9c44e882b89c9fee1d994e6a637"
     },
     "docs/ai/generated/role-packs/tester.md": {
       "ownership": "template",
-      "sha256": "c9523d22252e8b8a935e4f5011da1eb0ecde384cd1ea7157ae711e5875572e72"
+      "sha256": "821afb420a457a8670389c815f82c5737d32f2902c65bcf45db60128eb3c925e"
     },
     "docs/ai/legacy-inventory.json": {
       "ownership": "template",
@@ -624,11 +624,11 @@
     },
     "docs/ai/rules/git-operations.md": {
       "ownership": "template",
-      "sha256": "1c5ea9a41b22e457c687d92cfc18e005be427bdf3345ee79b3431edbecdd3c9b"
+      "sha256": "cceb8350b149b536b0139bd9de7d2c57246b941887ec2a214409e22880cec6c8"
     },
     "docs/ai/rules/living-plan.md": {
       "ownership": "template",
-      "sha256": "2de9e6f8a0fb14d4f17406a37440c5bac39603a83ed2e8e1e0e6a2dfec88f763"
+      "sha256": "53f4b247c4bac6a6bf8176a6993b7e2880c0f56881df7ef21a08bdb1ad060fd3"
     },
     "docs/ai/rules/mcp-stack.md": {
       "ownership": "template",
@@ -688,7 +688,7 @@
     },
     "docs/ai/workflows/orchestrate.md": {
       "ownership": "template",
-      "sha256": "850dc1ce62076fe5c87402a6cf8fa99b2731f864db9075a7c30cca1f2e87233b"
+      "sha256": "3d615afff8cf1ba4dab549efcb8db7d173b7e0943911419b648afac70922c4af"
     },
     "scripts/ai/backend_fixture.py": {
       "ownership": "template",
@@ -739,7 +739,7 @@
     },
     "scripts/seed_preflight.py": {
       "ownership": "template",
-      "sha256": "713b75501a923cee1da58613f6bd09513b9abf25be8747e62f2ee96c3590497f"
+      "sha256": "4014e356f3c7388535c02affd564b20bc5589a114222d61264ea4c8cb3a1bf68"
     },
     "templates/ai/checks/django-backend.json": {
       "ownership": "template",

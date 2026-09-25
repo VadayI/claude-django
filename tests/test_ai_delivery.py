@@ -103,6 +103,7 @@ class DeliveryTests(unittest.TestCase):
             self.assertIn("--catalog templates/ai/checks/django-backend.json", local_ci)
             project_path = target / ci_mode.PROJECT
             project = json.loads(project_path.read_text(encoding="utf-8"))
+            self.assertEqual(project["documentation"], ci_mode.DOCUMENTATION)
             project["extensions"] = {"owner": "fixture"}
             project_path.write_text(json.dumps(project, sort_keys=True, indent=2) + "\n", encoding="utf-8")
             pending, conflicts = ci_mode.plan(ROOT, target, "github")
@@ -226,7 +227,7 @@ class DeliveryTests(unittest.TestCase):
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
         # Tymczasowy pin deweloperski na rewizję P07 core (feat/p07-shared-memory);
         # po scaleniu contract PR wrócić do integrated pin i observed_upstream_main.
-        self.assertEqual(receipt["source_commit"], "0e3f4cdf9e9b7cc1197636cd0fe2ba0f9dfdecba")
+        self.assertEqual(receipt["source_commit"], "6fb703abdced3f1f5c1f9c626e95ad924f5a2a5b")
         self.assertEqual(receipt["pin_status"], "development")
         self.assertNotIn("observed_upstream_main", receipt)
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))
