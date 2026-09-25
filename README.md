@@ -10,7 +10,7 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 ## Shared Claude/Codex runtime delivery
 
 The vendored family core is pinned to integrated contract main commit
-`9db26a0c65b970c223ab034750f3019ac59c5e2e` (`docs/ai/core-source.json`,
+`db342b78ee8d085b6f5b854cabd217d69176d99c` (`docs/ai/core-source.json`,
 `pin_status: integrated`); `python scripts/ai/core_sync.py --check` verifies it.
 Python 3.13+ and its standard library
 are sufficient; no sibling checkout or marketplace is needed for core tooling.
@@ -402,9 +402,8 @@ The PAT/GH_TOKEN precedence and blank-placeholder fallback are preserved only in
 the child process; PowerShell caller variables remain unchanged. CLI arguments and
 exit status are forwarded. Applications load their own runtime environment.
 
-This review branch uses development-pinned core commit
-`90fdafde68454d665a53de78dc8f5fd8420465c2`; it is not claimed integrated.
-Delivery was regenerated and checked. Exact known template wrappers migrate by
+The launcher ships with the integrated core pin described in "Shared
+Claude/Codex runtime delivery" above. Delivery was regenerated and checked. Exact known template wrappers migrate by
 hash; custom wrappers conflict and remain unchanged. Full bootstrap/CI migration
 remains pending.
 

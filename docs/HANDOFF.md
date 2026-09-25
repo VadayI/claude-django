@@ -1,3 +1,11 @@
+# 2026-09-25 — P07 integrated: core pinned to contract main `db342b7`
+
+Branch `feat/p07-shared-memory` (PR #46): `main` merged in after fix PR #45 (`2bc0d76`), then the integrated repin. Contract PR #66 is merged as `db342b7`; PR #46 merges on the user's command of 2026-09-25 (D01).
+
+- `docs/ai/core-source.json`: `pin_status: integrated`, `source_commit` = `observed_upstream_main` = `db342b78ee8d085b6f5b854cabd217d69176d99c`; the payload is unchanged from the development pin `f8e3162` (same manifest digest). `tests/test_ai_delivery.py` asserts the integrated pin again.
+- This session: `docs/sessions/20260925T090423Z-claude-2757a2.md` (task, checks, limitations, next step).
+- Next: P08 (Git lifecycle G0–G9). The P07 runtime acceptance run (docs/ai/session-continuity.md) is still NOT_VERIFIED.
+
 # 2026-09-25 — P07 shared output-language preference (development core)
 
 Branch `feat/p07-shared-memory` (draft PR #46); commit `2f74f7f` on top of `1fa8fbc`, development pin `f8e3162`. Nothing is merged (D01).
