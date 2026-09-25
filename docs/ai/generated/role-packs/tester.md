@@ -887,13 +887,17 @@ Defeat naive hardcoded returns by asserting behavior from **at least 2–3 disti
 <!-- END SOURCE docs/ai/rules/no-stubs.md -->
 
 
-<!-- SOURCE docs/ai/rules/output-language.md SHA256 9de049efae88c3cdf8938fff0f0dcb957b7c20c6e41ac2daad0c391a3852a0ea -->
+<!-- SOURCE docs/ai/rules/output-language.md SHA256 768338a905daaea7bb2f3f330b03d2cd33ac7fdec2297a88951ad1afae24c43a -->
 
 # Output language
 
-Honor the user's current language preference. Read an existing project-owned
-`.claude/rules/output-language.md` when present; never overwrite it on update.
-If neither the session nor project declares a preference, ask once.
+Honor the user's current language preference. Read the project-owned shared
+preference `docs/ai/overrides/output-language.md` when present; an unmigrated
+legacy `.claude/rules/output-language.md` stays readable until
+`python scripts/ai/project_state.py --root . --language --apply` moves it and
+leaves a pointer. Never overwrite either file on update, and write new
+preferences only to the shared file. If neither the session nor project
+declares a preference, ask once.
 
 <!-- END SOURCE docs/ai/rules/output-language.md -->
 

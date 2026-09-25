@@ -168,15 +168,15 @@ Claude `SessionStart` runs `scripts/detect-env.py` through `scripts/session-star
 
 Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/update/delete/move headers, including Windows separators and multi-file payloads. Malformed edit payloads stop rather than pass silently. Arbitrary Bash file writes remain outside this hook's coverage; contract pin and CI drift checks remain required.
 4. **GitHub repository (you created it).** Confirm the repo URL / `owner/slug` of the EMPTY GitHub repo you created by hand (per ADR `0008`, `/bootstrap` does NOT create it). Default = `<login>/<slug>` from steps 1–2. Used to link `origin` (Mode A Step 1) and to build the fine-grained token template URL.
-5. **Output language.** **Skip this step if the session declares a preference or `.claude/rules/output-language.md` already exists.** Otherwise ask via the runtime's question interface (header `Language`):
+5. **Output language.** **Skip this step if the session declares a preference or `python scripts/ai/project_state.py --root . --language` reports a persisted language** (a legacy `.claude/rules/output-language.md` is moved with `--language --apply`). Otherwise ask via the runtime's question interface (header `Language`):
    - **English** (Recommended) — default; no extra config will be written.
    - **Українська**
    - **Polski**
    - (the harness adds "Other" automatically; the user can type any native name there, e.g. `Deutsch`, `Español`, `日本語`)
 
    If the user picked **English** — skip the language file edits. Otherwise dispatch `devops`:
-   - Copy `templates/output-language.md` -> `.claude/rules/output-language.md`, replacing both occurrences of the literal token `{LANGUAGE_NATIVE}` with the chosen native name.
-   - Keep this file project-owned; AGENTS.md reads it. Do not edit generated CLAUDE.md or the canonical generic language rule.
+   - Copy `templates/output-language.md` -> `docs/ai/overrides/output-language.md`, replacing both occurrences of the literal token `{LANGUAGE_NATIVE}` with the chosen native name.
+   - Keep this file project-owned; AGENTS.md reads it for Claude and Codex. Do not create `.claude/rules/output-language.md`, edit generated CLAUDE.md or the canonical generic language rule.
 
    To change later, run `/set-language`.
 

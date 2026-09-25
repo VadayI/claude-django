@@ -130,25 +130,25 @@
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
-      "sha256": "cab694b3ce70de7b473b0bde5d0fe13371219f3ac4f9f82567e597bb32e03ec8"
+      "sha256": "0f765d49c2a630ad10cbf2851aa2400e902076333cd7f0cb34a343621f8e190f"
     },
     "docs/ai/generated/role-packs/django-developer.md": {
       "ownership": "template",
-      "sha256": "77a915d1db72cf04a5b8831bfca458e1819917aa67f213c8df12136f093cdd61"
+      "sha256": "fc822e4ed3a837d5e163568b1a2b11c50f76917838b190b23821ee91abe089a9"
     },
     "docs/ai/generated/role-packs/reviewer.md": {
       "ownership": "template",
-      "sha256": "92cdaeabcbe5a1e2838b7042284a28102ed1d9c44e882b89c9fee1d994e6a637"
+      "sha256": "a909dab6d7a1ae616757f6bdb3f594e70843e03736682552a62678d161d06a77"
     },
     "docs/ai/generated/role-packs/tester.md": {
       "ownership": "template",
-      "sha256": "821afb420a457a8670389c815f82c5737d32f2902c65bcf45db60128eb3c925e"
+      "sha256": "c6a6779926211b45a3ea6124916d157ca17d9a25cc776f75145f3a94686abb21"
     }
   },
   "generator": "family-core",
   "schema_version": 1,
   "sources": {
-    "AGENTS.md": "83b268b114fe9c4b8058444200528359438f0749d9a97ff36fbe607c1ab5e37a",
+    "AGENTS.md": "602048317a42b63a798036bdbad131a091b7351f26e02136a6bf267204fa3c35",
     "docs/ai/catalog.json": "3f34d69f6eecd6db934b631ca257b25a2f6033ce7c87022b10542c143f43c5a4",
     "docs/ai/roles/api-architect.md": "aebddcbfccdd1391ac52c99988c1b8cd33ea8275377e16126bdad18a51e70bec",
     "docs/ai/roles/django-developer.md": "e5c0361bf84753a1baa3876e2f073cccb04cba220fbfcb47f1d126cdbbda8886",
@@ -166,7 +166,7 @@
     "docs/ai/rules/mcp-stack.md": "9ed71f1488604dfc9b050ee730867d53ebed857b1891cb7414f0b061e82de41a",
     "docs/ai/rules/migrations-tasks.md": "9e3dc81e26782de61bd81a2dc04857bba014a0b89428efccef1fb4b59af7a7a3",
     "docs/ai/rules/no-stubs.md": "c94ca8fe8aefc26de3ba8267e4cfda3d09bee6fd6b5f75c784f3b842553bfb8b",
-    "docs/ai/rules/output-language.md": "9de049efae88c3cdf8938fff0f0dcb957b7c20c6e41ac2daad0c391a3852a0ea",
+    "docs/ai/rules/output-language.md": "768338a905daaea7bb2f3f330b03d2cd33ac7fdec2297a88951ad1afae24c43a",
     "docs/ai/rules/preflight.md": "bbda44d9ba504352a2e56f98daf753067f357bc05dfa3f6c0998e4807e677386",
     "docs/ai/rules/project-maturity.md": "b5c40dff3d342c9670852ba9c4100cba7b8e00a01fa9489bf250c243defbd7af",
     "docs/ai/rules/serializers-permissions.md": "f0f3fe42050083f0327cedc51c455a5b5e3e68b1fe441508842010a115bc893c",
@@ -176,7 +176,7 @@
     "docs/ai/rules/user-guides.md": "d1614042e1ae92d2849b9eb8941639d7fefef5cd733ae17797f6a902a19fbd55",
     "docs/ai/rules/verification.md": "b21c21796a10f975b6cc90c4bdff6f6d27afd8feb9066ae4f74bb2b1dff8fe6a",
     "docs/ai/rules/workflow.md": "850dc1ce62076fe5c87402a6cf8fa99b2731f864db9075a7c30cca1f2e87233b",
-    "docs/ai/workflows/bootstrap.md": "e0d68cc68c5112ac582d6b237f6740a67608a8f27ec7d89123c30e1b80d1102b",
+    "docs/ai/workflows/bootstrap.md": "64605609494466c10d237e800981240adaea8fe9ca08cf6f785d8cc1d8ad5572",
     "docs/ai/workflows/orchestrate.md": "3d615afff8cf1ba4dab549efcb8db7d173b7e0943911419b648afac70922c4af"
   }
 }

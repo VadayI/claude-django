@@ -37,7 +37,7 @@ Update a **derived project** (one bootstrapped from `claude-django`) to a newer 
 ## Hard limits
 
 - **PR-only** — no direct commit/push to `main`; the sync lands as a reviewable PR.
-- Never overwrite project-owned files (`docs/project-state/*`, `.claude/rules/output-language.md`, `docs/**`, `backend/**`, `.env`).
+- Never overwrite project-owned files (`docs/project-state/*`, `docs/ai/overrides/*`, `.claude/rules/output-language.md`, `docs/**`, `backend/**`, `.env`).
 - Never replace `CLAUDE.md` / `.claude/settings.json` / `.mcp.json` / live CI wholesale — additive merge only.
 - Never print secret values.
 

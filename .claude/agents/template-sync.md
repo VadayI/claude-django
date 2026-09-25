@@ -39,7 +39,7 @@ Copy these straight from `$UPSTREAM`. Report each as `updated` (content changed)
 
 ### 3. Project-owned — NEVER touch
 - `docs/project-state/**` (endpoints.json, template-lineage.json — project registries and lineage), legacy `.claude/memory/**` until migrated, and gitignored `.ai-runtime/**` (env-detect.json, environment.json, command-log.jsonl)
-- `.claude/rules/output-language.md`
+- `docs/ai/overrides/**` (incl. the shared `output-language.md`) and `.claude/rules/output-language.md` (legacy preference or its pointer)
 - `docs/**`, `backend/**`, `.env`, anything under the project's own source tree.
 
 ## New gate scripts (the templates/ deletion gotcha)

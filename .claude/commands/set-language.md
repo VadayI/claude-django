@@ -11,9 +11,10 @@ Optional `$ARGUMENTS`: language code (`en`, `uk`, `pl`) or native name (`укр�
 
 ## Steps
 
-1. **Detect current language**:
-   - If `.claude/rules/output-language.md` exists, read its first line — the native name is the word after "Always respond in ". Show it as "current: <native>".
-   - If not, current language is **English** (the default).
+1. **Detect current language**: run `python scripts/ai/project_state.py --root . --language` and show `language` / `status` as "current: <native>".
+   - `legacy` or `identical` (only the Claude-only `.claude/rules/output-language.md` holds the choice): move it first with `python scripts/ai/project_state.py --root . --language --apply` — it creates the shared `docs/ai/overrides/output-language.md` and leaves a pointer at the old path.
+   - `conflict`: nothing is written; show both files and let the user's current choice decide (step 2).
+   - `none`: current language is **English** (the default).
 
 2. **Ask the user** via `AskUserQuestion` (header `Language`):
    - **English** — clears the language override and reverts to the project default.
@@ -23,20 +24,14 @@ Optional `$ARGUMENTS`: language code (`en`, `uk`, `pl`) or native name (`укр�
 
    Highlight the currently-detected language in your question text so the user sees what is set right now.
 
-3. **Apply the change** (orchestrator dispatches `devops`):
-   - **If the user picked English**:
-     - Delete `.claude/rules/output-language.md` (if present).
-     - Remove the line `@.claude/rules/output-language.md` from `CLAUDE.md` (if present). Do not touch other lines.
-   - **If the user picked any other language**:
-     - Copy `templates/output-language.md` → `.claude/rules/output-language.md`, replacing the literal token `{LANGUAGE_NATIVE}` with the chosen native name. Replace **both** occurrences.
-     - Ensure `@.claude/rules/output-language.md` is present in the `@.claude/rules/*.md` block at the top of `CLAUDE.md`. Add it after `@.claude/rules/preflight.md` if missing; do nothing if already there.
+3. **Apply the change** (orchestrator dispatches `devops`); only the shared file is written — Claude and Codex read it through AGENTS.md:
+   - Copy `templates/output-language.md` → `docs/ai/overrides/output-language.md`, replacing the literal token `{LANGUAGE_NATIVE}` (both occurrences) with the chosen native name — `English` included: an explicit English file keeps a migration pointer valid instead of leaving it orphaned. If none was persisted and the user picked English, writing nothing is also fine.
+   - On a `conflict`, after writing the shared file run `python scripts/ai/project_state.py --root . --language --apply --keep-shared`: the legacy preference becomes the pointer, so one writable preference remains.
+   - Never edit `CLAUDE.md` or create a new `.claude/rules/output-language.md`.
 
-4. **Verify**:
-   - Re-read `.claude/rules/output-language.md` (or confirm its absence for English).
-   - The body must NOT contain the literal `{LANGUAGE_NATIVE}` placeholder.
-   - `grep '^@.claude/rules/output-language.md$' CLAUDE.md` returns the expected count (1 for non-English, 0 for English).
+4. **Verify**: `python scripts/ai/project_state.py --root . --language` reports `status` `canonical` (or `none` for English) and the chosen `language`; the shared file does NOT contain the literal `{LANGUAGE_NATIVE}`.
 
-5. **Summary** — invocation logging is automatic (`UserPromptExpansion` hook), no manual append. Print: previous language → new language, files changed (`.claude/rules/output-language.md`, `CLAUDE.md`), and the reminder that the change takes effect in the **next** message (the current orchestrator context is already loaded).
+5. **Summary** — invocation logging is automatic (`UserPromptExpansion` hook), no manual append. Print: previous language → new language, files changed (`docs/ai/overrides/output-language.md`, and `.claude/rules/output-language.md` if migrated), and the reminder that the change takes effect in the **next** message (the current orchestrator context is already loaded).
 
 ## Hard limits
 

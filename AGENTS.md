@@ -18,8 +18,11 @@ Without native dispatch, use separate role sessions with artifact handoff.
 Workers read `docs/ai/generated/role-packs/<role>.md` fully, in bounded chunks,
 and verify its END marker. `docs/ai/production-structure.md` maps retained legacy
 roles/commands/skills; their functions remain available pending P12 conversion.
-Read project additions in `docs/ai/overrides/` when present. Preserve existing
-`.claude/rules/output-language.md`; explicit session language takes precedence.
+Read project additions in `docs/ai/overrides/` when present, including the shared
+language preference `docs/ai/overrides/output-language.md` (a legacy
+`.claude/rules/output-language.md` stays readable until `python
+scripts/ai/project_state.py --root . --language --apply`); explicit session
+language takes precedence.
 
 The backend consumes a pinned external API contract; never regenerate or edit
 the canonical contract here. Preserve thin HTTP views, serializer validation,

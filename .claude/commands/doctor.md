@@ -14,7 +14,7 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 
 ## Steps
 
-0. **Output language gate (FIRST, before audit).** If `.claude/rules/output-language.md` does NOT exist, ask via `AskUserQuestion` (header `Language`):
+0. **Output language gate (FIRST, before audit).** Run `python scripts/ai/project_state.py --root . --language`. If it reports a legacy Claude-only preference, move it with `--language --apply` (a conflict stops: reconcile via `/set-language`). If no language is persisted, ask via `AskUserQuestion` (header `Language`):
    - `English` (Recommended) — default; no extra config will be written.
    - `Українська`
    - `Polski`
@@ -22,13 +22,11 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
 
    If user picks **English** → skip the file edits, proceed to Step 1.
    Otherwise dispatch `devops`:
-   - `mkdir -p .claude/rules` (no-op if exists).
-   - Copy `templates/output-language.md` → `.claude/rules/output-language.md`, replacing both occurrences of `{LANGUAGE_NATIVE}` with the chosen native name.
-   - If `CLAUDE.md` exists at repo root, append `@.claude/rules/output-language.md` to the top import block (after `@.claude/rules/preflight.md`). Skip if already present.
+   - Copy `templates/output-language.md` → `docs/ai/overrides/output-language.md`, replacing both occurrences of `{LANGUAGE_NATIVE}` with the chosen native name. AGENTS.md makes Claude and Codex read it; do not edit `CLAUDE.md` or create `.claude/rules/output-language.md`.
 
    If `templates/output-language.md` is missing (e.g. user attached `.claude/` but skipped `templates/`), report it as a Quick start gap (`NO_TEMPLATES`) and proceed in English without writing the rule. From now on (this turn and onward), respond in the chosen language.
 
-   Skip Step 0 entirely if `.claude/rules/output-language.md` already exists.
+   Skip the question if a language is already persisted (shared file, or legacy file after its migration).
 
 0.5. **Runtime gate — run BEFORE the audit (hard STOP).** Mechanical check: `python scripts/policy/runtime_gate.py` — the single shared implementation (`/preflight` and `/bootstrap` run the same script); prints `NO_ENV_DETECT` | `UNSUPPORTED_PLATFORM <platform>` | `RUNTIME_OK`. Since P07 it calls the shared detector (`scripts/ai/detector.py`) in-process, so no hook-written file can satisfy or fake it; `NO_ENV_DETECT` now means the shared detector itself is missing or cannot run. Stack facts below still come from `.ai-runtime/env-detect.json`, written ONLY by `scripts/detect-env.py` (the `SessionStart` hook of Claude Code CLI or an explicit run on the real host).
 

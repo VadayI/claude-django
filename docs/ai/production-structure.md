@@ -69,8 +69,9 @@ Catalog dependency lists include the full referenced closure. Worker packs
 conservatively contain every non-coordinator rule. The coordinator workflow is
 excluded, including transitive references. Generated Claude rule files direct
 legacy consumers to their full canonical source. Never edit those pointers.
-Output language is an exception: an existing `.claude/rules/output-language.md`
-is project-owned, read by AGENTS, and excluded from delivery updates.
+Output language is an exception: the shared `docs/ai/overrides/output-language.md`
+and a legacy `.claude/rules/output-language.md` (or its migration pointer) are
+project-owned, read by AGENTS, and excluded from delivery updates.
 
 Preview and apply to a fresh or existing project from a reviewed source:
 
