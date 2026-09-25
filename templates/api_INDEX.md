@@ -35,7 +35,7 @@ All endpoints live under `/api/v1/`. Contract-breaking changes get a new version
 
 ## How a new endpoint lands here
 
-1. `api-architect` reads the endpoint from the pinned external contract and records the route in `.claude/memory/endpoints.json`.
+1. `api-architect` reads the endpoint from the pinned external contract and records the route in `docs/project-state/endpoints.json`.
 2. `tester` writes the failing DRF `APIClient` feature test against the contract.
 3. `django-developer` implements until GREEN and conformant, adding `@extend_schema` only where the Swagger UI needs help matching the contract.
 4. `docs-writer` adds a row to this index (pointing at the external contract + `CONTRACT_VERSION`) and writes a narrative markdown if needed.

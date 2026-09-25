@@ -103,6 +103,7 @@ class DeliveryTests(unittest.TestCase):
             self.assertIn("--catalog templates/ai/checks/django-backend.json", local_ci)
             project_path = target / ci_mode.PROJECT
             project = json.loads(project_path.read_text(encoding="utf-8"))
+            self.assertEqual(project["documentation"], ci_mode.DOCUMENTATION)
             project["extensions"] = {"owner": "fixture"}
             project_path.write_text(json.dumps(project, sort_keys=True, indent=2) + "\n", encoding="utf-8")
             pending, conflicts = ci_mode.plan(ROOT, target, "github")
@@ -224,7 +225,7 @@ class DeliveryTests(unittest.TestCase):
             ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
         ])
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
-        self.assertEqual(receipt["source_commit"], "9db26a0c65b970c223ab034750f3019ac59c5e2e")
+        self.assertEqual(receipt["source_commit"], "db342b78ee8d085b6f5b854cabd217d69176d99c")
         self.assertEqual(receipt["pin_status"], "integrated")
         self.assertEqual(receipt["observed_upstream_main"], receipt["source_commit"])
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))

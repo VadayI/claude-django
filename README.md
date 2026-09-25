@@ -10,7 +10,7 @@ A ready-made Claude Code configuration for **Django REST Framework** backend pro
 ## Shared Claude/Codex runtime delivery
 
 The vendored family core is pinned to integrated contract main commit
-`9db26a0c65b970c223ab034750f3019ac59c5e2e` (`docs/ai/core-source.json`,
+`db342b78ee8d085b6f5b854cabd217d69176d99c` (`docs/ai/core-source.json`,
 `pin_status: integrated`); `python scripts/ai/core_sync.py --check` verifies it.
 Python 3.13+ and its standard library
 are sufficient; no sibling checkout or marketplace is needed for core tooling.
@@ -68,7 +68,7 @@ The older support statements below describe the legacy Claude workflow.
 
 This config runs in **Claude Code CLI** (the terminal `claude` command) on **native Windows** (PowerShell or Git Bash), **WSL2 Ubuntu**, **Linux**, or **macOS**. The per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`), so `platform_supported` is `true` on all four.
 
-**Not supported:** Claude Desktop / Cowork / Code mode and the Claude API/SDK — these do not run the `SessionStart` hook, so `.claude/memory/env-detect.json` is never written and the gates cannot evaluate. On native Windows, ensure `python` resolves on PATH (not the Microsoft Store alias); Docker Desktop still needs a WSL2 or Hyper-V backend.
+**Not supported:** Claude Desktop / Cowork / Code mode and the Claude API/SDK — these do not run the `SessionStart` hook, so `.ai-runtime/env-detect.json` is never refreshed; `python scripts/policy/runtime_gate.py` still evaluates the platform in-process via the shared detector, but stack facts (`gh`, WSL2) stay unverified until `python scripts/detect-env.py` runs on the real host. On native Windows, ensure `python` resolves on PATH (not the Microsoft Store alias); Docker Desktop still needs a WSL2 or Hyper-V backend.
 
 Startup and `/doctor` hard-stops (e.g. `python` not on PATH, missing `gh` or PAT) and their fixes live in **[Troubleshooting](#troubleshooting-startup--doctor-hard-stops)** below.
 
@@ -90,7 +90,7 @@ which claude                         # MUST be /home/... or /usr/...  — NOT /m
 
 **2. Where to put the project.** Working from `/mnt/c` or `/mnt/d` (a Windows drive) is **fully supported** (ADR `0009`); `/doctor` won't ask you to move it. The only caveats are slower Docker bind-mounts and occasional CRLF / `git index.lock` quirks (run `git` from the host shell). `~/projects/<slug>` in the WSL2 FS is optional — for faster bind-mounts only.
 
-**3. Launch and verify the runner.** From the project root, launch `claude` — on native Windows that is `claude` in PowerShell or Git Bash; on WSL2 / Linux / macOS it is `claude` in your shell. Both are correct (ADR `0022`). On start the `SessionStart` hook runs `python scripts/session-start.py` and writes `.claude/memory/env-detect.json` with `platform_supported: true` and the detected `platform` / `shell` — exactly what `/doctor` needs to pass the platform gate. (Backslash paths in the banner are normal on native Windows and no longer signal a "wrong runner".)
+**3. Launch and verify the runner.** From the project root, launch `claude` — on native Windows that is `claude` in PowerShell or Git Bash; on WSL2 / Linux / macOS it is `claude` in your shell. Both are correct (ADR `0022`). On start the `SessionStart` hook runs `python scripts/session-start.py` and writes `.ai-runtime/env-detect.json` with `platform_supported: true` and the detected `platform` / `shell` — exactly what `/doctor` needs to pass the platform gate. (Backslash paths in the banner are normal on native Windows and no longer signal a "wrong runner".)
 
 > Run shell fixes in the **bash terminal**, not Claude's `❯` prompt. When `/doctor` says to run `npm install …`, that goes in the terminal — pasting it into the `❯` chat just sends Claude a message.
 
@@ -116,7 +116,7 @@ Short version: **install the CLI (native Windows or WSL2) → seed the config �
 | Symptom (what you see) | What it actually means | Fix (run in a **bash shell**, not the `❯` prompt) |
 |---|---|---|
 | `🔴 UNSUPPORTED_PLATFORM` (now rare) | `platform_supported: false` only occurs on a platform that is **not** Windows, macOS, Linux, or WSL2 — ADR `0022` made native Windows a supported runner, so all four pass. | Note the detected `platform` in `env-detect.json`; if it is one of the supported four, re-run `python scripts/detect-env.py`. |
-| `🔴 NO_ENV_DETECT` — `.claude/memory/env-detect.json` is missing | The `SessionStart` hook didn't run — usually `scripts/` wasn't copied during Quick start, or Python isn't on PATH. The hook **fails silently** without `scripts/detect-env.py`. | Confirm `scripts/detect-env.py` exists in the project; run `python scripts/detect-env.py` once by hand. If it errors, fix the cause (install Python 3.10+). **Never hand-write this file** — fabricated values bypass the safety gates. |
+| `🔴 NO_ENV_DETECT` — the shared detector (`scripts/ai/detector.py`) is missing or cannot run | Usually `scripts/` wasn't copied during Quick start, or Python isn't on PATH. Since P07 the gate probes in-process; a missing `.ai-runtime/env-detect.json` only means the stack probe (`scripts/detect-env.py`) has not run. | Confirm `scripts/detect-env.py` exists in the project; run `python scripts/detect-env.py` once by hand. If it errors, fix the cause (install Python 3.10+). **Never hand-write this file** — fabricated values bypass the safety gates. |
 | `🔴 NO_PYTHON_OR_HOOK` — only `python3` exists, no `python` | The hook calls `python`; Ubuntu ships it as `python3`. | `sudo apt install -y python-is-python3`, then reopen `claude`. |
 | `✗ REPO_NOT_FOUND` — `/bootstrap` can't see the repo | Per ADR `0008` you create the GitHub repo **by hand**; either the empty repo wasn't created or your fine-grained token isn't scoped to it. (`FINE_GRAINED_PAT_NOT_SUPPORTED` is retired — fine-grained tokens are now the recommended credential.) | Create the empty repo at https://github.com/new, mint a fine-grained token via the template URL `/bootstrap` prints (Only select repositories → your repo; Contents/Pull requests/Workflows/Administration = RW), put it in `.env` as `GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_…` and relaunch via `scripts/claude.sh` / `make cc` (ADR `0023`), re-run. |
 | `🔴 NO_GH_SCOPES` — classic PAT missing scopes | **Classic PATs only** — fine-grained tokens are not scope-gated (ADR `0008`). The classic token lacks `repo`/`workflow`. | `gh auth refresh -s repo,workflow,admin:repo_hook` — or better, switch to a fine-grained per-repo token (see the GitHub access step above). |
@@ -125,7 +125,7 @@ Short version: **install the CLI (native Windows or WSL2) → seed the config �
 | `which claude` stays `/mnt/c/...` even after the `$(npm config get prefix)/bin` PATH fix | Your `npm` is the **Windows** npm (Linux `node` is present but Linux `npm` is missing), so `npm install -g` put `claude` in the Windows prefix — the PATH trick can't help because that prefix is itself a `C:\...` path. | Confirm with `which node npm`. Let `nvm` own node+npm in WSL2: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh \| bash` → `nvm install --lts` → `npm install -g @anthropic-ai/claude-code`; `which node npm claude` must all be `/home/…`. Or just run `bash scripts/setup-wsl.sh`. |
 | Tests slow, `rm` fails, CRLF↔LF flips, `git index.lock` — project under `/mnt/c` or `/mnt/d` | The repo lives on a Windows drive (9p mount). **Fully supported (ADR `0009`)** — these are inherent `/mnt` caveats, not an error, and `/doctor` won't ask you to move. | No action required. Run `git` from the host shell (PowerShell/Git Bash) to avoid `index.lock`. Moving to `~/projects/<slug>` is optional (faster bind-mounts), never required. |
 
-After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites `env-detect.json` on each launch, so a corrected runner/PAT shows up immediately. Full runtime guidance (native Windows vs WSL2): `.claude/rules/environment.md` → *"Windows: native or WSL2"*.
+After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites `.ai-runtime/env-detect.json` and `.ai-runtime/environment.json` on each launch, so a corrected runner/PAT shows up immediately. Full runtime guidance (native Windows vs WSL2): `.claude/rules/environment.md` → *"Windows: native or WSL2"*.
 
 ---
 
@@ -135,7 +135,7 @@ After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites
 2. **TDD in Python.** No production code without a failing test first. Red → Green → Refactor cycle.
 3. **External REST API contract.** The canonical OpenAPI schema is authored in `claude-api-contract` and pinned via `CONTRACT_VERSION`; `scripts/pull_contract.sh` vendors it to `docs/api/openapi.yml`. A CI **conformance gate** (`scripts/check_contract_conformance.sh` — schemathesis + django-contract-tester) validates the implementation against the pinned contract, so **the backend can't drift from the published API** (it never regenerates the canon). Swagger UI (`/api/schema/swagger/`) and Redoc (`/api/schema/redoc/`) are the interactive client. A full production frontend, if needed, lives in a **separate repository**.
 4. **Pull Requests only.** Branch → PR → review → merge. Direct commits to `main` are forbidden (branch protection).
-5. **Context in Git.** Claude's work history (`CLAUDE.md`, `.claude/memory/`, `docs/WORKLOG.md`, ADRs) is committed to the repo — so it stays in sync between the two machines via a plain `git pull`.
+5. **Context in Git.** Claude's work history (`CLAUDE.md`, `docs/project-state/`, `docs/WORKLOG.md`, ADRs) is committed to the repo — so it stays in sync between the two machines via a plain `git pull`.
 6. **Maturity-scaled process.** Each project declares a maturity stage (demo / prototype / PoC / MVP / production) in `docs/PROJECT.md` that scales pipeline depth and review rigour — never relaxing TDD, the CI gates, or contract conformance (`.claude/rules/project-maturity.md`). The brief also records a **Definition of Done** (§​7) — the gate checklist a feature must pass before merging.
 
 ---
@@ -246,7 +246,7 @@ claude
 > /update-from-template                # branch chore/sync-template-<date>, sync, open a PR
 ```
 
-What it does (via the `template-sync` agent): **overwrites** template-owned files (`.claude/agents/`, `commands/`, `skills/`, `rules/*.md` except your `output-language.md`, the `scripts/` helpers), **preserves** project-owned ones (`CLAUDE.md`, `settings.json`, `.mcp.json`, `.claude/memory/`, all of `docs/` and `backend/`, `.env`), shows merge-by-hand items (`CLAUDE.md` / `settings.json` / `.mcp.json` / `backend-ci.yml`) as additive-only diffs, copies in any new gate scripts, and records the synced commit in `.claude/memory/template-sync.json`. Full rules: ADR `0014` and the `/update-from-template` entry under *Commands* above.
+What it does (via the `template-sync` agent): **overwrites** template-owned files (`.claude/agents/`, `commands/`, `skills/`, `rules/*.md` except your `output-language.md`, the `scripts/` helpers), **preserves** project-owned ones (`CLAUDE.md`, `settings.json`, `.mcp.json`, `docs/project-state/`, all of `docs/` and `backend/`, `.env`), shows merge-by-hand items (`CLAUDE.md` / `settings.json` / `.mcp.json` / `backend-ci.yml`) as additive-only diffs, copies in any new gate scripts, and records the synced commit in `docs/project-state/template-lineage.json`. Full rules: ADR `0014` and the `/update-from-template` entry under *Commands* above.
 
 It lands as a **PR** (the PR-only rule applies to derived projects); review the merge-by-hand diffs, merge, then run `/doctor` to re-verify the environment against the refreshed spec. If you maintain your own fork of the template, pass its URL: `/update-from-template https://github.com/<you>/claude-django.git`.
 
@@ -274,7 +274,7 @@ It lands as a **PR** (the PR-only rule applies to derived projects); review the 
 | `/config-check` | Quick check that `.claude/settings.json` / `.mcp.json` / MCP keys / hooks are correct | As needed |
 | `/plugins` | Check installed vs expected plugins; get the paste-ready install block | Once per machine, as needed |
 
-The `auditor` agent (invoked by `/audit`) reads `.claude/memory/command-log.jsonl` and the live state, then suggests the right one for the moment — you don't need to memorize the table.
+The `auditor` agent (invoked by `/audit`) reads `.ai-runtime/command-log.jsonl` and the live state, then suggests the right one for the moment — you don't need to memorize the table.
 
 ---
 
@@ -321,7 +321,7 @@ Rules:
 
 ## How to use (commands · agents · skills)
 
-**Commands** are slash-commands typed inside `claude` (e.g. `/bootstrap my-project`, `/doctor`, `/wrap-up "notes"`, `/review-pr 42`); the full list is the *Commands* subsection above. PR-scoped ones need the `github` MCP + an authenticated `gh`. Every call is logged to `.claude/memory/command-log.jsonl` for `auditor`.
+**Commands** are slash-commands typed inside `claude` (e.g. `/bootstrap my-project`, `/doctor`, `/wrap-up "notes"`, `/review-pr 42`); the full list is the *Commands* subsection above. PR-scoped ones need the `github` MCP + an authenticated `gh`. Every call is logged to `.ai-runtime/command-log.jsonl` for `auditor`.
 
 **Agents** you don't call directly — describe the task and the orchestrator routes it through the pipeline in `.claude/rules/workflow.md`. You *can* name one explicitly (`"use ba to draft user stories for X"`). Each agent's triggers live in `.claude/agents/<name>.md`.
 
@@ -402,9 +402,8 @@ The PAT/GH_TOKEN precedence and blank-placeholder fallback are preserved only in
 the child process; PowerShell caller variables remain unchanged. CLI arguments and
 exit status are forwarded. Applications load their own runtime environment.
 
-This review branch uses development-pinned core commit
-`90fdafde68454d665a53de78dc8f5fd8420465c2`; it is not claimed integrated.
-Delivery was regenerated and checked. Exact known template wrappers migrate by
+The launcher ships with the integrated core pin described in "Shared
+Claude/Codex runtime delivery" above. Delivery was regenerated and checked. Exact known template wrappers migrate by
 hash; custom wrappers conflict and remain unchanged. Full bootstrap/CI migration
 remains pending.
 

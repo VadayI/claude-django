@@ -5,7 +5,7 @@ description: "[claude-django] Regenerate docs/HANDOFF.md — the rolling 'where 
 
 Regenerate `docs/HANDOFF.md` — the rolling snapshot read by every new session ("where we are right now and what's next").
 
-Pairs with `/wrap-up` (which still owns `docs/WORKLOG.md` append + `docs/lessons.md` + lint/tests + commit suggestion). `/handoff` ONLY touches `docs/HANDOFF.md`; nothing else, no commits, no pushes. Run it whenever the project state has shifted enough that the snapshot is stale — typically at session end after `/wrap-up`, after merging a PR, or before context-switching to a different branch.
+Pairs with `/wrap-up` (which owns the `docs/sessions/` record + `docs/lessons.md` + lint/tests + commit suggestion). `/handoff` ONLY touches `docs/HANDOFF.md`; nothing else, no commits, no pushes. Run it whenever the project state has shifted enough that the snapshot is stale — typically at session end after `/wrap-up`, after merging a PR, or before context-switching to a different branch.
 
 ## Input
 
@@ -115,6 +115,6 @@ fi
 - Never print secret values.
 - The "Open questions" and "Environment notes" sections are carry-over only; the command does not delete or rewrite their content. Empty them yourself if a question is resolved.
 
-> Pairs with `/wrap-up` (WORKLOG + lessons + lint/tests + commit suggestion) and `/audit` (next-command suggestion -- `auditor` reads `docs/HANDOFF.md` and may promote the "Next step" to its primary suggestion).
+> Pairs with `/wrap-up` (session record + lessons + lint/tests + commit suggestion) and `/audit` (next-command suggestion -- `auditor` reads `docs/HANDOFF.md` and may promote the "Next step" to its primary suggestion).
 
 <!-- Last reviewed/updated: 2026-05-30 (P3: new command) -->

@@ -91,12 +91,12 @@ ba → api-architect → tester (RED) → django-developer (GREEN) → tester (R
         → [Quality Gate: reviewer | security-scanner | dba] → docs-writer
 ```
 
-> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `.claude/memory/endpoints.json` + `docs/api/openapi.yml`, per `docs/ai/rules/verification.md`. Regenerate/run on demand with `/verify`. `docs/WORKLOG.md` is NOT a per-feature output — it is persisted once at session end by `/wrap-up` (single owner, docs/ai/rules/git-operations.md), which may delegate the append to `docs-writer`. When a feature changes first-start, data-loading, an auth flow, or a top-level resource, `guide-writer` also refreshes `docs/guides/{admin,api-consumer}.md` per `docs/ai/rules/user-guides.md` (regenerate on demand with `/guides`).
+> Phase 6 also emits the **verification handoff** (`docs/verify/<feature>.md`) from `docs/project-state/endpoints.json` + `docs/api/openapi.yml`, per `docs/ai/rules/verification.md`. Regenerate/run on demand with `/verify`. `docs/WORKLOG.md` is NOT a per-feature output — it is persisted once at session end by `/wrap-up` (single owner, docs/ai/rules/git-operations.md), which may delegate the append to `docs-writer`. When a feature changes first-start, data-loading, an auth flow, or a top-level resource, `guide-writer` also refreshes `docs/guides/{admin,api-consumer}.md` per `docs/ai/rules/user-guides.md` (regenerate on demand with `/guides`).
 
 | Phase | Mode | Agent(s) | Output |
 |------|-------|----------|-------|
 | 1. Requirements | sequential | `ba` | User stories, implementation scope (which pinned-contract endpoints this PR implements) |
-| 2. Contract reading | sequential | `api-architect` | **Reads** pinned `docs/api/openapi.yml` — does NOT design the contract; records this PR's routes in `.claude/memory/endpoints.json` |
+| 2. Contract reading | sequential | `api-architect` | **Reads** pinned `docs/api/openapi.yml` — does NOT design the contract; records this PR's routes in `docs/project-state/endpoints.json` |
 | 3. RED | sequential | `tester` | Failing pytest tests for the endpoint/logic |
 | 4. GREEN | sequential | `django-developer` | Code that greens the tests + ruff |
 | 5. Quality Gate | **parallel** | `reviewer`, `security-scanner`, `dba` | Independent reports |

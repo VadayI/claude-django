@@ -29,7 +29,7 @@ bash scripts/check_contract_conformance.sh    # schemathesis + django-contract-t
 
 ## Lifecycle (per feature)
 
-1. The contract for the endpoint already exists in `claude-api-contract` (designed there first). `api-architect` reads the pinned contract and records the slice's routes in `.claude/memory/endpoints.json`.
+1. The contract for the endpoint already exists in `claude-api-contract` (designed there first). `api-architect` reads the pinned contract and records the slice's routes in `docs/project-state/endpoints.json`.
 2. `tester` writes the failing API feature test (DRF `APIClient`) against the contract.
 3. `django-developer` implements until GREEN and conformant — `drf-spectacular` annotations (`@extend_schema`, `@extend_schema_field`) are added only where the Swagger UI needs help matching the contract.
 4. **Before opening the PR** (or in `/wrap-up`): run `scripts/check_contract_conformance.sh` (schemathesis + django-contract-tester) against the pinned contract; both must pass.
@@ -45,7 +45,7 @@ bash scripts/check_contract_conformance.sh    # schemathesis + django-contract-t
 
 ## Binds these agents (loaded per-agent via `@`-reference)
 
-- `api-architect` — reads the pinned external contract and records the feature's routes in `.claude/memory/endpoints.json`. Does NOT author the contract here; a needed contract change is raised in `claude-api-contract`.
+- `api-architect` — reads the pinned external contract and records the feature's routes in `docs/project-state/endpoints.json`. Does NOT author the contract here; a needed contract change is raised in `claude-api-contract`.
 - `django-developer` — implements against the external contract; adds `@extend_schema` only for Swagger-UI parity; runs the conformance gate before declaring GREEN.
 - `docs-writer` — owns `docs/api/INDEX.md` (points at the external contract + version) and any per-endpoint narrative; verifies the conformance gate passes before declaring the PR ready.
 - `reviewer` — at the Quality Gate, blocks PRs whose implementation diverges from the pinned contract, or that raise `CONTRACT_VERSION` without an ADR / migration note.

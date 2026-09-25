@@ -18,6 +18,6 @@ Optional `$ARGUMENTS`: a domain/feature to scope. If empty, infer from the curre
    - record a `docs/decisions/NNNN-*.md` ADR if a notable decision was made;
    - refresh `README.md` only if commands/stack changed.
 
-   > `docs/WORKLOG.md` and `docs/lessons.md` are owned by `/wrap-up` (the session-summary chronicle) — do NOT append them here, to avoid duplicate entries. This command syncs reference docs (api / README) + ADRs only; an ADR is a unique numbered file, so recording one here carries no duplication risk.
+   > The `docs/sessions/` record and `docs/lessons.md` are owned by `/wrap-up` (the session summary) — do NOT write them here, to avoid duplicate entries. This command syncs reference docs (api / README) + ADRs only; an ADR is a unique numbered file, so recording one here carries no duplication risk.
 3. Summarize which docs were updated. Do not open a PR unless asked (use `/create-pr`).
 <!-- Last reviewed/updated: 2026-05-27 -->

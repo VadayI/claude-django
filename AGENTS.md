@@ -1,8 +1,12 @@
 # Shared Django project instructions
 
-Read existing `docs/HANDOFF.md`, current Git status and project settings before
-continuing a task; verify stale notes against the actual revision. Shared rules
-live in `docs/ai/catalog.json`, not in personal runtime memory.
+Start with `python scripts/ai/session_context.py --root .`: Git branch/HEAD,
+project settings, documentation map and the latest session record with its
+checks and next step, without `.ai-runtime`. Then read `docs/HANDOFF.md`; verify
+stale notes against the listed diff and actual revision. Shared rules live in
+`docs/ai/catalog.json`, not in personal runtime memory. Wrap-up ends with a
+session record and a passing `session_context.py --check` after the commit
+(docs/ai/session-continuity.md); move durable facts out of runtime-private memory.
 
 If this is the primary coordinating session, read the full
 `docs/ai/workflows/orchestrate.md`. A delegated worker reads its assigned role
@@ -14,8 +18,11 @@ Without native dispatch, use separate role sessions with artifact handoff.
 Workers read `docs/ai/generated/role-packs/<role>.md` fully, in bounded chunks,
 and verify its END marker. `docs/ai/production-structure.md` maps retained legacy
 roles/commands/skills; their functions remain available pending P12 conversion.
-Read project additions in `docs/ai/overrides/` when present. Preserve existing
-`.claude/rules/output-language.md`; explicit session language takes precedence.
+Read project additions in `docs/ai/overrides/` when present, including the shared
+language preference `docs/ai/overrides/output-language.md` (a legacy
+`.claude/rules/output-language.md` stays readable until `python
+scripts/ai/project_state.py --root . --language --apply`); explicit session
+language takes precedence.
 
 The backend consumes a pinned external API contract; never regenerate or edit
 the canonical contract here. Preserve thin HTTP views, serializer validation,

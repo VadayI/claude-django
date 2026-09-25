@@ -10,7 +10,7 @@ Optional `$ARGUMENTS`: a focus area — `git`, `ci`, `docs`, `gates`, or empty (
 
 ## Steps
 
-1. **Dispatch `auditor`** (`subagent_type: "auditor"`) with the focus from `$ARGUMENTS`. It reads `.claude/memory/command-log.jsonl` + live state and produces a primary suggestion + up to 3 secondaries + a recent-activity table.
+1. **Dispatch `auditor`** (`subagent_type: "auditor"`) with the focus from `$ARGUMENTS`. It reads `.ai-runtime/command-log.jsonl` + live state and produces a primary suggestion + up to 3 secondaries + a recent-activity table.
 
 2. **Relay** the auditor's report verbatim and finish with one line: `next: <primary command>`.
 

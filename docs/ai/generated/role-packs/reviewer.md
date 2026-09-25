@@ -51,7 +51,7 @@ Additional rules loaded for this agent: docs/ai/rules/verification.md and docs/a
 
 <!-- END SOURCE docs/ai/roles/reviewer.md -->
 
-<!-- SOURCE docs/ai/rules/api-docs.md SHA256 419a1ec2b4004558a62f77f8f8257bc5674707baa0b622d62aa40ca6ff245570 -->
+<!-- SOURCE docs/ai/rules/api-docs.md SHA256 d16c9a392fa795c44dae404bbd5261cf1f5bed1dd9a62be1afdb959e5000911e -->
 
 # REST API contract (external, consumed — enforced)
 
@@ -84,7 +84,7 @@ bash scripts/check_contract_conformance.sh    # schemathesis + django-contract-t
 
 ## Lifecycle (per feature)
 
-1. The contract for the endpoint already exists in `claude-api-contract` (designed there first). `api-architect` reads the pinned contract and records the slice's routes in `.claude/memory/endpoints.json`.
+1. The contract for the endpoint already exists in `claude-api-contract` (designed there first). `api-architect` reads the pinned contract and records the slice's routes in `docs/project-state/endpoints.json`.
 2. `tester` writes the failing API feature test (DRF `APIClient`) against the contract.
 3. `django-developer` implements until GREEN and conformant — `drf-spectacular` annotations (`@extend_schema`, `@extend_schema_field`) are added only where the Swagger UI needs help matching the contract.
 4. **Before opening the PR** (or in `/wrap-up`): run `scripts/check_contract_conformance.sh` (schemathesis + django-contract-tester) against the pinned contract; both must pass.
@@ -100,7 +100,7 @@ bash scripts/check_contract_conformance.sh    # schemathesis + django-contract-t
 
 ## Binds these agents (loaded per-agent via `@`-reference)
 
-- `api-architect` — reads the pinned external contract and records the feature's routes in `.claude/memory/endpoints.json`. Does NOT author the contract here; a needed contract change is raised in `claude-api-contract`.
+- `api-architect` — reads the pinned external contract and records the feature's routes in `docs/project-state/endpoints.json`. Does NOT author the contract here; a needed contract change is raised in `claude-api-contract`.
 - `django-developer` — implements against the external contract; adds `@extend_schema` only for Swagger-UI parity; runs the conformance gate before declaring GREEN.
 - `docs-writer` — owns `docs/api/INDEX.md` (points at the external contract + version) and any per-endpoint narrative; verifies the conformance gate passes before declaring the PR ready.
 - `reviewer` — at the Quality Gate, blocks PRs whose implementation diverges from the pinned contract, or that raise `CONTRACT_VERSION` without an ADR / migration note.
@@ -376,13 +376,13 @@ or the agreed approach MUST point to its `docs/reviews/` entry.
 <!-- END SOURCE docs/ai/rules/deviation-register.md -->
 
 
-<!-- SOURCE docs/ai/rules/docker-commands.md SHA256 c6841088a823dbc849f7d4f8d91b6bb1180c0e76dfc8fc6a895d79339a742c33 -->
+<!-- SOURCE docs/ai/rules/docker-commands.md SHA256 1a46c42a03ac87dd4e40dd4251e426b8f8f3bda59cf393b1466742753880aefb -->
 
 # Docker / environment commands
 
 > **Shell:** bash on Linux / macOS / WSL2 Ubuntu, or PowerShell / Git Bash on native Windows. The per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`), so no shell is privileged. The `.sh` gate scripts below run on the Linux CI runner; locally on native Windows they need Git Bash (for `make gates`). Working from a Windows drive (`/mnt/c`/`/mnt/d`) is fully supported (ADR `0009`); bind-mounts are just slower there, and git is best run from the host shell (avoids `/mnt` `index.lock`). `~/projects/<project>` is optional for faster bind-mounts, not required.
 >
-> The `SessionStart` hook writes `.claude/memory/env-detect.json` with the active shell so agents can verify their assumptions.
+> The `SessionStart` hook writes `.ai-runtime/env-detect.json` with the active shell so agents can verify their assumptions.
 
 ## Make wrappers (optional shortcuts)
 
@@ -408,7 +408,7 @@ docker compose down             # stop
 
 ## SessionStart conveniences
 
-The `SessionStart` hook runs `scripts/session-start.py`, which (in order): writes `.claude/memory/env-detect.json` via `scripts/detect-env.py` (mandatory — the gates depend on it); seeds `.env` from `.env.example` if `.env` is missing (placeholders only — fill real secrets yourself); and brings services up **only** when you opt in:
+The `SessionStart` hook runs `scripts/session-start.py`, which (in order): writes `.ai-runtime/environment.json` via the shared `scripts/ai/detector.py --write`, then `.ai-runtime/env-detect.json` via `scripts/detect-env.py` (mandatory — the stack gates depend on it); seeds `.env` from `.env.example` if `.env` is missing (placeholders only — fill real secrets yourself); and brings services up **only** when you opt in:
 
 ```bash
 export CLAUDE_DJANGO_AUTO_UP=1   # before launching `claude`: auto `docker compose up -d` on session start
@@ -461,17 +461,17 @@ curl -fsS -o /dev/null -w '%{http_code}\n' \
 <!-- END SOURCE docs/ai/rules/docker-commands.md -->
 
 
-<!-- SOURCE docs/ai/rules/environment.md SHA256 47f5426149cebf234a93d2fbee9d6d45d51084719ae6fa1327b2c415bc26c33f -->
+<!-- SOURCE docs/ai/rules/environment.md SHA256 856c0b91cdd24603d526bef0ec8793249d6deef45805e19deb0ae0fcc7f3f9ab -->
 
 # Environment specification (the source of truth)
 
 This file defines the **expected local environment** for a `claude-django` project. The `/doctor` command checks the live machine against this spec and proposes fixes. Keep this file authoritative: if the required setup changes, change it here first.
 
-> Philosophy: detect → report → propose → **fix only after the user confirms**. `/doctor` reads `.claude/memory/env-detect.json` (written by the `SessionStart` hook) to pick shell-appropriate checks, never auto-fixes risky/irreversible things, never pushes to `main`, and never prints secret values.
+> Philosophy: detect → report → propose → **fix only after the user confirms**. `/doctor` reads `.ai-runtime/env-detect.json` (written by the `SessionStart` hook) to pick shell-appropriate checks, never auto-fixes risky/irreversible things, never pushes to `main`, and never prints secret values.
 
 ## Scope 1 — System tools
 
-The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Windows use the PowerShell or Git Bash equivalents. Native Windows is supported — the per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`). The shell is auto-detected by `scripts/detect-env.py` on every session start and stored in `.claude/memory/env-detect.json`.
+The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Windows use the PowerShell or Git Bash equivalents. Native Windows is supported — the per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`). The shell is auto-detected by `scripts/detect-env.py` on every session start and stored in `.ai-runtime/env-detect.json`.
 
 | Requirement | Expected | Check (bash) |
 |---|---|---|
@@ -491,7 +491,7 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Wi
 Native Windows is a first-class runner (ADR `0022`). Launch `claude` from
 PowerShell or Git Bash in the project directory; the `SessionStart` hook runs
 `python scripts/session-start.py` (cross-platform — no bash), writes
-`.claude/memory/env-detect.json` with `platform_supported: true`,
+`.ai-runtime/env-detect.json` with `platform_supported: true`,
 `platform: windows`, and `shell: powershell` (or `git-bash`), and `/doctor`
 passes the platform gate.
 
@@ -524,11 +524,11 @@ in env-detect schema v6).
 | `CONTEXT7_API_KEY` | set — provide via the project `.env` (parsed literally by `scripts/claude.sh` / `make cc`); the context7 plugin (or the `.mcp.json` fallback) needs it for doc lookups. See ADR `0023`. | `[ -n "$CONTEXT7_API_KEY" ]` (never print the value) |
 | GitHub auth | `gh` authenticated (via env token OR stored creds — either is fine; if `GITHUB_TOKEN`/`GITHUB_PERSONAL_ACCESS_TOKEN` is set, `gh auth login` will refuse to store separate creds and that is EXPECTED) | `gh auth status` |
 | `gh` token — repo access | Per ADR `0008`: the repo is created **by hand**, access is a **fine-grained per-repo token**. Fine-grained tokens carry no OAuth scopes, so `scopes` is empty — that is EXPECTED, not a failure. Required repository permissions on the target repo: **Contents** RW, **Metadata** RO (auto), **Pull requests** RW, **Workflows** RW, **Administration** RW (branch protection). | Capability is verified by `gh repo view <owner>/<repo>`, not by scopes. `/bootstrap` and `/doctor` print a template URL: `https://github.com/settings/personal-access-tokens/new?...&contents=write&pull_requests=write&workflows=write&administration=write` (classic PATs still gate on `repo`+`workflow`) |
-| `gh` PAT kind | **Fine-grained** (`github_pat_...`) is RECOMMENDED (ADR `0008`) and is NOT a blocker — `FINE_GRAINED_PAT_NOT_SUPPORTED` is retired. A `classic` PAT (`ghp_...`) also works but grants whole-account access (discouraged). | `python -c "import json,pathlib; print(json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())['gh']['pat_kind'])"` — either `fine-grained` (preferred) or `classic` is accepted |
+| `gh` PAT kind | **Fine-grained** (`github_pat_...`) is RECOMMENDED (ADR `0008`) and is NOT a blocker — `FINE_GRAINED_PAT_NOT_SUPPORTED` is retired. A `classic` PAT (`ghp_...`) also works but grants whole-account access (discouraged). | `python -c "import json,pathlib; print(json.loads(pathlib.Path('.ai-runtime/env-detect.json').read_text())['gh']['pat_kind'])"` — either `fine-grained` (preferred) or `classic` is accepted |
 
 ### env-detect.json integrity (hard rule)
 
-`.claude/memory/env-detect.json` is the source of truth for `platform_supported`, `gh.pat_kind`, `gh.scopes`, and tool availability. It is rewritten by `scripts/detect-env.py` via the `SessionStart` hook on every Claude Code CLI session.
+`.ai-runtime/env-detect.json` is the source of truth for `platform_supported`, `gh.pat_kind`, `gh.scopes`, and tool availability. It is rewritten by `scripts/detect-env.py` via the `SessionStart` hook (`scripts/session-start.py`) on every Claude Code CLI session, right after the shared detector wrote `.ai-runtime/environment.json`. A legacy `.claude/memory/env-detect.json` is moved to `.ai-runtime/` by the probe; two differing copies are reported, never merged. The mechanical gate `python scripts/policy/runtime_gate.py` no longer reads this file at all — it calls the shared detector in-process, so a fabricated report cannot satisfy it.
 
 **Never hand-write or "patch" this file** to skip past a blocker. The file's fields drive `/bootstrap` and `/doctor` hard gates (`UNSUPPORTED_PLATFORM`, `NO_NODE`, `NO_GH_SCOPES`); fabricated values silently bypass safety checks. If the file is missing:
 
@@ -542,7 +542,7 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 
 | Requirement | Expected | Check |
 |---|---|---|
-| Skeleton | `backend/`, `docs/api/`, `docs/decisions/`, `docs/plans/`, `.claude/memory/` exist | `test -d <dir>` |
+| Skeleton | `backend/`, `docs/api/`, `docs/decisions/`, `docs/plans/`, `docs/project-state/` exist | `test -d <dir>` |
 | `CONTRACT_VERSION` pin | set in `.env` to the consumed `claude-api-contract` tag (`vX.Y.Z`); raising it is a deliberate PR (ADR `0017`). `CONTRACT_URL` (optional) is a **fetch-only** override — the drift `--check` still validates against the pin (ADR `0025`) | `grep -q '^CONTRACT_VERSION=' .env` |
 | External contract vendored | `docs/api/openapi.yml` present, fetched at the pinned version via `scripts/pull_contract.sh` (vendored copy of the external canon, never generated) | `test -f docs/api/openapi.yml` |
 | CI drift-gate armed | GitHub Actions repository variable `CONTRACT_VERSION` set and equal to the `.env` pin — `backend-ci.yml` runs the drift gate only `if: vars.CONTRACT_VERSION != ''` (`/bootstrap` sets it; re-set on every pin raise, ADR `0025`) | `gh variable get CONTRACT_VERSION` — non-empty, equals the `.env` value |
@@ -579,7 +579,7 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 <!-- END SOURCE docs/ai/rules/environment.md -->
 
 
-<!-- SOURCE docs/ai/rules/git-operations.md SHA256 0ca0d9acd220e6b8359079f467ffd5309a57bc19c180da9aca4292654ab0e1f2 -->
+<!-- SOURCE docs/ai/rules/git-operations.md SHA256 cceb8350b149b536b0139bd9de7d2c57246b941887ec2a214409e22880cec6c8 -->
 
 # Git operations
 
@@ -643,7 +643,7 @@ Edge cases, risks, next steps.
 
 ## Context sync between machines
 
-At the end of a session, update and commit the context files: `docs/HANDOFF.md` (the rolling "where we are / what's next" snapshot — read first on a new machine), `docs/WORKLOG.md` (the append-only "what we did" chronicle), and if needed `docs/todo.md` (cross-session backlog), `docs/lessons.md`, `.claude/memory/*` and ADRs `docs/decisions/NNNN-*.md`. This is how Claude's work history travels between computers via a plain `git pull`. Regenerate `HANDOFF.md` via `/wrap-up` (or `/handoff` alone).
+At the end of a session, update and commit the context files: the session record in `docs/sessions/` (created by `python scripts/ai/session_context.py --root . --new-record --agent <runtime>`; one file per session, so parallel sessions merge without conflicts), `docs/HANDOFF.md` (the rolling "where we are / what's next" snapshot — read first on a new machine, merged by content, never `merge=union`), and if needed `docs/todo.md` (cross-session backlog), `docs/lessons.md`, `docs/project-state/*` and ADRs `docs/decisions/NNNN-*.md`. `docs/WORKLOG.md` remains the pre-P07 history. This is how the work history travels between computers and agents via a plain `git pull`; `python scripts/ai/session_context.py --root . --check` must PASS after the commit (docs/ai/session-continuity.md). Regenerate `HANDOFF.md` via `/wrap-up` (or `/handoff` alone).
 
 ## Prohibitions
 
@@ -659,7 +659,7 @@ Commit/push/draft PR are part of an authorized task. Merge requires a new explic
 <!-- END SOURCE docs/ai/rules/git-operations.md -->
 
 
-<!-- SOURCE docs/ai/rules/living-plan.md SHA256 2de9e6f8a0fb14d4f17406a37440c5bac39603a83ed2e8e1e0e6a2dfec88f763 -->
+<!-- SOURCE docs/ai/rules/living-plan.md SHA256 53f4b247c4bac6a6bf8176a6993b7e2880c0f56881df7ef21a08bdb1ad060fd3 -->
 
 # Living plan (agents keep `docs/plans/NNNN-*.md` current as work runs)
 
@@ -684,9 +684,9 @@ Each `docs/plans/NNNN-*.md` carries three managed sections on top of the ordinar
 - **Executor agents** (`ba`, `api-architect`, `django-developer`, `tester`, `docs-writer`) — after finishing their phase, **append** a one-line confirmation to the active plan's Execution log (via an append-only file update, never a full-file rewrite).
 - **Gate agents** (`reviewer`, `security-scanner`, `dba`) — do NOT edit the plan; they stay read-only over both code and plan. They **report the gate result to the orchestrator**, which records the Execution log entry. This preserves the "gate agents only read and report" invariant.
 
-## Boundary with WORKLOG
+## Boundary with session records
 
-**Execution log ≠ WORKLOG.** The Execution log is an in-plan journal of confirmations during one task. `docs/WORKLOG.md` is the cross-session chronicle, single owner `/wrap-up`. They do not duplicate: the plan records the course of one task, WORKLOG the session summary.
+**Execution log ≠ session record.** The Execution log is an in-plan journal of confirmations during one task. The session record (`docs/sessions/`, one file per session, written at `/wrap-up`) is the cross-session summary; `docs/WORKLOG.md` is the earlier chronicle. They do not duplicate: the plan records the course of one task, the record the session summary.
 
 ## Binds these agents (rule is auto-loaded)
 
@@ -877,13 +877,17 @@ Defeat naive hardcoded returns by asserting behavior from **at least 2–3 disti
 <!-- END SOURCE docs/ai/rules/no-stubs.md -->
 
 
-<!-- SOURCE docs/ai/rules/output-language.md SHA256 9de049efae88c3cdf8938fff0f0dcb957b7c20c6e41ac2daad0c391a3852a0ea -->
+<!-- SOURCE docs/ai/rules/output-language.md SHA256 768338a905daaea7bb2f3f330b03d2cd33ac7fdec2297a88951ad1afae24c43a -->
 
 # Output language
 
-Honor the user's current language preference. Read an existing project-owned
-`.claude/rules/output-language.md` when present; never overwrite it on update.
-If neither the session nor project declares a preference, ask once.
+Honor the user's current language preference. Read the project-owned shared
+preference `docs/ai/overrides/output-language.md` when present; an unmigrated
+legacy `.claude/rules/output-language.md` stays readable until
+`python scripts/ai/project_state.py --root . --language --apply` moves it and
+leaves a pointer. Never overwrite either file on update, and write new
+preferences only to the shared file. If neither the session nor project
+declares a preference, ask once.
 
 <!-- END SOURCE docs/ai/rules/output-language.md -->
 
@@ -1308,7 +1312,7 @@ docker compose exec backend ruff check .
 <!-- END SOURCE docs/ai/rules/testing.md -->
 
 
-<!-- SOURCE docs/ai/rules/user-guides.md SHA256 7fd768cb12ab494c830bd88de2acf823ecf62c6357b1eee1e01e8691db0b8739 -->
+<!-- SOURCE docs/ai/rules/user-guides.md SHA256 d1614042e1ae92d2849b9eb8941639d7fefef5cd733ae17797f6a902a19fbd55 -->
 
 # User-facing guides (mandatory, enforced at the Quality Gate)
 
@@ -1345,7 +1349,7 @@ Keep both guides copy-paste runnable and **derived from what the project actuall
 
 The guides reference, never restate, the machine-checked sources:
 
-- **Endpoints / auth** mentioned in `api-consumer.md` MUST exist in `docs/api/openapi.yml` (the vendored external contract) and `.claude/memory/endpoints.json`. The contract is the source of truth; if the guide names an endpoint or auth scheme the schema lacks, the guide is wrong.
+- **Endpoints / auth** mentioned in `api-consumer.md` MUST exist in `docs/api/openapi.yml` (the vendored external contract) and `docs/project-state/endpoints.json`. The contract is the source of truth; if the guide names an endpoint or auth scheme the schema lacks, the guide is wrong.
 - **Management commands / data-loading** in `admin.md` MUST correspond to real commands in `backend/apps/**/management/commands/` or documented fixtures. `guide-writer` verifies these against the code before declaring the guide ready.
 
 This is the same anti-drift discipline as `app-readme.md` and `verification.md`: the human narrative is allowed to add *prose and ordering*, but every concrete command, route, and code it names must trace back to the code or schema.
@@ -1377,7 +1381,7 @@ There is **no standalone shell gate** for the guides (unlike `check_app_readmes.
 <!-- END SOURCE docs/ai/rules/user-guides.md -->
 
 
-<!-- SOURCE docs/ai/rules/verification.md SHA256 82aa7334e0007b72d2fc2b815990d296709999366d963c94b176e3294df536ad -->
+<!-- SOURCE docs/ai/rules/verification.md SHA256 b21c21796a10f975b6cc90c4bdff6f6d27afd8feb9066ae4f74bb2b1dff8fe6a -->
 
 # Endpoint verification handoff (mandatory, automatic block)
 
@@ -1398,13 +1402,13 @@ One markdown file per feature (slug matches the branch / feature name), written 
    - **Auth / error cases**: the negative checks that matter — anonymous -> **401**, other user -> **403**, bad body -> **400**, missing -> **404**, conflict -> **409** — each as a one-line `curl` + expected code. Only list the codes the contract actually declares.
 4. **Done when** — a short checklist the user ticks: every success case returns its code, every auth/error case returns its code.
 
-Keep it copy-paste runnable. Bodies and codes come from `.claude/memory/endpoints.json` and `docs/api/openapi.yml` (see below) — do not invent fields the schema does not have.
+Keep it copy-paste runnable. Bodies and codes come from `docs/project-state/endpoints.json` and `docs/api/openapi.yml` (see below) — do not invent fields the schema does not have.
 
-## Source of truth — `.claude/memory/endpoints.json` + the OpenAPI schema
+## Source of truth — `docs/project-state/endpoints.json` + the OpenAPI schema
 
 The verification guide is generated from a machine-readable route registry plus the committed (vendored external) OpenAPI schema, so it always matches the real contract:
 
-- **`.claude/memory/endpoints.json`** — the route registry. `api-architect` writes/updates an entry the moment it fixes a contract (phase 2), so the registry is the early, authoritative list of what the feature will expose. Schema per entry:
+- **`docs/project-state/endpoints.json`** — the route registry. `api-architect` writes/updates an entry the moment it fixes a contract (phase 2), so the registry is the early, authoritative list of what the feature will expose. Schema per entry:
 
   ```json
   {
@@ -1418,7 +1422,7 @@ The verification guide is generated from a machine-readable route registry plus 
   }
   ```
 
-  `auth` is one of `anonymous` | `authenticated` | `owner` | `admin`. `path` is the full versioned path (no trailing slash — ADR `0025`). The file is a JSON array of such objects. **Mapping to the contract-side registry:** the contract repo keeps its own committed `.claude/memory/endpoints.json` with a different schema (`operationId`, `scopes`, `auth: "bearerAuth"`, `surface`); this backend registry is derived from the contract in phase 2, not shared with it — `auth` here collapses the contract's `security` + `scopes` into four DRF-permission buckets, and `operationId`/`surface` are intentionally dropped (they matter to codegen/frontends, not to DRF tests).
+  `auth` is one of `anonymous` | `authenticated` | `owner` | `admin`. `path` is the full versioned path (no trailing slash — ADR `0025`). The file is a JSON array of such objects. **Mapping to the contract-side registry:** the contract repo keeps its own committed `docs/project-state/endpoints.json` with a different schema (`operationId`, `scopes`, `auth: "bearerAuth"`, `surface`); this backend registry is derived from the contract in phase 2, not shared with it — `auth` here collapses the contract's `security` + `scopes` into four DRF-permission buckets, and `operationId`/`surface` are intentionally dropped (they matter to codegen/frontends, not to DRF tests).
 
 - **`docs/api/openapi.yml`** — the **external contract** vendored from `claude-api-contract` (pulled via `scripts/pull_contract.sh`, pinned by `CONTRACT_VERSION`). The source of truth for field shapes and the final code set. The backend does not generate it.
 
@@ -1427,14 +1431,14 @@ The verification guide is generated from a machine-readable route registry plus 
 After GREEN, before the PR opens, `docs-writer` reconciles the routes across **three** sources and they MUST agree:
 
 ```
-.claude/memory/endpoints.json  <->  docs/api/openapi.yml  <->  docs/api/INDEX.md
+docs/project-state/endpoints.json  <->  docs/api/openapi.yml  <->  docs/api/INDEX.md
 ```
 
 `openapi.yml` (the external contract) is the **source of truth**. If `endpoints.json` or `INDEX.md` disagree (a renamed path, a dropped endpoint, a changed status code), they are wrong and get corrected to match the schema. Stale entries for endpoints no longer in the schema are removed from `endpoints.json`. This is the same discipline the README *Endpoints* section follows — `endpoints.json` simply makes it machine-checkable and feeds `/verify`.
 
 ## Lifecycle (per feature)
 
-1. **Phase 2 — contract.** `api-architect` appends/updates the feature's endpoints in `.claude/memory/endpoints.json` as part of fixing the contract (the contract is incomplete until the registry entry exists).
+1. **Phase 2 — contract.** `api-architect` appends/updates the feature's endpoints in `docs/project-state/endpoints.json` as part of fixing the contract (the contract is incomplete until the registry entry exists).
 2. **Phases 3-4 — RED/GREEN.** No verification work; the registry entry already exists.
 3. **Phase 6 — docs.** `docs-writer`:
    - runs the three-way reconciliation above;
@@ -1444,7 +1448,7 @@ After GREEN, before the PR opens, `docs-writer` reconciles the routes across **t
 
 ## Binds these agents (loaded per-agent via `@`-reference)
 
-- `api-architect` — the contract is incomplete until the feature's routes are recorded in `.claude/memory/endpoints.json` (method, path, app, auth, declared statuses).
+- `api-architect` — the contract is incomplete until the feature's routes are recorded in `docs/project-state/endpoints.json` (method, path, app, auth, declared statuses).
 - `docs-writer` — owns `docs/verify/<feature>.md`; runs the three-way reconciliation (`endpoints.json <-> openapi.yml <-> INDEX.md`) and generates the guide before declaring the PR ready.
 - `reviewer` — at the Quality Gate, flags a PR that adds/changes an endpoint without a matching `docs/verify/<feature>.md` or whose `endpoints.json` disagrees with the schema.
 - `tester` — the negative cases listed in the guide (401/403/400/404/409) must each correspond to a real test; the guide is the manual mirror of those tests, never a superset of what is tested.

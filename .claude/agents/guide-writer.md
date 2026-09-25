@@ -25,7 +25,7 @@ The narrative may add prose and ordering, but every concrete reference must trac
 # Endpoints/auth named in api-consumer.md must exist in the schema + registry
 grep -nE '/api/v1/[a-z0-9/_-]+' docs/guides/api-consumer.md
 test -f docs/api/openapi.yml && grep -nE 'paths:|/api/v1' docs/api/openapi.yml | head
-test -f .claude/memory/endpoints.json && cat .claude/memory/endpoints.json
+test -f docs/project-state/endpoints.json && cat docs/project-state/endpoints.json
 
 # Management commands named in admin.md must exist in the code
 ls backend/apps/*/management/commands/*.py 2>/dev/null

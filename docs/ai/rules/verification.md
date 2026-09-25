@@ -17,13 +17,13 @@ One markdown file per feature (slug matches the branch / feature name), written 
    - **Auth / error cases**: the negative checks that matter — anonymous -> **401**, other user -> **403**, bad body -> **400**, missing -> **404**, conflict -> **409** — each as a one-line `curl` + expected code. Only list the codes the contract actually declares.
 4. **Done when** — a short checklist the user ticks: every success case returns its code, every auth/error case returns its code.
 
-Keep it copy-paste runnable. Bodies and codes come from `.claude/memory/endpoints.json` and `docs/api/openapi.yml` (see below) — do not invent fields the schema does not have.
+Keep it copy-paste runnable. Bodies and codes come from `docs/project-state/endpoints.json` and `docs/api/openapi.yml` (see below) — do not invent fields the schema does not have.
 
-## Source of truth — `.claude/memory/endpoints.json` + the OpenAPI schema
+## Source of truth — `docs/project-state/endpoints.json` + the OpenAPI schema
 
 The verification guide is generated from a machine-readable route registry plus the committed (vendored external) OpenAPI schema, so it always matches the real contract:
 
-- **`.claude/memory/endpoints.json`** — the route registry. `api-architect` writes/updates an entry the moment it fixes a contract (phase 2), so the registry is the early, authoritative list of what the feature will expose. Schema per entry:
+- **`docs/project-state/endpoints.json`** — the route registry. `api-architect` writes/updates an entry the moment it fixes a contract (phase 2), so the registry is the early, authoritative list of what the feature will expose. Schema per entry:
 
   ```json
   {
@@ -37,7 +37,7 @@ The verification guide is generated from a machine-readable route registry plus 
   }
   ```
 
-  `auth` is one of `anonymous` | `authenticated` | `owner` | `admin`. `path` is the full versioned path (no trailing slash — ADR `0025`). The file is a JSON array of such objects. **Mapping to the contract-side registry:** the contract repo keeps its own committed `.claude/memory/endpoints.json` with a different schema (`operationId`, `scopes`, `auth: "bearerAuth"`, `surface`); this backend registry is derived from the contract in phase 2, not shared with it — `auth` here collapses the contract's `security` + `scopes` into four DRF-permission buckets, and `operationId`/`surface` are intentionally dropped (they matter to codegen/frontends, not to DRF tests).
+  `auth` is one of `anonymous` | `authenticated` | `owner` | `admin`. `path` is the full versioned path (no trailing slash — ADR `0025`). The file is a JSON array of such objects. **Mapping to the contract-side registry:** the contract repo keeps its own committed `docs/project-state/endpoints.json` with a different schema (`operationId`, `scopes`, `auth: "bearerAuth"`, `surface`); this backend registry is derived from the contract in phase 2, not shared with it — `auth` here collapses the contract's `security` + `scopes` into four DRF-permission buckets, and `operationId`/`surface` are intentionally dropped (they matter to codegen/frontends, not to DRF tests).
 
 - **`docs/api/openapi.yml`** — the **external contract** vendored from `claude-api-contract` (pulled via `scripts/pull_contract.sh`, pinned by `CONTRACT_VERSION`). The source of truth for field shapes and the final code set. The backend does not generate it.
 
@@ -46,14 +46,14 @@ The verification guide is generated from a machine-readable route registry plus 
 After GREEN, before the PR opens, `docs-writer` reconciles the routes across **three** sources and they MUST agree:
 
 ```
-.claude/memory/endpoints.json  <->  docs/api/openapi.yml  <->  docs/api/INDEX.md
+docs/project-state/endpoints.json  <->  docs/api/openapi.yml  <->  docs/api/INDEX.md
 ```
 
 `openapi.yml` (the external contract) is the **source of truth**. If `endpoints.json` or `INDEX.md` disagree (a renamed path, a dropped endpoint, a changed status code), they are wrong and get corrected to match the schema. Stale entries for endpoints no longer in the schema are removed from `endpoints.json`. This is the same discipline the README *Endpoints* section follows — `endpoints.json` simply makes it machine-checkable and feeds `/verify`.
 
 ## Lifecycle (per feature)
 
-1. **Phase 2 — contract.** `api-architect` appends/updates the feature's endpoints in `.claude/memory/endpoints.json` as part of fixing the contract (the contract is incomplete until the registry entry exists).
+1. **Phase 2 — contract.** `api-architect` appends/updates the feature's endpoints in `docs/project-state/endpoints.json` as part of fixing the contract (the contract is incomplete until the registry entry exists).
 2. **Phases 3-4 — RED/GREEN.** No verification work; the registry entry already exists.
 3. **Phase 6 — docs.** `docs-writer`:
    - runs the three-way reconciliation above;
@@ -63,7 +63,7 @@ After GREEN, before the PR opens, `docs-writer` reconciles the routes across **t
 
 ## Binds these agents (loaded per-agent via `@`-reference)
 
-- `api-architect` — the contract is incomplete until the feature's routes are recorded in `.claude/memory/endpoints.json` (method, path, app, auth, declared statuses).
+- `api-architect` — the contract is incomplete until the feature's routes are recorded in `docs/project-state/endpoints.json` (method, path, app, auth, declared statuses).
 - `docs-writer` — owns `docs/verify/<feature>.md`; runs the three-way reconciliation (`endpoints.json <-> openapi.yml <-> INDEX.md`) and generates the guide before declaring the PR ready.
 - `reviewer` — at the Quality Gate, flags a PR that adds/changes an endpoint without a matching `docs/verify/<feature>.md` or whose `endpoints.json` disagrees with the schema.
 - `tester` — the negative cases listed in the guide (401/403/400/404/409) must each correspond to a real test; the guide is the manual mirror of those tests, never a superset of what is tested.

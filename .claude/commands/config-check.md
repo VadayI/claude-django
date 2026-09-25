@@ -9,7 +9,7 @@ Quick audit of this project's **Claude configuration** — a thin wrapper over `
 
 This command does NOT reimplement audit logic. It runs `/doctor` restricted to the **`claude`** scope. Concretely:
 
-1. Run the **Runtime gate** exactly as `/doctor` Step 0.5 (read `.claude/memory/env-detect.json`; hard-STOP on `NO_ENV_DETECT` / `UNSUPPORTED_PLATFORM`). The config audit is meaningless if the runtime is unverified.
+1. Run the **Runtime gate** exactly as `/doctor` Step 0.5 (read `.ai-runtime/env-detect.json`; hard-STOP on `NO_ENV_DETECT` / `UNSUPPORTED_PLATFORM`). The config audit is meaningless if the runtime is unverified.
 2. Execute `/doctor` with scope `claude` (equivalent to the user running `/doctor claude`) — see `.claude/commands/doctor.md` Step 1, "Claude config & access" checks in `@.claude/rules/environment.md` Scope 2:
    - plugins installed match the **committed baseline defined authoritatively in `@.claude/rules/environment.md` Scope 2** (do NOT hardcode the list here — read it there to avoid drift) vs `.claude/settings.json` `enabledPlugins`. `claude-hud@claude-hud` and `engineering@knowledge-work-plugins` are **personal/global** installs (NOT committed); `code-review`/`code-simplifier`/`feature-dev`/`pr-review-toolkit`/`commit-commands` are intentionally absent (ADR `0011`/`0024`);
    - MCP for github + context7: provided by the **official plugins** `github@claude-plugins-official` + `context7@claude-plugins-official` (recommended baseline, ADR `0011`); the `.mcp.json` + `enabledMcpjsonServers` path is an optional fallback — flag if BOTH are enabled for the same MCP;

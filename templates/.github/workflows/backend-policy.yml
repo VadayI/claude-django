@@ -87,11 +87,11 @@ jobs:
       - name: Advisory — verify doc for endpoint changes
         run: |
           [ -s /tmp/changed.txt ] || exit 0
-          if grep -qE '^\.claude/memory/endpoints\.json$' /tmp/changed.txt; then
+          if grep -qE '^(docs/project-state|\.claude/memory)/endpoints\.json$' /tmp/changed.txt; then
             if grep -qE '^docs/verify/.+\.md$' /tmp/changed.txt; then
               echo "Verify doc updated alongside the endpoint change."
             else
-              echo "::notice::.claude/memory/endpoints.json changed without docs/verify/*.md. Regenerate the verification handoff (/verify). Advisory only."
+              echo "::notice::endpoints registry (docs/project-state/endpoints.json) changed without docs/verify/*.md. Regenerate the verification handoff (/verify). Advisory only."
             fi
           fi
 

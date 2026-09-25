@@ -83,7 +83,7 @@ docs/
   decisions/                # ADRs — architectural decision records
   plans/                    # work plans before non-trivial features
 scripts/
-  detect-env.py             # writes .claude/memory/env-detect.json on SessionStart
+  detect-env.py             # writes .ai-runtime/env-detect.json on SessionStart
   check_stubs.sh            # CI gate: forbids unlogged STUBs
   pull_contract.sh          # pull external contract openapi.yml@CONTRACT_VERSION
   check_contract_conformance.sh  # CI gate: validate impl vs pinned contract

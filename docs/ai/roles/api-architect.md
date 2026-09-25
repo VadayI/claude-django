@@ -13,7 +13,7 @@ For each endpoint in the pinned contract, record:
 - **Authorization**: who has access (anonymous / authenticated / owner / admin).
 - **Pagination / filters / sorting**: where applicable.
 
-After reading the contract, **record each route in `.claude/memory/endpoints.json`** (the machine-readable registry, per docs/ai/rules/verification.md). One JSON object per endpoint: `{method, path, app, feature, auth, statuses[], notes}`. The contract is incomplete until the registry entry exists — it feeds `/verify` and the verification handoff. Append/update; never duplicate an existing `method+path`.
+After reading the contract, **record each route in `docs/project-state/endpoints.json`** (the machine-readable registry, per docs/ai/rules/verification.md). One JSON object per endpoint: `{method, path, app, feature, auth, statuses[], notes}`. The contract is incomplete until the registry entry exists — it feeds `/verify` and the verification handoff. Append/update; never duplicate an existing `method+path`.
 
 ## Principles
 

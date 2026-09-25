@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Detect the runtime environment for claude-django commands.
 
-Writes ``.claude/memory/env-detect.json`` with the platform, shell, WSL2 status,
-and tool availability. Invoked by the ``SessionStart`` hook in
-``.claude/settings.json``. No caching — runs on every session start so the data
+Writes ``.ai-runtime/env-detect.json`` with the platform, shell, WSL2 status,
+and tool availability (a legacy ``.claude/memory/env-detect.json`` is moved there
+first by ``scripts/ai/project_state.py``; two differing copies are reported, never
+merged). Invoked by ``scripts/session-start.py`` (``SessionStart`` hook in
+``.claude/settings.json``) after the shared detector wrote
+``.ai-runtime/environment.json``. No caching — runs on every session start so the data
 is always fresh.
 
 Python is a HARD REQUIREMENT of this project. If Python cannot run, the hook
 itself fails and the user is told to install Python 3.10+.
 
-Output schema (``.claude/memory/env-detect.json``)::
+Output schema (``.ai-runtime/env-detect.json``)::
 
     {
       "schema_version": 6,
@@ -222,8 +225,32 @@ def _gh_scopes() -> list[str]:
     return []
 
 
+def _runtime_report_path() -> pathlib.Path:
+    """Resolve the canonical probe report path after migrating its legacy copy.
+
+    Returns: ``<root>/.ai-runtime/env-detect.json`` for the project that owns
+        this script.
+    Raises: ValueError when a differing legacy copy still exists (conflict) or
+        the path traverses a link; OSError when the legacy file cannot be moved.
+    Side effects: May move ``.claude/memory/env-detect.json`` (and the command
+        log) into ``.ai-runtime``; never touches project registries.
+    """
+    root = pathlib.Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root / "scripts" / "ai"))
+    import project_state  # noqa: E402  (vendored family core; jedyny resolver stanu)
+
+    project_state.migrate_runtime(root)
+    return project_state.writable_state_path(root, "env-detect.json", "runtime")
+
+
 def main() -> int:
-    """Detect the environment and write ``.claude/memory/env-detect.json``."""
+    """Detect the environment and write ``.ai-runtime/env-detect.json``.
+
+    Returns: 0 after the report is written; 1 when the runtime state cannot be
+        written because two differing copies exist or the path is unsafe.
+    Side effects: Moves a legacy runtime report, writes one JSON file; no Git,
+        DB, network or secret access beyond the documented ``gh`` probes.
+    """
     platform_supported = _platform_supported()
     pat_kind = _gh_pat_kind()
     # Fine-grained PATs (the recommended credential, ADR 0008) never expose
@@ -270,9 +297,12 @@ def main() -> int:
         "cwd": str(pathlib.Path.cwd()),
     }
 
-    out_dir = pathlib.Path(".claude/memory")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "env-detect.json"
+    try:
+        out_path = _runtime_report_path()
+    except (OSError, ValueError) as error:
+        print(f"detect-env: NOT_VERIFIED: {error}", file=sys.stderr)
+        return 1
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
 
     # One non-noisy summary line for the SessionStart hook output.
