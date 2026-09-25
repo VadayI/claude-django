@@ -157,9 +157,10 @@
       "sha256": "5f5a84216b5a8aca8d64c49704bb88b1413f6e506c3c81bf2f8dcdc05e863383"
     }
   },
-  "pin_status": "development",
+  "observed_upstream_main": "8a7b08021bc0370582a62b0940f36a8b5b206c32",
+  "pin_status": "integrated",
   "schema_version": 1,
-  "source_commit": "7d0571de2f36fa4f7e74864f35353a199ac3d69a",
+  "source_commit": "8a7b08021bc0370582a62b0940f36a8b5b206c32",
   "source_manifest_digest": "d6ee07d8ec7037a04af840c1a5940ccab4fa916033fe137145bfebbe28215264",
   "source_repository": "https://github.com/VadayI/claude-api-contract.git",
   "version": "0.2.0-dev"

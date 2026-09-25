@@ -1,3 +1,11 @@
+# 2026-09-25 — P08 integrated: core pinned to contract main `8a7b080`
+
+Branch `feat/p08-git-lifecycle` (PR #47). Contract PR #67 was merged by `git_lifecycle.py merge` as `8a7b080` and cleaned by `git_lifecycle.py cleanup`; PR #47 merges on the user's command of 2026-09-25 (D01).
+
+- `docs/ai/core-source.json`: `pin_status: integrated`, `source_commit` = `observed_upstream_main` = `8a7b08021bc0370582a62b0940f36a8b5b206c32`. `tests/test_ai_delivery.py` asserts the integrated pin again.
+- This session: `docs/sessions/20260925T211629Z-claude-9ce3f4.md` (task, checks, limitations, next step).
+- Next: P10 (onboarding) / P11 (readiness agent). The P07/P08 runtime acceptance run (docs/ai/session-continuity.md) is still NOT_VERIFIED.
+
 # 2026-09-25 — P08 Git lifecycle (development core)
 
 Branch `feat/p08-git-lifecycle` from `main`; draft PR pending (the user publishes). Nothing is merged (D01).

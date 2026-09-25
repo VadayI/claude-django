@@ -3,9 +3,9 @@
 P04 supplies the editable catalog, all 22 complete rule sources, four selected
 role contracts, full generated packs and Claude/Codex entry points. This is
 production **structure**, not a claim of application/deployment readiness.
-The family core is pinned without local edits; this P08 review branch uses the
-development pin `7d0571de2f36fa4f7e74864f35353a199ac3d69a` (`docs/ai/core-source.json`,
-`pin_status: development`) until the contract P08 PR merges.
+The family core is pinned to integrated contract main commit
+`8a7b08021bc0370582a62b0940f36a8b5b206c32` without local edits
+(`docs/ai/core-source.json`, `pin_status: integrated`).
 
 Edit `docs/ai/rules`, `docs/ai/roles`, and `docs/ai/workflows`; then run:
 
