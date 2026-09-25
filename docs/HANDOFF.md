@@ -1,3 +1,11 @@
+# 2026-09-25 — P08 Git lifecycle (development core)
+
+Branch `feat/p08-git-lifecycle` from `main`; draft PR pending (the user publishes). Nothing is merged (D01).
+
+- Finalize with `python scripts/ai/git_lifecycle.py`: `inspect --fetch` → `commit --path …` → `verify` → `share --title … --body-file …` → on the user's command `merge --pr N --expect-head SHA` → `cleanup` (docs/ai/git-lifecycle.md). Exit 3 means incomplete/not verified; read the reported state.
+- This session: `docs/sessions/20260925T100942Z-claude-893e18.md` (task, checks, limitations, next step).
+- Next: publish and review; merge the contract P08 PR first, then repin Django/React to the integrated core. Windows and real-GitHub runs of the CLI are NOT_VERIFIED.
+
 # 2026-09-25 — P07 integrated: core pinned to contract main `db342b7`
 
 Branch `feat/p07-shared-memory` (PR #46): `main` merged in after fix PR #45 (`2bc0d76`), then the integrated repin. Contract PR #66 is merged as `db342b7`; PR #46 merges on the user's command of 2026-09-25 (D01).
