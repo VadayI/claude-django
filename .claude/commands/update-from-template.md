@@ -8,7 +8,7 @@ Update a **derived project** (one bootstrapped from `claude-django`) to a newer 
 ## Input
 
 `$ARGUMENTS` (all optional):
-- an **upstream repo URL or git ref** — optional. The **canonical upstream is `https://github.com/VadayI/claude-django.git`** (its default branch HEAD), and that is what runs with no argument. Pass a URL/ref ONLY to sync from a different source (e.g. your own fork or a pinned tag). The last-used URL is recorded in `.claude/memory/template-sync.json` for the change report, but the default source is always the canonical repo above.
+- an **upstream repo URL or git ref** — optional. The **canonical upstream is `https://github.com/VadayI/claude-django.git`** (its default branch HEAD), and that is what runs with no argument. Pass a URL/ref ONLY to sync from a different source (e.g. your own fork or a pinned tag). The last-used URL is recorded in `docs/project-state/template-lineage.json` for the change report, but the default source is always the canonical repo above.
 - **`--dry-run`** — report what WOULD change without writing any files.
 
 ## Preconditions
@@ -30,14 +30,14 @@ Update a **derived project** (one bootstrapped from `claude-django`) to a newer 
    git checkout main && git pull
    git checkout -b chore/sync-template-$(date +%Y%m%d)
    ```
-3. **Dispatch `template-sync`** (`subagent_type: "template-sync"`) with `$UPSTREAM=/tmp/claude-django` and the dry-run flag if present. It performs the categorized sync (template-owned overwrite · merge-by-hand diff · project-owned untouched), wires any new gate scripts into the live `scripts/` + `.github/workflows/backend-ci.yml`, writes `.claude/memory/template-sync.json`, and returns the change report.
+3. **Dispatch `template-sync`** (`subagent_type: "template-sync"`) with `$UPSTREAM=/tmp/claude-django` and the dry-run flag if present. It performs the categorized sync (template-owned overwrite · merge-by-hand diff · project-owned untouched), wires any new gate scripts into the live `scripts/` + `.github/workflows/backend-ci.yml`, writes `docs/project-state/template-lineage.json`, and returns the change report.
 4. **Relay** the report. Highlight the **merge-by-hand** items (CLAUDE.md / settings.json / live CI) so the user reviews those hunks, and the **Stale** section (template-owned files removed/renamed upstream) so the user can decide on manual cleanup — the sync never auto-deletes.
 5. **Open a PR** (skip on `--dry-run`): hand off to `docs-writer` (or run `/create-pr`) with a description summarizing the synced SHA range and the merge-by-hand files to review. **Never push to `main`.**
 
 ## Hard limits
 
 - **PR-only** — no direct commit/push to `main`; the sync lands as a reviewable PR.
-- Never overwrite project-owned files (`.claude/memory/*`, `.claude/rules/output-language.md`, `docs/**`, `backend/**`, `.env`).
+- Never overwrite project-owned files (`docs/project-state/*`, `.claude/rules/output-language.md`, `docs/**`, `backend/**`, `.env`).
 - Never replace `CLAUDE.md` / `.claude/settings.json` / `.mcp.json` / live CI wholesale — additive merge only.
 - Never print secret values.
 

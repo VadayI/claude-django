@@ -2,7 +2,7 @@
 
 Long-term, cross-session backlog for this project — items that survive between `claude` sessions (unlike in-conversation tasks managed by `TaskCreate`/`TaskUpdate`).
 
-The `auditor` agent (`/audit`) reads this file alongside `.claude/memory/command-log.jsonl` when proposing the next command. The `docs-writer` agent updates this file at `/wrap-up` and `/update-docs`.
+The `auditor` agent (`/audit`) reads this file alongside `.ai-runtime/command-log.jsonl` when proposing the next command. The `docs-writer` agent updates this file at `/wrap-up` and `/update-docs`.
 
 ## Format
 

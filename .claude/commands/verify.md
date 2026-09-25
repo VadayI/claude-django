@@ -8,12 +8,12 @@ Generate (and optionally run) the **human-facing endpoint verification guide** f
 ## Input
 
 `$ARGUMENTS`:
-- a **feature slug** (e.g. `article-crud`) — which feature to (re)generate. If empty, ask via `AskUserQuestion`, defaulting to the current branch name stripped of its `feat/|fix/|chore/` prefix. `all` regenerates every feature present in `.claude/memory/endpoints.json`.
+- a **feature slug** (e.g. `article-crud`) — which feature to (re)generate. If empty, ask via `AskUserQuestion`, defaulting to the current branch name stripped of its `feat/|fix/|chore/` prefix. `all` regenerates every feature present in `docs/project-state/endpoints.json`.
 - optional flag **`--run`** — after generating, execute the guide against a live server and report pass/fail.
 
 ## Preconditions
 
-- `.claude/memory/endpoints.json` exists and is non-empty (the route registry written by `api-architect`). If missing/empty -> STOP: "no recorded endpoints; run the feature pipeline (api-architect records routes) first."
+- `docs/project-state/endpoints.json` exists and is non-empty (the route registry written by `api-architect`). If missing/empty -> STOP: "no recorded endpoints; run the feature pipeline (api-architect records routes) first."
 - `docs/api/openapi.yml` exists (the vendored external contract — source of truth, ADR 0017). If missing -> warn that field shapes can't be verified against the schema and proceed from `endpoints.json` only.
 
 ## Steps
@@ -23,7 +23,7 @@ Generate (and optionally run) the **human-facing endpoint verification guide** f
 Before generating, confirm the three sources agree per `@.claude/rules/verification.md`:
 
 ```
-.claude/memory/endpoints.json  <->  docs/api/openapi.yml  <->  docs/api/INDEX.md
+docs/project-state/endpoints.json  <->  docs/api/openapi.yml  <->  docs/api/INDEX.md
 ```
 
 `openapi.yml` is the source of truth. If `endpoints.json` disagrees (renamed path, dropped endpoint, changed status), report the drift and dispatch `docs-writer` to correct `endpoints.json` / `INDEX.md` to match the schema — do NOT silently generate from a stale registry.

@@ -130,19 +130,19 @@
     },
     "docs/ai/generated/role-packs/api-architect.md": {
       "ownership": "template",
-      "sha256": "cfdc53936a3fbb3985b22a3665eecc449d79be8e9793bbc6e408f4a4f3ddfc8f"
+      "sha256": "8e72cc7575f2756401bda371684bb5e73f441ee48d15cc560b0d970cce136e61"
     },
     "docs/ai/generated/role-packs/django-developer.md": {
       "ownership": "template",
-      "sha256": "077d98e5ef3647da96ab21707bd526cf4dffc5a949f3db3a7ed720d2129c61dc"
+      "sha256": "2aeeef466bd0a56544fb8fe0e46900f526ed20b0378fdf3d8b7eab67442c6fff"
     },
     "docs/ai/generated/role-packs/reviewer.md": {
       "ownership": "template",
-      "sha256": "595b2bac882cdcb39b7aba59b458cef36f500ff6ca37297f3e08e4f696622f1a"
+      "sha256": "6be999e298b0869b559c0062c75957cba3ae0840f479c0bb5b33b6ad50d4beef"
     },
     "docs/ai/generated/role-packs/tester.md": {
       "ownership": "template",
-      "sha256": "6e2cb35f6b86e404d94eef3e51b850a084aea8b57bbd6c5820e466190d0f8886"
+      "sha256": "c9523d22252e8b8a935e4f5011da1eb0ecde384cd1ea7157ae711e5875572e72"
     }
   },
   "generator": "family-core",
@@ -150,18 +150,18 @@
   "sources": {
     "AGENTS.md": "9bbe24bf7904e321c9fb5ac72dd743b8ac11f28192cadb6898c6b1582e4ac940",
     "docs/ai/catalog.json": "3f34d69f6eecd6db934b631ca257b25a2f6033ce7c87022b10542c143f43c5a4",
-    "docs/ai/roles/api-architect.md": "960088a42723ccf06002ef77b59f1bec50721874acefb1aeb029c283988efb6d",
+    "docs/ai/roles/api-architect.md": "aebddcbfccdd1391ac52c99988c1b8cd33ea8275377e16126bdad18a51e70bec",
     "docs/ai/roles/django-developer.md": "e5c0361bf84753a1baa3876e2f073cccb04cba220fbfcb47f1d126cdbbda8886",
     "docs/ai/roles/reviewer.md": "b69e0cceb309b7982edbe31861e604de5973bbdb528188dc7c1f03a4b0ed5d77",
     "docs/ai/roles/tester.md": "9ab96be9825e709b82dd381475dd0d799ad1a8381ecac576fbb3cd4c56e66965",
-    "docs/ai/rules/api-docs.md": "419a1ec2b4004558a62f77f8f8257bc5674707baa0b622d62aa40ca6ff245570",
+    "docs/ai/rules/api-docs.md": "d16c9a392fa795c44dae404bbd5261cf1f5bed1dd9a62be1afdb959e5000911e",
     "docs/ai/rules/app-readme.md": "9cef659cf2c333bed0b109272479b461bfa30a73bb1e2324452f671aa39d75c2",
     "docs/ai/rules/architecture.md": "45fc36cbffce5a5d7fef60d2574774c420c3dab7e522a8ab6e3c8ae93ea56c7e",
     "docs/ai/rules/code-style.md": "4b56a9dfb90a0a22279a4616796a1bd046c433140f2822a3f6b8769a64dd1c1e",
     "docs/ai/rules/deviation-register.md": "0940d8cd41dd5680a4c967884226eda6ee0b10ecabb29e0d0b22d2e5d9abcfbf",
-    "docs/ai/rules/docker-commands.md": "c6841088a823dbc849f7d4f8d91b6bb1180c0e76dfc8fc6a895d79339a742c33",
-    "docs/ai/rules/environment.md": "47f5426149cebf234a93d2fbee9d6d45d51084719ae6fa1327b2c415bc26c33f",
-    "docs/ai/rules/git-operations.md": "0ca0d9acd220e6b8359079f467ffd5309a57bc19c180da9aca4292654ab0e1f2",
+    "docs/ai/rules/docker-commands.md": "1a46c42a03ac87dd4e40dd4251e426b8f8f3bda59cf393b1466742753880aefb",
+    "docs/ai/rules/environment.md": "856c0b91cdd24603d526bef0ec8793249d6deef45805e19deb0ae0fcc7f3f9ab",
+    "docs/ai/rules/git-operations.md": "1c5ea9a41b22e457c687d92cfc18e005be427bdf3345ee79b3431edbecdd3c9b",
     "docs/ai/rules/living-plan.md": "2de9e6f8a0fb14d4f17406a37440c5bac39603a83ed2e8e1e0e6a2dfec88f763",
     "docs/ai/rules/mcp-stack.md": "9ed71f1488604dfc9b050ee730867d53ebed857b1891cb7414f0b061e82de41a",
     "docs/ai/rules/migrations-tasks.md": "9e3dc81e26782de61bd81a2dc04857bba014a0b89428efccef1fb4b59af7a7a3",
@@ -173,10 +173,10 @@
     "docs/ai/rules/simplicity-surgical.md": "ba7142b621b9cf458bae4006beaa1a8d24449d52c63495f6caf8d08595a4a9b6",
     "docs/ai/rules/tdd.md": "1d610e093d0b0910dfadb84f66d3e66eb3e53566ff38a7ae7c1287b3f0dceb6c",
     "docs/ai/rules/testing.md": "a637acb85daae8f9c6476a4d1df4ae52164acba49262d83e1b6f018300a492ca",
-    "docs/ai/rules/user-guides.md": "7fd768cb12ab494c830bd88de2acf823ecf62c6357b1eee1e01e8691db0b8739",
-    "docs/ai/rules/verification.md": "82aa7334e0007b72d2fc2b815990d296709999366d963c94b176e3294df536ad",
-    "docs/ai/rules/workflow.md": "1d4227ad077482a10bb7c376c0f791cf0027187d0a7e924a36aa7454b0099325",
-    "docs/ai/workflows/bootstrap.md": "dc3b866c2a603dbba5f656ab19183cdaae9010b52b52ea08bed45843551a9d66",
-    "docs/ai/workflows/orchestrate.md": "1d4227ad077482a10bb7c376c0f791cf0027187d0a7e924a36aa7454b0099325"
+    "docs/ai/rules/user-guides.md": "d1614042e1ae92d2849b9eb8941639d7fefef5cd733ae17797f6a902a19fbd55",
+    "docs/ai/rules/verification.md": "b21c21796a10f975b6cc90c4bdff6f6d27afd8feb9066ae4f74bb2b1dff8fe6a",
+    "docs/ai/rules/workflow.md": "850dc1ce62076fe5c87402a6cf8fa99b2731f864db9075a7c30cca1f2e87233b",
+    "docs/ai/workflows/bootstrap.md": "e0d68cc68c5112ac582d6b237f6740a67608a8f27ec7d89123c30e1b80d1102b",
+    "docs/ai/workflows/orchestrate.md": "850dc1ce62076fe5c87402a6cf8fa99b2731f864db9075a7c30cca1f2e87233b"
   }
 }

@@ -30,7 +30,7 @@ Optional `$ARGUMENTS`: a short note about the session focus/outcome. If empty, i
      - Next steps: ...
      ```
    - If the user corrected your approach this session, add a note to `docs/lessons.md`.
-   - If durable project facts changed, update `.claude/memory/`.
+   - If durable project facts changed, update `docs/project-state/` (registries, lineage); legacy `.claude/memory/` copies are migrated with `python scripts/ai/project_state.py --root . --apply`, never edited in parallel.
    - If a notable architectural decision was made, add an ADR in `docs/decisions/NNNN-*.md`.
    - **Regenerate `docs/HANDOFF.md` by running `/handoff`** — the single source of HANDOFF generation. Do NOT restate or duplicate its logic here. This is mandatory: a wrap-up that leaves `HANDOFF.md` full of `{TODO}` placeholders has not finished. After `/handoff` returns, verify its output — confirm `grep -c '{TODO}' docs/HANDOFF.md` is `0` (the carry-over `## Open questions` / `## Environment notes` sections may legitimately keep a `{TODO}`, but the state sections must be filled).
 
@@ -42,7 +42,7 @@ Optional `$ARGUMENTS`: a short note about the session focus/outcome. If empty, i
    ```
    Report any residual `# STUB:` / `NotImplementedError` and whether each is logged in `docs/STUBS.md` (per @.claude/rules/no-stubs.md).
 
-5. **Show the working state** and enumerate the doc files this command touched so none is silently left behind (`docs/WORKLOG.md`, `docs/HANDOFF.md`, and any `docs/lessons.md` / ADR / `.claude/memory/` edits):
+5. **Show the working state** and enumerate the doc files this command touched so none is silently left behind (`docs/WORKLOG.md`, `docs/HANDOFF.md`, and any `docs/lessons.md` / ADR / `docs/project-state/` edits):
    ```bash
    git status -sb
    git --no-pager diff --stat

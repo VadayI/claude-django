@@ -226,7 +226,7 @@ class DeliveryTests(unittest.TestCase):
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
         # Tymczasowy pin deweloperski na rewizję P07 core (feat/p07-shared-memory);
         # po scaleniu contract PR wrócić do integrated pin i observed_upstream_main.
-        self.assertEqual(receipt["source_commit"], "1235a23f8f77d7dff4e91e039cf60877ae794ce9")
+        self.assertEqual(receipt["source_commit"], "0e3f4cdf9e9b7cc1197636cd0fe2ba0f9dfdecba")
         self.assertEqual(receipt["pin_status"], "development")
         self.assertNotIn("observed_upstream_main", receipt)
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))

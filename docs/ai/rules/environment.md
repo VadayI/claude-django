@@ -2,11 +2,11 @@
 
 This file defines the **expected local environment** for a `claude-django` project. The `/doctor` command checks the live machine against this spec and proposes fixes. Keep this file authoritative: if the required setup changes, change it here first.
 
-> Philosophy: detect → report → propose → **fix only after the user confirms**. `/doctor` reads `.claude/memory/env-detect.json` (written by the `SessionStart` hook) to pick shell-appropriate checks, never auto-fixes risky/irreversible things, never pushes to `main`, and never prints secret values.
+> Philosophy: detect → report → propose → **fix only after the user confirms**. `/doctor` reads `.ai-runtime/env-detect.json` (written by the `SessionStart` hook) to pick shell-appropriate checks, never auto-fixes risky/irreversible things, never pushes to `main`, and never prints secret values.
 
 ## Scope 1 — System tools
 
-The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Windows use the PowerShell or Git Bash equivalents. Native Windows is supported — the per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`). The shell is auto-detected by `scripts/detect-env.py` on every session start and stored in `.claude/memory/env-detect.json`.
+The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Windows use the PowerShell or Git Bash equivalents. Native Windows is supported — the per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`). The shell is auto-detected by `scripts/detect-env.py` on every session start and stored in `.ai-runtime/env-detect.json`.
 
 | Requirement | Expected | Check (bash) |
 |---|---|---|
@@ -26,7 +26,7 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Wi
 Native Windows is a first-class runner (ADR `0022`). Launch `claude` from
 PowerShell or Git Bash in the project directory; the `SessionStart` hook runs
 `python scripts/session-start.py` (cross-platform — no bash), writes
-`.claude/memory/env-detect.json` with `platform_supported: true`,
+`.ai-runtime/env-detect.json` with `platform_supported: true`,
 `platform: windows`, and `shell: powershell` (or `git-bash`), and `/doctor`
 passes the platform gate.
 
@@ -59,11 +59,11 @@ in env-detect schema v6).
 | `CONTEXT7_API_KEY` | set — provide via the project `.env` (parsed literally by `scripts/claude.sh` / `make cc`); the context7 plugin (or the `.mcp.json` fallback) needs it for doc lookups. See ADR `0023`. | `[ -n "$CONTEXT7_API_KEY" ]` (never print the value) |
 | GitHub auth | `gh` authenticated (via env token OR stored creds — either is fine; if `GITHUB_TOKEN`/`GITHUB_PERSONAL_ACCESS_TOKEN` is set, `gh auth login` will refuse to store separate creds and that is EXPECTED) | `gh auth status` |
 | `gh` token — repo access | Per ADR `0008`: the repo is created **by hand**, access is a **fine-grained per-repo token**. Fine-grained tokens carry no OAuth scopes, so `scopes` is empty — that is EXPECTED, not a failure. Required repository permissions on the target repo: **Contents** RW, **Metadata** RO (auto), **Pull requests** RW, **Workflows** RW, **Administration** RW (branch protection). | Capability is verified by `gh repo view <owner>/<repo>`, not by scopes. `/bootstrap` and `/doctor` print a template URL: `https://github.com/settings/personal-access-tokens/new?...&contents=write&pull_requests=write&workflows=write&administration=write` (classic PATs still gate on `repo`+`workflow`) |
-| `gh` PAT kind | **Fine-grained** (`github_pat_...`) is RECOMMENDED (ADR `0008`) and is NOT a blocker — `FINE_GRAINED_PAT_NOT_SUPPORTED` is retired. A `classic` PAT (`ghp_...`) also works but grants whole-account access (discouraged). | `python -c "import json,pathlib; print(json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())['gh']['pat_kind'])"` — either `fine-grained` (preferred) or `classic` is accepted |
+| `gh` PAT kind | **Fine-grained** (`github_pat_...`) is RECOMMENDED (ADR `0008`) and is NOT a blocker — `FINE_GRAINED_PAT_NOT_SUPPORTED` is retired. A `classic` PAT (`ghp_...`) also works but grants whole-account access (discouraged). | `python -c "import json,pathlib; print(json.loads(pathlib.Path('.ai-runtime/env-detect.json').read_text())['gh']['pat_kind'])"` — either `fine-grained` (preferred) or `classic` is accepted |
 
 ### env-detect.json integrity (hard rule)
 
-`.claude/memory/env-detect.json` is the source of truth for `platform_supported`, `gh.pat_kind`, `gh.scopes`, and tool availability. It is rewritten by `scripts/detect-env.py` via the `SessionStart` hook on every Claude Code CLI session.
+`.ai-runtime/env-detect.json` is the source of truth for `platform_supported`, `gh.pat_kind`, `gh.scopes`, and tool availability. It is rewritten by `scripts/detect-env.py` via the `SessionStart` hook (`scripts/session-start.py`) on every Claude Code CLI session, right after the shared detector wrote `.ai-runtime/environment.json`. A legacy `.claude/memory/env-detect.json` is moved to `.ai-runtime/` by the probe; two differing copies are reported, never merged. The mechanical gate `python scripts/policy/runtime_gate.py` no longer reads this file at all — it calls the shared detector in-process, so a fabricated report cannot satisfy it.
 
 **Never hand-write or "patch" this file** to skip past a blocker. The file's fields drive `/bootstrap` and `/doctor` hard gates (`UNSUPPORTED_PLATFORM`, `NO_NODE`, `NO_GH_SCOPES`); fabricated values silently bypass safety checks. If the file is missing:
 
@@ -77,7 +77,7 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 
 | Requirement | Expected | Check |
 |---|---|---|
-| Skeleton | `backend/`, `docs/api/`, `docs/decisions/`, `docs/plans/`, `.claude/memory/` exist | `test -d <dir>` |
+| Skeleton | `backend/`, `docs/api/`, `docs/decisions/`, `docs/plans/`, `docs/project-state/` exist | `test -d <dir>` |
 | `CONTRACT_VERSION` pin | set in `.env` to the consumed `claude-api-contract` tag (`vX.Y.Z`); raising it is a deliberate PR (ADR `0017`). `CONTRACT_URL` (optional) is a **fetch-only** override — the drift `--check` still validates against the pin (ADR `0025`) | `grep -q '^CONTRACT_VERSION=' .env` |
 | External contract vendored | `docs/api/openapi.yml` present, fetched at the pinned version via `scripts/pull_contract.sh` (vendored copy of the external canon, never generated) | `test -f docs/api/openapi.yml` |
 | CI drift-gate armed | GitHub Actions repository variable `CONTRACT_VERSION` set and equal to the `.env` pin — `backend-ci.yml` runs the drift gate only `if: vars.CONTRACT_VERSION != ''` (`/bootstrap` sets it; re-set on every pin raise, ADR `0025`) | `gh variable get CONTRACT_VERSION` — non-empty, equals the `.env` value |

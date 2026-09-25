@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Claude SessionStart adapter for explicit environment detection.
 
-The detector may update its documented runtime report. The adapter never
-touches Git locks, secrets, dependencies, services, or project files.
+Runs two visible probes and reports their real exit status: the shared family
+detector (``scripts/ai/detector.py --write`` → ``.ai-runtime/environment.json``)
+and the Django stack probe (``scripts/detect-env.py`` → ``.ai-runtime/env-detect.json``).
+The adapter never touches Git locks, secrets, dependencies, services, or
+project files.
 """
 
 from pathlib import Path
@@ -12,27 +15,39 @@ import sys
 
 
 def main() -> int:
-    """Run the project's detector and expose its real exit status.
+    """Run the shared detector and the stack probe, exposing the first failure.
 
     Args: None; the script path identifies the project root.
-    Returns: The detector exit code, or 2 if a suitable Python cannot start it.
+    Returns: 0 when both probes succeed, the first nonzero probe exit code
+        otherwise, or 2 if a suitable Python cannot start them.
     Raises: None; supported launch errors are reported on stderr.
-    Side effects: Runs detect-env.py, which may write its documented runtime
-        report. No Git lock deletion, env seeding, Docker, install, database,
-        secret read, push, merge, or project file mutation occurs here.
-    Business rule: Failed detection is visible rather than a green session.
+    Side effects: Runs detector.py and detect-env.py, which write only their
+        documented gitignored runtime reports. No Git lock deletion, env
+        seeding, Docker, install, database, secret read, push, merge, or
+        project file mutation occurs here.
+    Business rule: Failed detection is visible rather than a green session; a
+        failing shared detector does not skip the stack probe.
     """
     root = Path(__file__).resolve().parent.parent
-    detector = root / "scripts" / "detect-env.py"
     launcher = os.environ.get("AI_PYTHON", sys.executable)
     if launcher == sys.executable and sys.version_info < (3, 13):
         print("session-start: set AI_PYTHON to Python 3.13+", file=sys.stderr)
         return 2
-    try:
-        return subprocess.run([launcher, str(detector)], cwd=root, check=False).returncode
-    except OSError as error:
-        print(f"session-start: detector unavailable: {error}", file=sys.stderr)
-        return 2
+    # Kolejność: wspólny detektor (raport kanoniczny), potem probe stacku Django.
+    commands = (
+        [launcher, str(root / "scripts" / "ai" / "detector.py"), "--repository", str(root), "--write"],
+        [launcher, str(root / "scripts" / "detect-env.py")],
+    )
+    status = 0
+    for argv in commands:
+        try:
+            code = subprocess.run(argv, cwd=root, check=False).returncode
+        except OSError as error:
+            print(f"session-start: detector unavailable: {error}", file=sys.stderr)
+            return 2
+        if code and not status:
+            status = code
+    return status
 
 
 if __name__ == "__main__":

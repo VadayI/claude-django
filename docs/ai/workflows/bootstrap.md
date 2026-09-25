@@ -28,7 +28,7 @@ Classify the project state via this Python probe. Run it before asking the user 
 ```bash
 python -c "
 import json, pathlib, subprocess, sys
-envf = pathlib.Path('.claude/memory/env-detect.json')
+envf = pathlib.Path('.ai-runtime/env-detect.json')
 if not envf.is_file():
     print('NO_ENV_DETECT'); sys.exit(0)
 has_git = pathlib.Path('.git').is_dir()
@@ -49,15 +49,15 @@ else:
 ```
 
 - `MODE_A` -> fresh scaffold (no `backend/` yet). The GitHub repo is created by **you** beforehand (ADR `0008`); Mode A links to it, it does not create it. Proceed with the Mode A flow below.
-- `MODE_B` -> resume; proceed with the Mode B flow below. **Foreign-project guard (ADR `0026`):** Mode B assumes template lineage (the backend was scaffolded by Mode A). If the probes show a backend WITHOUT the template shape (no `apps/common`, no `config/settings/` package, no `CONTRACT_VERSION` in `.env.example`) and `.claude/memory/template-sync.json` is absent — STOP and recommend `/adopt`: PR-ing template pieces into a foreign layout produces misplaced files.
+- `MODE_B` -> resume; proceed with the Mode B flow below. **Foreign-project guard (ADR `0026`):** Mode B assumes template lineage (the backend was scaffolded by Mode A). If the probes show a backend WITHOUT the template shape (no `apps/common`, no `config/settings/` package, no `CONTRACT_VERSION` in `.env.example`) and `docs/project-state/template-lineage.json` is absent — STOP and recommend `/adopt`: PR-ing template pieces into a foreign layout produces misplaced files.
 - `MODE_AMBIGUOUS` -> STOP, ask via the runtime's question interface. Special hard guard: if `backend/manage.py` exists but `.git/` does NOT, do NOT auto-pick Mode A — stop with `BACKEND_WITHOUT_GIT, manual intervention required`. If the backend predates this config (a **foreign** project), `/adopt` is the right tool — never Mode A (ADR `0026`).
-- `NO_ENV_DETECT` -> **STOP immediately.** `.claude/memory/env-detect.json` is absent, so the runtime is unverified and the hard preflight below cannot be evaluated. See `NO_ENV_DETECT` under *Per-flag remediation*. Do NOT proceed, do NOT fabricate the file.
+- `NO_ENV_DETECT` -> **STOP immediately.** `.ai-runtime/env-detect.json` is absent, so the runtime is unverified and the hard preflight below cannot be evaluated. See `NO_ENV_DETECT` under *Per-flag remediation*. Do NOT proceed, do NOT fabricate the file.
 
 ## Hard preflight (refuse to start if any blocker is true)
 
-> **Runtime policy.** Run `python scripts/detect-env.py` explicitly in the actual execution environment before mode detection. The legacy report is transitional until the P07 project-state migration; never fabricate it, infer host capabilities from a sandbox, or require a Claude hook when an explicit probe succeeds. Python 3.13+ is required.
+> **Runtime policy.** Run `python scripts/detect-env.py` explicitly in the actual execution environment before mode detection. The stack report lives in gitignored `.ai-runtime/env-detect.json` (P07 project state); a leftover `.claude/memory/env-detect.json` is moved there by the probe itself. Never fabricate it, infer host capabilities from a sandbox, or require a Claude hook when an explicit probe succeeds. Python 3.13+ is required.
 
-Read `.claude/memory/env-detect.json` first (the `SessionStart` hook keeps it fresh).
+Read `.ai-runtime/env-detect.json` first (the `SessionStart` hook keeps it fresh).
 
 ### Blockers (STOP if any are present)
 
@@ -66,7 +66,7 @@ python scripts/policy/runtime_gate.py   # NO_ENV_DETECT / UNSUPPORTED_PLATFORM <
 # Only on RUNTIME_OK, check the bootstrap-specific blockers:
 python -c "
 import json, pathlib
-env = json.loads(pathlib.Path('.claude/memory/env-detect.json').read_text())
+env = json.loads(pathlib.Path('.ai-runtime/env-detect.json').read_text())
 flags = []
 if not env['tools'].get('gh'):     flags.append('NO_GH_BIN')
 if not env['tools'].get('docker'): flags.append('NO_DOCKER')
@@ -220,7 +220,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
    probe are idempotent and will pick up the existing repo.
 
 2. **Skeleton** — dispatch `devops` (`subagent_type: "devops"`) to:
-   - `mkdir -p backend docs/api docs/verify docs/guides docs/decisions docs/plans .claude/memory scripts`
+   - `mkdir -p backend docs/api docs/verify docs/guides docs/decisions docs/plans docs/project-state scripts`
    - Copy templates:
      - `templates/backend.Dockerfile` -> `backend/Dockerfile`
      - `templates/pyproject.toml` -> `backend/pyproject.toml`
@@ -235,7 +235,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
      - `templates/apps_common/` -> `backend/apps/common/` (**recursive**, including `tests/` — the cross-cutting `common` app: error envelope, `Conflict`, OpenAPI envelope hook, plus the test-only convention suite). Copy with `cp -r templates/apps_common backend/apps/common`. See docs/ai/rules/serializers-permissions.md and docs/ai/rules/architecture.md. This makes the DRF conventions part of every new project's scaffold, not just a written rule.
      - `templates/lessons.md` -> `docs/lessons.md` (append-only feedback log; maintained by `docs-writer` at `/wrap-up`)
      - `templates/todo.md` -> `docs/todo.md` (cross-session backlog; read by `auditor` at `/audit`)
-     - `templates/endpoints.json` -> `.claude/memory/endpoints.json` (route registry; written by `api-architect`, feeds `/verify` — see docs/ai/rules/verification.md)
+     - `templates/endpoints.json` -> `docs/project-state/endpoints.json` (route registry; written by `api-architect`, feeds `/verify` — see docs/ai/rules/verification.md)
      - `templates/verify_TEMPLATE.md` -> `docs/verify/_TEMPLATE.md` (per-feature verification-guide template that `docs-writer` renders into `docs/verify/<feature>.md`)
      - `templates/guides_admin.md` -> `docs/guides/admin.md` (operator onboarding guide; replace `{SLUG}`, keep `{TODO}` markers — owned by `guide-writer`, see docs/ai/rules/user-guides.md)
      - `templates/guides_api_consumer.md` -> `docs/guides/api-consumer.md` (REST API consumer onboarding guide; replace `{SLUG}`, keep `{TODO}` markers)
@@ -553,7 +553,7 @@ Run each probe; if it fails, that piece is missing.
 6. **Env file (committed key list).** `test -f .env.example`. The `.env` file itself is gitignored and machine-local, so its absence here is **not** a Mode B blocker — `.env.example` is the durable, committed contract. If `.env` is missing locally, print a one-liner for the user: `cp .env.example .env && $EDITOR .env` (fill in secrets).
 7. **Per-app READMEs.** For every directory under `backend/apps/`, `test -f backend/apps/<name>/README.md`.
 8. **Docs scaffolding.** `test -f docs/STUBS.md && test -f docs/APP_README.md && test -f docs/guides/admin.md && test -f docs/guides/api-consumer.md`.
-9. **Verification scaffolding.** `test -f .claude/memory/endpoints.json && test -f docs/verify/_TEMPLATE.md` (route registry seed + verify-guide template; see docs/ai/rules/verification.md).
+9. **Verification scaffolding.** `test -f docs/project-state/endpoints.json && test -f docs/verify/_TEMPLATE.md` (route registry seed + verify-guide template; see docs/ai/rules/verification.md).
 
 ### Per missing piece
 

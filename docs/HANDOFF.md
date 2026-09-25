@@ -1,3 +1,29 @@
+# 2026-09-24 — P07 consumers adopted (draft PR #46, development core)
+
+Branch `feat/p07-shared-memory` on top of `fix/p06-django-consistency` (PR #45).
+The vendored core is the contract `feat/p07-shared-memory` head recorded in
+`docs/ai/core-source.json` (`pin_status: development`); repin to integrated after
+the contract P07 PR merges and restore the assertions marked «Tymczasowy pin
+deweloperski» in `tests/test_ai_delivery.py`.
+
+- A2 closed: `scripts/policy/runtime_gate.py` calls the shared detector
+  in-process (no hook-written JSON can satisfy or fake it); `NO_ENV_DETECT` now
+  means the shared detector is missing/broken. `scripts/session-start.py` runs
+  `scripts/ai/detector.py --write` (`.ai-runtime/environment.json`) and then
+  `scripts/detect-env.py` (`.ai-runtime/env-detect.json`).
+- Runtime writers (`detect-env.py`, `policy/log_command.py`) migrate their own
+  legacy `.claude/memory` records via `project_state.migrate_runtime()` and refuse
+  on a conflict; `backend_policy.py` and `templates/.github/workflows/backend-policy.yml`
+  accept `docs/project-state/endpoints.json` or the legacy path; `seed_preflight.py`
+  rejects `docs/project-state/` and `.ai-runtime/` as seed paths.
+- Rules/workflows/agents/commands/README/templates use `docs/project-state/`
+  and `.ai-runtime/`; role packs and instruction manifest regenerated.
+- Verified on Linux Python 3.13.7: `core_sync --check`, `generate_adapters --check`,
+  `build_instruction_manifest --check` PASS; `tests/` 38 OK; SessionStart smoke
+  moved a legacy `env-detect.json` and wrote both reports.
+- Next: merge fix PR #45, contract P07, then repin here; P08. Merge only on the
+  user's command.
+
 # 2026-09-24 — P07 core delivered with a development pin
 
 Branch `feat/p07-shared-memory` on top of `fix/p06-django-consistency`. The

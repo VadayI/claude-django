@@ -4,6 +4,10 @@ import argparse
 import json
 from pathlib import Path
 import re
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import project_state  # noqa: E402  (ten sam katalog scripts/ai; jedyny resolver stanu projektu)
 
 
 def contract_pin(path: Path) -> str | None:
@@ -60,7 +64,8 @@ def verify(root: Path, base: Path, context_path: Path) -> int:
         re.fullmatch(r"docs/plans/.+\.md", name) for name in changed
     ):
         print("Advisory: backend changed without a living plan")
-    if ".claude/memory/endpoints.json" in changed and not any(
+    registry_paths = set(project_state.artifact_relative_paths("endpoints.json"))
+    if registry_paths & set(changed) and not any(
         re.fullmatch(r"docs/verify/.+\.md", name) for name in changed
     ):
         print("Advisory: endpoint registry changed without verify documentation")

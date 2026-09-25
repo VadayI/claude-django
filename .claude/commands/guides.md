@@ -15,7 +15,7 @@ Generate or refresh the **user-facing onboarding guides** — `docs/guides/admin
 ## Preconditions
 
 - A Django project exists (`backend/`). If not -> STOP: "no backend yet; run /bootstrap first."
-- `docs/api/openapi.yml` and `.claude/memory/endpoints.json` are the source of truth for any endpoint/auth the api-consumer guide names. If missing, warn that API references can't be reconciled and proceed from code only.
+- `docs/api/openapi.yml` and `docs/project-state/endpoints.json` are the source of truth for any endpoint/auth the api-consumer guide names. If missing, warn that API references can't be reconciled and proceed from code only.
 
 ## Steps
 

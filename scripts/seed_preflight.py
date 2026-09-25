@@ -63,7 +63,7 @@ def plan(source: Path, target: Path) -> tuple[dict[str, str], list[str]]:
         incoming = contained(source, origin).read_text(encoding="utf-8")
         incoming_digest = digest(incoming)
         receipt_files[name] = {"source": origin, "sha256": incoming_digest}
-        if name.startswith((".github/", ".claude/memory/")) or name in (".env", ".claude/rules/output-language.md"):
+        if name.startswith((".github/", ".claude/memory/", "docs/project-state/", ".ai-runtime/")) or name in (".env", ".claude/rules/output-language.md"):
             raise ValueError(f"Project-owned/active workflow seed path: {name}")
         destination = contained(target, name)
         if name in pending:
