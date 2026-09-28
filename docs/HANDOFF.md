@@ -1,3 +1,11 @@
+# 2026-09-28 — `/audit` starts with a sync preflight
+
+Branch `chore/audit-sync-preflight` from `main`. Nothing is merged (D01).
+
+- `/audit` first runs `python scripts/ai/git_lifecycle.py --json inspect --fetch`: uncommitted paths, unpushed or diverged commits, PR mismatch or missing evidence are the first finding, then the user chooses `/wrap-up` or auditing anyway. Read-only.
+- This session: `docs/sessions/20260928T091718Z-claude-4574b4.md`.
+- Next: publish and merge on command; then P10/P11. Planned later: a branch/release tool (merge, sync, cleanup, releases and tags) together with raising the file-size limit to 1200 lines.
+
 # 2026-09-25 — P08 integrated: core pinned to contract main `8a7b080`
 
 Branch `feat/p08-git-lifecycle` (PR #47). Contract PR #67 was merged by `git_lifecycle.py merge` as `8a7b080` and cleaned by `git_lifecycle.py cleanup`; PR #47 merges on the user's command of 2026-09-25 (D01).

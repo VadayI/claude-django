@@ -171,7 +171,7 @@
         "53200b9dca6cfda8d6606987a6b3a37454a360d18fd98fc4f46d31d43666afe8"
       ],
       "ownership": "template",
-      "sha256": "b54273ab22a00f2adaf8b8e7ec013262279b093bd6b0e7e394f15fa97680d169"
+      "sha256": "d5acd91587e84c2bc6fbd9c157ce15440c1f35670fa9ea25ece85ed7d0d930bb"
     },
     ".claude/commands/bootstrap.md": {
       "legacy_sha256": [
