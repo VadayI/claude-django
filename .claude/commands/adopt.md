@@ -5,6 +5,14 @@ description: "[claude-django] /adopt — attach the config to an EXISTING foreig
 
 Attach the `claude-django` config to an **existing Django project that was NOT created from this template** (a "foreign" project). Unlike the README Quick start (greenfield seed) and `/bootstrap` (scaffold/resume of a template-derived project), `/adopt` is **additive-only**: it never overwrites an existing file — conflicts are surfaced as `<name>.adopt-proposed` copies + a merge report, and the whole change lands as a **PR** (ADR `0026`).
 
+## Step 0 — working directory (D17)
+
+Before anything else run `python scripts/ai/workdir.py`. Exit 1 means the checkout
+is on a Windows drive mounted into WSL and the user did not start this session with
+`ALLOW_MNT_SESSION=1`: show its message and move checklist to the user and STOP —
+no later step runs (docs/ai/session-continuity.md). Exit 0 continues; a printed
+allowance notice goes into the session record's Limitations.
+
 ## Input
 
 Optional `$ARGUMENTS`: an upstream URL or git ref (default: canonical `https://github.com/VadayI/claude-django.git` @ default branch), plus `--dry-run` for a report without any changes.

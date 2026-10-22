@@ -17,6 +17,14 @@ Bootstrap a Django backend project from this template config. Two modes:
 
 You orchestrate; you do not write code yourself. Every implementation step is delegated to an agent (`devops`, `ci-cd-engineer`, ...).
 
+## Step 0 — working directory (D17)
+
+Before anything else run `python scripts/ai/workdir.py`. Exit 1 means the checkout
+is on a Windows drive mounted into WSL and the user did not start this session with
+`ALLOW_MNT_SESSION=1`: show its message and move checklist to the user and STOP —
+no later step runs (docs/ai/session-continuity.md). Exit 0 continues; a printed
+allowance notice goes into the session record's Limitations.
+
 ## Input
 
 Optional current request arguments: `--dry-run` (sandbox preview, no side effects) and/or project slug. If slug empty, ask via the runtime's question interface.

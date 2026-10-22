@@ -105,5 +105,21 @@ class RuntimeHookTests(unittest.TestCase):
         self.assertEqual([entry["command"] for entry in start], ["python scripts/session-start.py"])
 
 
+    def test_d17_workdir_gate_is_wired_into_prompt_and_tool_hooks(self):
+        """D17: every prompt and tool call passes the working-directory gate.
+
+        Args: None; reads committed settings only.
+        Returns: None after checking the exact hook command in both events.
+        Raises: AssertionError when the gate is missing from either event.
+        Side effects: None.
+        """
+        settings = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))
+        gate = '"${AI_PYTHON:-python3}" "$CLAUDE_PROJECT_DIR/scripts/ai/workdir.py" --hook'
+        for event in ("UserPromptSubmit", "PreToolUse"):
+            commands = [hook["command"] for entry in settings["hooks"][event] for hook in entry["hooks"]]
+            self.assertIn(gate, commands, event)
+        self.assertTrue((ROOT / "scripts/ai/workdir.py").is_file())
+
+
 if __name__ == "__main__":
     unittest.main()
