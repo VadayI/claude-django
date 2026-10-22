@@ -1,3 +1,11 @@
+# 2026-10-22 — Q01 quick fixes
+
+Branch `chore/q01-quick-fixes` from `main`. Nothing is merged (D01).
+
+- `.env.example`/`*.example` readable by agents (D16).
+- This session: `docs/sessions/20261022T164119Z-claude-dcd0d2.md`.
+- Next: publish and merge on command; then P08a (test discipline + WSL/ext4).
+
 # 2026-09-28 — `/audit` starts with a sync preflight
 
 Branch `chore/audit-sync-preflight` from `main`. Nothing is merged (D01).
