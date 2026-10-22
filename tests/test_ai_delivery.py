@@ -226,7 +226,7 @@ class DeliveryTests(unittest.TestCase):
         ])
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
         # Tymczasowy pin deweloperski (P08a): po merge contract — integrated pin i pełne asercje.
-        self.assertEqual(receipt["source_commit"], "de5f0c4702812c06046eb81a0f06ace6263f9065")
+        self.assertEqual(receipt["source_commit"], "48154b332bd476b0e5a849dae58e7aa0ee2d030e")
         self.assertEqual(receipt["pin_status"], "development")
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))
         seed = json.loads((ROOT / "templates/ai/seed-inputs.json").read_text(encoding="utf-8"))
