@@ -367,11 +367,11 @@ or the agreed approach MUST point to its `docs/reviews/` entry.
 <!-- END SOURCE docs/ai/rules/deviation-register.md -->
 
 
-<!-- SOURCE docs/ai/rules/docker-commands.md SHA256 1a46c42a03ac87dd4e40dd4251e426b8f8f3bda59cf393b1466742753880aefb -->
+<!-- SOURCE docs/ai/rules/docker-commands.md SHA256 ccfba470a8b8641057d9b0fd661144f2a1cba581279a45713b6a1b4fdfe056c4 -->
 
 # Docker / environment commands
 
-> **Shell:** bash on Linux / macOS / WSL2 Ubuntu, or PowerShell / Git Bash on native Windows. The per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`), so no shell is privileged. The `.sh` gate scripts below run on the Linux CI runner; locally on native Windows they need Git Bash (for `make gates`). Working from a Windows drive (`/mnt/c`/`/mnt/d`) is fully supported (ADR `0009`); bind-mounts are just slower there, and git is best run from the host shell (avoids `/mnt` `index.lock`). `~/projects/<project>` is optional for faster bind-mounts, not required.
+> **Shell:** bash on Linux / macOS / WSL2 Ubuntu, or PowerShell / Git Bash on native Windows. The per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`), so no shell is privileged. The `.sh` gate scripts below run on the Linux CI runner; locally on native Windows they need Git Bash (for `make gates`). Keep the working clone in the WSL2 filesystem (`~/src/<project>`, ext4 — ADR `0027`, supersedes `0009`): a bind-mount from a Windows drive (`/mnt/c`/`/mnt/d`) goes through 9P — a full pytest run took 55 min there instead of 1 min 37 s, an image build 36 min instead of 41 s. Agent sessions on `/mnt` are blocked without `ALLOW_MNT_SESSION=1` (D17); move checklist: `docs/ai/wsl-ext4-migration.md`.
 >
 > The `SessionStart` hook writes `.ai-runtime/env-detect.json` with the active shell so agents can verify their assumptions.
 
@@ -382,7 +382,8 @@ A root `Makefile` wraps the most common commands below so they are identical on 
 ```bash
 make help          # list targets
 make up            # docker compose up -d
-make test ARGS="-k auth"   # docker compose exec backend pytest -k auth
+make test ARGS="-k auth"   # targeted: docker compose exec backend pytest -n auto --dist loadfile -k auth
+make ci            # FULL suite + coverage — the user runs it, at most twice a day (D12, testing.md)
 make lint          # ruff check
 make gates         # run the CI gate scripts locally before pushing
 make doctor-deps   # quick host tool presence check (not the /doctor command)
@@ -410,7 +411,7 @@ Off by default (heavy/stateful) per the project's detect -> propose -> fix-on-co
 ## Backend (Django in the container)
 
 ```bash
-docker compose exec backend pytest                       # tests (TDD)
+docker compose exec backend pytest apps/<app>/tests      # targeted tests (TDD); the full suite is `make ci`, run by the user (D12)
 docker compose exec backend ruff check .                 # lint
 docker compose exec backend ruff format .                # formatting
 docker compose exec backend python manage.py makemigrations
@@ -452,7 +453,7 @@ curl -fsS -o /dev/null -w '%{http_code}\n' \
 <!-- END SOURCE docs/ai/rules/docker-commands.md -->
 
 
-<!-- SOURCE docs/ai/rules/environment.md SHA256 856c0b91cdd24603d526bef0ec8793249d6deef45805e19deb0ae0fcc7f3f9ab -->
+<!-- SOURCE docs/ai/rules/environment.md SHA256 d5c06b0c28902dfe84a3be9cf362bf0124f792ada1e308facecad7527021a1dd -->
 
 # Environment specification (the source of truth)
 
@@ -468,7 +469,7 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Wi
 |---|---|---|
 | **Python (HARD REQUIREMENT)** | 3.13+ on PATH as `python` | `python --version`. On Ubuntu, if only `python3` is installed: `sudo apt install -y python-is-python3`. Without Python the SessionStart hook (`scripts/detect-env.py`) cannot run. |
 | OS shell | Native Windows (PowerShell / Git Bash) OR WSL2 (Ubuntu); Linux / macOS bash or zsh. Per-session hooks are cross-platform Python (ADR `0022`). | `python --version` must work; `env-detect.json` shows `platform_supported: true` (it is `false` only on a platform that is neither Windows, Linux, macOS, nor WSL2). |
-| Working dir | Any path, **including `/mnt/c`/`/mnt/d` (Windows drive) — fully supported (ADR `0009`); `/doctor` must NOT suggest moving**. Informational `/mnt` caveats only: slower Docker bind-mounts, CRLF, `git index.lock` (run git from the host shell). `~/projects/<slug>` is optional (max bind-mount speed), never required. | `pwd` |
+| Working dir | **WSL2 ext4 clone** (`~/src/<repo>`) or a native Linux/macOS path → ✅ (ADR `0027`, supersedes `0009`). A WSL2 path on a Windows drive (`/mnt/c`, `/mnt/d`, any 9P/drvfs mount) **blocks agent sessions** unless the user started this one with `ALLOW_MNT_SESSION=1` (D17); `/doctor` then reports ⚠️ with the 8-step move checklist (`docs/ai/wsl-ext4-migration.md`). Native Windows with Docker bind-mounts from `C:`/`D:` → ⚠️, same advice, not blocked. Measured: full pytest 55 min on `/mnt/d` vs 1 min 37 s on ext4. | `python scripts/ai/workdir.py`; `time ls -R . >/dev/null`; `docker stats` during tests |
 | Docker Desktop | running, with WSL2 integration enabled if WSL2 is used | `docker info` |
 | docker compose | v2 available | `docker compose version` |
 | Python in container | 3.13.x (separate from the host Python above) | `docker compose exec -T backend python --version` |
@@ -542,7 +543,7 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 | `.env` | local-only (gitignored), copied from `.env.example`; secrets filled | `test -f .env` (never print contents). Missing → `cp .env.example .env && $EDITOR .env` |
 | Services | `postgres` + `backend` up and healthy | `docker compose ps` |
 | Migrations | applied (no unapplied) | `docker compose exec -T backend python manage.py showmigrations --plan` — output should not contain `[ ]` |
-| Tests | pytest green | `docker compose exec -T backend pytest -q` |
+| Tests | last full run green, run by the user (D12) | `/doctor` does not run the full suite: read the latest session record's Checks; if none, give the user `make ci` and report ℹ️ `NOT_VERIFIED` |
 | Lint | ruff clean | `docker compose exec -T backend ruff check .` |
 
 > Skeleton/`.env`/services may legitimately be absent in a brand-new repo before Step 3 of the README. `/doctor` reports these as "not set up yet" (info), not as failures, when no Django project exists yet.
@@ -570,7 +571,7 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 <!-- END SOURCE docs/ai/rules/environment.md -->
 
 
-<!-- SOURCE docs/ai/rules/git-operations.md SHA256 49020796d73116f1da03eb22f547a4a80c5ec00bf100d22b66393665f071ee73 -->
+<!-- SOURCE docs/ai/rules/git-operations.md SHA256 2c6d129f46d8be534e80a3e8810434ab5899a648902e634e910e5aeca7b86425 -->
 
 # Git operations
 
@@ -624,7 +625,7 @@ Short description of the change.
 Context / user story.
 
 ## How verified
-- [ ] pytest green
+- [ ] targeted pytest green; full suite (`make ci`) run by the user (D12)
 - [ ] ruff clean
 - [ ] CI passed
 
@@ -1266,7 +1267,7 @@ Assert behavior from at least 2–3 distinct cases (different inputs → differe
 <!-- END SOURCE docs/ai/rules/tdd.md -->
 
 
-<!-- SOURCE docs/ai/rules/testing.md SHA256 a637acb85daae8f9c6476a4d1df4ae52164acba49262d83e1b6f018300a492ca -->
+<!-- SOURCE docs/ai/rules/testing.md SHA256 a500fc40884e30606936da0ca6ae970aa129eb91135bc80722e2c7c2419e796a -->
 
 # Testing policy
 
@@ -1291,14 +1292,31 @@ Single owner of the list: docs/ai/rules/tdd.md ("What to test / what to skip") �
 
 First a failing test (RED), then code (GREEN), then refactor. Details — docs/ai/rules/tdd.md.
 
+## Full suite vs targeted runs (D12)
+
+- **Agents never run the full suite.** They run only targeted subsets: the tests
+  of the changed module or app, `-k <name>`, `--lf` (last failed).
+- **The full suite runs at most twice a day and the user starts it.** When a full
+  run is due (before a PR leaves draft, after a wide refactor), the agent stops and
+  gives the exact command — `make ci` (or the raw command below) — and records the
+  result the user reports, with its time, in the session record. A full run the
+  agent did not see is `NOT_VERIFIED`, never assumed green.
+- Parallelism: `pytest-xdist` (`-n auto --dist loadfile`) is on by default in
+  `make test`/`make ci`. It pays off only with the clone in WSL ext4 (ADR `0027`);
+  on a Windows-drive bind mount the workers serialize on I/O. For one quick test
+  drop it: `make test PYTEST_XDIST= ARGS="-k name"`.
+
 ## Commands
 
 ```bash
-docker compose exec backend pytest
-docker compose exec backend pytest --cov=apps --cov-report=term-missing
+# targeted (agents)
+make test ARGS="apps/orders/tests -x"        # docker compose exec backend pytest -n auto --dist loadfile apps/orders/tests -x
+make test PYTEST_XDIST= ARGS="--lf"          # last failed, single process
+# full suite (the user, at most twice a day)
+make ci                                      # docker compose exec backend pytest -n auto --dist loadfile --cov=apps --cov-report=term-missing
 docker compose exec backend ruff check .
 ```
-<!-- Last reviewed/updated: 2026-07-07 (what-to-test delegated to tdd.md — audit batch B) -->
+<!-- Last reviewed/updated: 2026-10-22 (D12 full-suite discipline, xdist — ADR 0027) -->
 
 <!-- END SOURCE docs/ai/rules/testing.md -->
 

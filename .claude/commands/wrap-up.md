@@ -5,6 +5,14 @@ description: "[claude-django] Wrap up the work session — summarize, persist co
 
 You wrap up the current work session: summarize, persist context to Git-tracked files, run checks, and prepare for commit. Invoke this when the user wants to finish work in this session / context window. This operationalizes principle 5 (Context in Git).
 
+## Step 0 — working directory (D17)
+
+Before anything else run `python scripts/ai/workdir.py`. Exit 1 means the checkout
+is on a Windows drive mounted into WSL and the user did not start this session with
+`ALLOW_MNT_SESSION=1`: show its message and move checklist to the user and STOP —
+no later step runs (docs/ai/session-continuity.md). Exit 0 continues; a printed
+allowance notice goes into the session record's Limitations.
+
 ## Input
 Optional `$ARGUMENTS`: a short note about the session focus/outcome. If empty, infer from the session.
 
@@ -30,12 +38,13 @@ Optional `$ARGUMENTS`: a short note about the session focus/outcome. If empty, i
    - If a notable architectural decision was made, add an ADR in `docs/decisions/NNNN-*.md`.
    - **Regenerate `docs/HANDOFF.md` by running `/handoff`** — the single source of HANDOFF generation. Do NOT restate or duplicate its logic here. This is mandatory: a wrap-up that leaves `HANDOFF.md` full of `{TODO}` placeholders has not finished. After `/handoff` returns, verify its output — confirm `grep -c '{TODO}' docs/HANDOFF.md` is `0` (the carry-over `## Open questions` / `## Environment notes` sections may legitimately keep a `{TODO}`, but the state sections must be filled).
 
-4. **Run quick checks** and report status (skip silently if the `backend` container is down):
+4. **Run quick checks** and report status (skip silently if the `backend` container is down). Tests: only the subset this session touched — never the full suite (D12, docs/ai/rules/testing.md):
    ```bash
    docker compose exec -T backend ruff check . || true
-   docker compose exec -T backend pytest -q || true
+   docker compose exec -T backend pytest -q -n auto --dist loadfile <changed app/test paths> || true
    bash scripts/check_stubs.sh || true   # residual stubs vs docs/STUBS.md
    ```
+   Then give the user the full-suite command to run themselves when it is due (at most twice a day): `make ci`. Record its result only when the user reports it; otherwise the full suite is `NOT_VERIFIED` in the session record.
    Report any residual `# STUB:` / `NotImplementedError` and whether each is logged in `docs/STUBS.md` (per @.claude/rules/no-stubs.md).
 
 5. **Show the working state** and enumerate the doc files this command touched so none is silently left behind (the `docs/sessions/` record, `docs/HANDOFF.md`, and any `docs/lessons.md` / ADR / `docs/project-state/` edits):

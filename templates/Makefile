@@ -11,6 +11,8 @@
 DC ?= docker compose
 BACKEND ?= $(DC) exec backend
 ARGS ?=
+# Parallel pytest (pytest-xdist, ADR 0027). A single quick test: make test PYTEST_XDIST= ARGS="-k name"
+PYTEST_XDIST ?= -n auto --dist loadfile
 AI_PYTHON ?= python
 AI_ARGS ?=
 .PHONY: ai-claude ai-codex ai-core-check
@@ -25,7 +27,7 @@ ai-core-check: ## Check the pinned family runtime without repairs
 	@$(AI_PYTHON) scripts/ai/core_sync.py --check
 
 .DEFAULT_GOAL := help
-.PHONY: help cc setup up dev down ps logs build test cov lint fmt migrate makemigrations superuser shell schema gates doctor-deps check-deploy
+.PHONY: help cc setup up dev down ps logs build test cov ci lint fmt migrate makemigrations superuser shell schema gates doctor-deps check-deploy
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN{FS=":.*?## "} {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -53,11 +55,14 @@ logs: ## Tail backend logs
 build: ## Build/rebuild images (install deps)
 	$(DC) build
 
-test: ## Run pytest (filter: make test ARGS="-k name")
-	$(BACKEND) pytest $(ARGS)
+test: ## Targeted pytest for agents/TDD (make test ARGS="-k name" or a path; D12)
+	$(BACKEND) pytest $(PYTEST_XDIST) $(ARGS)
 
 cov: ## pytest with coverage report
-	$(BACKEND) pytest --cov=apps --cov-report=term-missing $(ARGS)
+	$(BACKEND) pytest $(PYTEST_XDIST) --cov=apps --cov-report=term-missing $(ARGS)
+
+ci: ## FULL suite with coverage, parallel. Run by the user, at most twice a day (D12)
+	$(BACKEND) pytest $(PYTEST_XDIST) --cov=apps --cov-report=term-missing $(ARGS)
 
 lint: ## ruff check
 	$(BACKEND) ruff check . $(ARGS)

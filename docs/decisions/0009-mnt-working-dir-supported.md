@@ -1,6 +1,6 @@
 # 9. Робота з /mnt (Windows-диск) повноцінно підтримується
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0027](0027-wsl-ext4-working-dir.md) (2026-10-22)
 - **Date:** 2026-06-01
 - **Deciders:** Project maintainer
 - **Tags:** environment, wsl2, developer-experience, doctor

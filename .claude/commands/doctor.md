@@ -5,6 +5,14 @@ description: "[claude-django] Environment configurator — verify the local mach
 
 You are the **environment configurator** for a `claude-django` project. You verify the local environment against the spec in `@.claude/rules/environment.md` and bring it up to standard. Run this when the user connects to the project (especially on a fresh machine) or asks to "check / fix / configure the environment".
 
+## Step 0 — working directory (D17)
+
+Before anything else run `python scripts/ai/workdir.py`. Exit 1 means the checkout
+is on a Windows drive mounted into WSL and the user did not start this session with
+`ALLOW_MNT_SESSION=1`: show its message and move checklist to the user and STOP —
+no later step runs (docs/ai/session-continuity.md). Exit 0 continues; a printed
+allowance notice goes into the session record's Limitations.
+
 ## Contract
 
 Detect → report → **propose** → fix **only after the user confirms**. You NEVER auto-fix risky/irreversible things, NEVER commit or push (especially to `main`), and NEVER print secret values.
@@ -52,7 +60,7 @@ Optional `$ARGUMENTS`: a scope to limit the audit — `system`, `claude`, `proje
    - **Platform audit** (schema v2+): read `.platform_supported` from `.ai-runtime/env-detect.json`. Report ❌ `UNSUPPORTED_PLATFORM` only if `false` — which, since ADR `0022`, happens only on a platform that is none of Windows / macOS / Linux / WSL2 (native Windows, WSL2, Linux, and macOS all pass). If it ever fires, note the detected `platform` and STOP.
    - **Node audit** (schema v5+): read `.node_supported` from `.ai-runtime/env-detect.json` (derived: node on PATH AND major >= 18). Report ❌ `NO_NODE` if `false` — Node 18+ is needed only to install the Claude Code CLI via `npm install -g @anthropic-ai/claude-code` (the native Windows installer needs no Node); missing Node also blocks `/bootstrap`. Remedy: install Node 18+ (`nvm install --lts` recommended), then `npm install -g @anthropic-ai/claude-code` and relaunch `claude`. On older schemas where the field is absent, fall back to `.tools.node` + `.tool_versions.node`.
    - **env-detect.json integrity**: if `.ai-runtime/env-detect.json` is missing, report ❌ `NO_PYTHON_OR_HOOK` and **do NOT hand-write the file** to skip past the audit. Propose: run `python scripts/detect-env.py` once manually; if that itself fails, install Python 3.10+ and reopen Claude Code. Fabricated `env-detect.json` values silently bypass the platform / PAT / scope gates.
-   - **Working dir**: a project under `/mnt/c`/`/mnt/d` (Windows drive) is ✅ **fully supported** (ADR `0009`) — report it ✅, NOT ⚠️, and **never propose moving it to `~/projects`**. You may add a single ℹ️ note about `/mnt` caveats (slower Docker bind-mounts; CRLF; `git index.lock` on 9p — run git from the host shell). `~/projects/<slug>` is optional (faster bind-mounts), never required.
+   - **Working dir** (ADR `0027`, supersedes `0009`): run `python scripts/ai/workdir.py --json`. `location: linux` (ext4, e.g. `~/src/<repo>`) → ✅. `location: windows-mount` — reached only when the user allowed this session with `ALLOW_MNT_SESSION=1` (otherwise Step 0 already stopped) → ⚠️ with the move checklist from `docs/ai/wsl-ext4-migration.md` and the heuristic: `time ls -R . >/dev/null` here versus a clone in `~/src` (a 10–50× difference means the 9P bridge), and `docker stats` during tests (CPU far below 100 % × cores with live processes = waiting for disk). Native Windows with Docker bind-mounts from a Windows drive → ⚠️ with the same advice (move into WSL2 ext4). Never report a Windows-drive working dir as ✅.
    It returns a per-item result: ✅ ok / ⚠️ attention / ❌ missing-or-broken / ℹ️ not-set-up-yet.
 
 1b. **Scenario detection.** Classify the project state into ONE of five:

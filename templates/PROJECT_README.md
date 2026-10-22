@@ -12,7 +12,7 @@ The contract is the **REST API**. There is no frontend in this repo. A productio
 
 ## Quick start
 
-This project requires **WSL2 Ubuntu** (on Windows) / **Linux** / **macOS** + **Docker Desktop**. See `CLAUDE.md` → "Where this runs" for the rationale.
+This project requires **WSL2 Ubuntu** (on Windows) / **Linux** / **macOS** + **Docker Desktop**. See `CLAUDE.md` → "Where this runs" for the rationale. On Windows keep the clone in the WSL2 filesystem (`~/src/{SLUG}`), not on a Windows drive: a bind mount from `/mnt/c`/`/mnt/d` makes tests and builds 10–50× slower, and agent sessions there are blocked (`docs/ai/wsl-ext4-migration.md`). The full test suite (`make ci`) is run by you, at most twice a day; agents run targeted tests only.
 
 ```bash
 # 1. Fill secrets (DJANGO_SECRET_KEY, etc.)

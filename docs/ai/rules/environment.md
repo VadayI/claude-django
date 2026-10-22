@@ -12,7 +12,7 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Wi
 |---|---|---|
 | **Python (HARD REQUIREMENT)** | 3.13+ on PATH as `python` | `python --version`. On Ubuntu, if only `python3` is installed: `sudo apt install -y python-is-python3`. Without Python the SessionStart hook (`scripts/detect-env.py`) cannot run. |
 | OS shell | Native Windows (PowerShell / Git Bash) OR WSL2 (Ubuntu); Linux / macOS bash or zsh. Per-session hooks are cross-platform Python (ADR `0022`). | `python --version` must work; `env-detect.json` shows `platform_supported: true` (it is `false` only on a platform that is neither Windows, Linux, macOS, nor WSL2). |
-| Working dir | Any path, **including `/mnt/c`/`/mnt/d` (Windows drive) — fully supported (ADR `0009`); `/doctor` must NOT suggest moving**. Informational `/mnt` caveats only: slower Docker bind-mounts, CRLF, `git index.lock` (run git from the host shell). `~/projects/<slug>` is optional (max bind-mount speed), never required. | `pwd` |
+| Working dir | **WSL2 ext4 clone** (`~/src/<repo>`) or a native Linux/macOS path → ✅ (ADR `0027`, supersedes `0009`). A WSL2 path on a Windows drive (`/mnt/c`, `/mnt/d`, any 9P/drvfs mount) **blocks agent sessions** unless the user started this one with `ALLOW_MNT_SESSION=1` (D17); `/doctor` then reports ⚠️ with the 8-step move checklist (`docs/ai/wsl-ext4-migration.md`). Native Windows with Docker bind-mounts from `C:`/`D:` → ⚠️, same advice, not blocked. Measured: full pytest 55 min on `/mnt/d` vs 1 min 37 s on ext4. | `python scripts/ai/workdir.py`; `time ls -R . >/dev/null`; `docker stats` during tests |
 | Docker Desktop | running, with WSL2 integration enabled if WSL2 is used | `docker info` |
 | docker compose | v2 available | `docker compose version` |
 | Python in container | 3.13.x (separate from the host Python above) | `docker compose exec -T backend python --version` |
@@ -86,7 +86,7 @@ This rule applies to humans AND to LLM agents executing `/bootstrap` / `/doctor`
 | `.env` | local-only (gitignored), copied from `.env.example`; secrets filled | `test -f .env` (never print contents). Missing → `cp .env.example .env && $EDITOR .env` |
 | Services | `postgres` + `backend` up and healthy | `docker compose ps` |
 | Migrations | applied (no unapplied) | `docker compose exec -T backend python manage.py showmigrations --plan` — output should not contain `[ ]` |
-| Tests | pytest green | `docker compose exec -T backend pytest -q` |
+| Tests | last full run green, run by the user (D12) | `/doctor` does not run the full suite: read the latest session record's Checks; if none, give the user `make ci` and report ℹ️ `NOT_VERIFIED` |
 | Lint | ruff clean | `docker compose exec -T backend ruff check .` |
 
 > Skeleton/`.env`/services may legitimately be absent in a brand-new repo before Step 3 of the README. `/doctor` reports these as "not set up yet" (info), not as failures, when no Django project exists yet.

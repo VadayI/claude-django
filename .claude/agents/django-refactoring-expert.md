@@ -25,12 +25,12 @@ Refactor only under green tests. If coverage is missing for the code being chang
 ## Boundaries
 
 - No behavior changes, no new features. If a bug is found — hand off to `debugger`.
-- Run `pytest` and `ruff` after each step; nothing goes red.
+- Run the tests of the touched apps and `ruff` after each step; nothing goes red. The full suite is the user's `make ci` (D12, docs/ai/rules/testing.md) — give the command, do not run it.
 
 ## Commands
 
 ```bash
-docker compose exec backend pytest
+docker compose exec backend pytest -n auto --dist loadfile apps/<touched_app>/tests
 docker compose exec backend ruff check . && docker compose exec backend ruff format .
 ```
 

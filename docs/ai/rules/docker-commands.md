@@ -1,6 +1,6 @@
 # Docker / environment commands
 
-> **Shell:** bash on Linux / macOS / WSL2 Ubuntu, or PowerShell / Git Bash on native Windows. The per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`), so no shell is privileged. The `.sh` gate scripts below run on the Linux CI runner; locally on native Windows they need Git Bash (for `make gates`). Working from a Windows drive (`/mnt/c`/`/mnt/d`) is fully supported (ADR `0009`); bind-mounts are just slower there, and git is best run from the host shell (avoids `/mnt` `index.lock`). `~/projects/<project>` is optional for faster bind-mounts, not required.
+> **Shell:** bash on Linux / macOS / WSL2 Ubuntu, or PowerShell / Git Bash on native Windows. The per-session hooks are cross-platform Python (ADR `0022`, which amends ADR `0005`), so no shell is privileged. The `.sh` gate scripts below run on the Linux CI runner; locally on native Windows they need Git Bash (for `make gates`). Keep the working clone in the WSL2 filesystem (`~/src/<project>`, ext4 — ADR `0027`, supersedes `0009`): a bind-mount from a Windows drive (`/mnt/c`/`/mnt/d`) goes through 9P — a full pytest run took 55 min there instead of 1 min 37 s, an image build 36 min instead of 41 s. Agent sessions on `/mnt` are blocked without `ALLOW_MNT_SESSION=1` (D17); move checklist: `docs/ai/wsl-ext4-migration.md`.
 >
 > The `SessionStart` hook writes `.ai-runtime/env-detect.json` with the active shell so agents can verify their assumptions.
 
@@ -11,7 +11,8 @@ A root `Makefile` wraps the most common commands below so they are identical on 
 ```bash
 make help          # list targets
 make up            # docker compose up -d
-make test ARGS="-k auth"   # docker compose exec backend pytest -k auth
+make test ARGS="-k auth"   # targeted: docker compose exec backend pytest -n auto --dist loadfile -k auth
+make ci            # FULL suite + coverage — the user runs it, at most twice a day (D12, testing.md)
 make lint          # ruff check
 make gates         # run the CI gate scripts locally before pushing
 make doctor-deps   # quick host tool presence check (not the /doctor command)
@@ -39,7 +40,7 @@ Off by default (heavy/stateful) per the project's detect -> propose -> fix-on-co
 ## Backend (Django in the container)
 
 ```bash
-docker compose exec backend pytest                       # tests (TDD)
+docker compose exec backend pytest apps/<app>/tests      # targeted tests (TDD); the full suite is `make ci`, run by the user (D12)
 docker compose exec backend ruff check .                 # lint
 docker compose exec backend ruff format .                # formatting
 docker compose exec backend python manage.py makemigrations

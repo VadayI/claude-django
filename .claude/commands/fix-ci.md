@@ -93,10 +93,10 @@ Instruct the developer to:
   docker compose exec backend ruff check .
   docker compose exec backend ruff format --check .
   ```
-- For **tests**, verify the failing test then the suite:
+- For **tests**, verify the failing test, then the tests of its app (the full suite is the user's `make ci`, D12 — give the command, do not run it):
   ```bash
   docker compose exec backend pytest -k "<failing_test>"
-  docker compose exec backend pytest
+  docker compose exec backend pytest -n auto --dist loadfile apps/<app>/tests
   ```
 - Do NOT change anything beyond what fixes the failure; do NOT refactor adjacent code.
 

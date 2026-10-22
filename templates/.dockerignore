@@ -1,0 +1,28 @@
+# Build context hygiene (ADR 0027). Bootstrap copies this file to backend/.dockerignore
+# because the backend build context is ./backend. Without it a real project sent
+# 386 MB of media into every image build.
+.git
+.gitignore
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+.coverage.*
+htmlcov
+.venv
+venv
+node_modules
+.ai-runtime
+.env
+.env.*
+!.env.example
+media
+mediafiles
+staticfiles
+*.log
+*.sqlite3
+.DS_Store
+.idea
+.vscode
