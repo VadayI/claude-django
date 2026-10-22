@@ -88,7 +88,7 @@ which claude                         # MUST be /home/... or /usr/...  — NOT /m
 
 > **WSL2 only:** installing the CLI on the Windows side does **not** give you a WSL2 `claude`; if `which claude` shows `/mnt/c/...` the Windows binary is shadowing it on PATH — fix per [Troubleshooting](#troubleshooting-startup--doctor-hard-stops), or run `bash scripts/setup-wsl.sh` (whole toolchain: Python / Node / `claude` / `gh` + PATH fix; idempotent, never touches secrets or git). On **native Windows** there is no shadowing — a `C:\...\claude.exe` on PATH is the correct runner.
 
-**2. Where to put the project.** Working from `/mnt/c` or `/mnt/d` (a Windows drive) is **fully supported** (ADR `0009`); `/doctor` won't ask you to move it. The only caveats are slower Docker bind-mounts and occasional CRLF / `git index.lock` quirks (run `git` from the host shell). `~/projects/<slug>` in the WSL2 FS is optional — for faster bind-mounts only.
+**2. Where to put the project — the WSL2 filesystem, not a Windows drive** (ADR `0027`, supersedes `0009`). Keep the clone in ext4: `~/src/<slug>`. On a Windows drive (`/mnt/c`, `/mnt/d`) every Docker bind-mount read crosses the 9P bridge — measured: full pytest 55 min vs 1 min 37 s on ext4, image build 36 min vs 41 s. Agent sessions there are **blocked** (D17): start `claude` with `ALLOW_MNT_SESSION=1` only if you knowingly accept that for this one session. Moving an existing clone: [`docs/ai/wsl-ext4-migration.md`](docs/ai/wsl-ext4-migration.md) (8 steps). Open the code from Windows via VS Code Remote-WSL or `\\wsl$\...`.
 
 **3. Launch and verify the runner.** From the project root, launch `claude` — on native Windows that is `claude` in PowerShell or Git Bash; on WSL2 / Linux / macOS it is `claude` in your shell. Both are correct (ADR `0022`). On start the `SessionStart` hook runs `python scripts/session-start.py` and writes `.ai-runtime/env-detect.json` with `platform_supported: true` and the detected `platform` / `shell` — exactly what `/doctor` needs to pass the platform gate. (Backslash paths in the banner are normal on native Windows and no longer signal a "wrong runner".)
 
@@ -123,7 +123,7 @@ Short version: **install the CLI (native Windows or WSL2) → seed the config �
 | You pasted a shell command (e.g. `npm install …`) and **nothing changed** | You typed it into Claude's `❯` chat prompt, not the terminal — Claude just replied with a note. | `/exit` (or open a second WSL2 tab), run the command in **bash**, then relaunch `claude`. |
 | PowerShell: `wsl2: The term 'wsl2' is not recognized` | The command is `wsl`, not `wsl2`. | `wsl` (or `wsl -d Ubuntu`) to enter WSL2 from PowerShell. |
 | `which claude` stays `/mnt/c/...` even after the `$(npm config get prefix)/bin` PATH fix | Your `npm` is the **Windows** npm (Linux `node` is present but Linux `npm` is missing), so `npm install -g` put `claude` in the Windows prefix — the PATH trick can't help because that prefix is itself a `C:\...` path. | Confirm with `which node npm`. Let `nvm` own node+npm in WSL2: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh \| bash` → `nvm install --lts` → `npm install -g @anthropic-ai/claude-code`; `which node npm claude` must all be `/home/…`. Or just run `bash scripts/setup-wsl.sh`. |
-| Tests slow, `rm` fails, CRLF↔LF flips, `git index.lock` — project under `/mnt/c` or `/mnt/d` | The repo lives on a Windows drive (9p mount). **Fully supported (ADR `0009`)** — these are inherent `/mnt` caveats, not an error, and `/doctor` won't ask you to move. | No action required. Run `git` from the host shell (PowerShell/Git Bash) to avoid `index.lock`. Moving to `~/projects/<slug>` is optional (faster bind-mounts), never required. |
+| `BLOCKED (D17)` on every prompt; or tests/builds take tens of minutes, `rm` fails, CRLF↔LF flips, `git index.lock` — project under `/mnt/c` or `/mnt/d` | The repo lives on a Windows drive (9P mount): every file access crosses the Windows → WSL bridge (ADR `0027`, supersedes `0009`). Check: `time ls -R . >/dev/null` here vs `~/src` (10–50×), `docker stats` during tests (CPU far below 100 % × cores). | Move the clone to `~/src/<slug>` per [`docs/ai/wsl-ext4-migration.md`](docs/ai/wsl-ext4-migration.md). For one deliberate session only: `ALLOW_MNT_SESSION=1 claude`. |
 
 After applying a fix, just re-run `/doctor` — the `SessionStart` hook rewrites `.ai-runtime/env-detect.json` and `.ai-runtime/environment.json` on each launch, so a corrected runner/PAT shows up immediately. Full runtime guidance (native Windows vs WSL2): `.claude/rules/environment.md` → *"Windows: native or WSL2"*.
 
@@ -170,7 +170,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 - **Python 3.13+ on PATH as `python`** (hard requirement for the ownership-safe installer and shared runtime). On Ubuntu install `python-is-python3` if only `python3` is present.
 - Docker Desktop (WSL2 or Hyper-V backend)
 - **Shell:** PowerShell or Git Bash on native Windows, bash in WSL2 Ubuntu, or bash/zsh on Linux/macOS — all supported (ADR `0022`).
-- WSL2 (Ubuntu) — **optional on Windows** (one of two runners; the other is native PowerShell / Git Bash). Docker Desktop still needs a WSL2 or Hyper-V backend. The project can live on your Windows drive (`/mnt/...` from WSL2, `D:\...` natively — fully supported, ADR `0009`); `~/projects/<slug>` in the WSL2 FS is optional for faster bind-mounts
+- WSL2 (Ubuntu) — **optional on Windows** (one of two runners; the other is native PowerShell / Git Bash). Docker Desktop still needs a WSL2 or Hyper-V backend. Keep the project in the WSL2 filesystem (`~/src/<slug>`, ext4 — ADR `0027`): on a Windows drive Docker bind-mounts go through 9P and agent sessions are blocked (D17)
 - **Node.js 18+ (via `nvm`; the native Windows installer needs none)** — needed to install the Claude Code CLI via `npm install -g @anthropic-ai/claude-code` and for `npx`-based skills (e.g. the Context7 MCP). `/doctor` reports `NO_NODE` if it is missing or below 18
 - A GitHub account
 
@@ -178,7 +178,7 @@ CI/CD:     ci-cd-engineer / devops → [reviewer | security-scanner]
 
 > **First time on this Windows machine?** Two options. **(a) Native Windows:** install Python 3.13+ (make sure `python --version` works — not the Microsoft Store alias), Node 18+ (only if installing the CLI via npm), `git`, `gh`, and Docker Desktop; run everything from PowerShell or Git Bash. **(b) WSL2:** from PowerShell `wsl --install -d Ubuntu` then `wsl --set-default Ubuntu`, set a Unix user/password, and install Python 3.13+ plus the remaining toolchain (verify `ID=ubuntu` in `/etc/os-release`, 24.04+).
 >
-> Then open your shell at the project: PowerShell or Git Bash at `D:\...` (native), or `wsl` and `cd /mnt/d/...` (WSL2) — a Windows-drive path is fine either way (ADR `0009`). On WSL2 the one thing that matters is `which claude` resolving to `/home/...` (not `/mnt/c/...`); on native Windows a `claude.exe` on PATH is correct.
+> Then open your shell at the project: `wsl` and `mkdir -p ~/src/<slug> && cd ~/src/<slug>` — the clone lives in the WSL2 filesystem, not on `D:` (ADR `0027`; agent sessions on `/mnt/...` are blocked, D17). `which claude` must resolve to `/home/...` (not `/mnt/c/...`). Native PowerShell / Git Bash remains a supported runner, but Docker bind-mounts from a Windows drive are just as slow there — `/doctor` warns about it.
 
 **Fastest — one-line seed.** From the root of your project folder in **Git Bash or WSL2**, this clones the template and applies its explicit per-file seed inventory. It never creates or overwrites `.env`, project memory/language, or active workflows. A seeded folder is rejected unless `--force` is supplied; `--force` only permits a checked repeat and never bypasses ownership conflicts:
 
@@ -194,7 +194,7 @@ git config --global http.schannelCheckRevoke false
 bash <(curl -fsSL --ssl-no-revoke https://raw.githubusercontent.com/VadayI/claude-django/main/scripts/install.sh)
 ```
 
-If deep TLS inspection still blocks it, seed from **WSL2** instead (it uses OpenSSL, not schannel): `wsl` → `cd /mnt/d/...your-project` → run the plain one-liner above (no flag) → `exit`, then launch `claude` natively in Git Bash / PowerShell.
+If deep TLS inspection still blocks it, seed from **WSL2** instead (it uses OpenSSL, not schannel): `wsl` → `cd ~/src/<your-project>` → run the plain one-liner above (no flag), then launch `claude` there.
 
 Then launch `claude` → `/doctor` → `/bootstrap`. To upgrade an *already-seeded* project use `/update-from-template` instead (it preserves your edits, ADR `0014`).
 
@@ -219,7 +219,7 @@ Then install any needed optional plugins (see below). Mixed-owned instruction fi
 
 ## Step-by-step: a NEW project from scratch
 
-1. **Quick start** (above) — copy `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `scripts/`, `templates/` into the new project folder (a Windows-drive path like `D:\...` is fine; `~/projects/<slug>` in WSL2 is optional).
+1. **Quick start** (above) — copy `.claude/`, `CLAUDE.md`, `.mcp.json`, `.gitignore`, `scripts/`, `templates/` into the new project folder — on Windows a WSL2 ext4 folder such as `~/src/<slug>` (a Windows drive blocks agent sessions, ADR `0027`).
 2. `claude` → `/doctor` — verifies environment and detects scenario `fresh`; recommends `/bootstrap`.
 3. `claude` → `/bootstrap` — runs the hard preflight (Python / `gh` / `docker` / templates + GitHub access), then scaffolds the project: links `origin` to the empty repo you created (Mode A never runs `gh repo create`), builds the skeleton + drf-spectacular config, brings Docker up, migrates, pulls the external contract to `docs/api/openapi.yml` (when published), makes the first commit + push to `main`, and enables branch protection. Each step has a `⏸ Checkpoint — Resume` marker; Mode B resumes a failed run. This is the only command that direct-pushes to `main` (documented exception in `.claude/rules/git-operations.md`). Full behaviour: the `/bootstrap` entry under *Commands* above.
 4. (manual) Drop your input documents into `docs/` — briefs, ТЗ, PDFs, .docx, screenshots — keeping `docs/api/`, `docs/decisions/`, `docs/plans/` for their existing purpose.
@@ -284,7 +284,7 @@ The environment lives entirely in Git, so the second machine picks up everything
 
 ```bash
 # one-time on the new machine: Claude Code CLI + Docker Desktop (native Windows, or WSL2) (+ nvm if you use npx skills)
-cd ~/projects
+mkdir -p ~/src && cd ~/src          # WSL2 ext4, not /mnt/d (ADR 0027)
 git clone https://github.com/<your-username>/my-project.git
 cd my-project
 docker compose up -d && docker compose exec backend pytest   # make sure it's green
