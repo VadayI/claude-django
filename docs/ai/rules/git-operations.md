@@ -50,7 +50,7 @@ Short description of the change.
 Context / user story.
 
 ## How verified
-- [ ] pytest green
+- [ ] targeted pytest green; full suite (`make ci`) run by the user (D12)
 - [ ] ruff clean
 - [ ] CI passed
 

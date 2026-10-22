@@ -231,6 +231,7 @@ Claude PreToolUse parses structured edit paths and recognized `apply_patch` add/
    - `mkdir -p backend docs/api docs/verify docs/guides docs/decisions docs/plans docs/project-state scripts`
    - Copy templates:
      - `templates/backend.Dockerfile` -> `backend/Dockerfile`
+     - `templates/.dockerignore` -> `backend/.dockerignore` (the build context is `./backend`; part of the first commit — ADR `0027`)
      - `templates/pyproject.toml` -> `backend/pyproject.toml`
      - `templates/scripts/check_stubs.sh` -> `scripts/` (+ chmod +x)
      - `templates/scripts/pull_contract.sh` -> `scripts/` (+ chmod +x)

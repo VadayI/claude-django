@@ -25,9 +25,9 @@ Optional `$ARGUMENTS`: a path/glob to limit scope. If empty, use the current dif
    ```bash
    docker compose exec backend ruff check .
    docker compose exec backend ruff format .
-   docker compose exec backend pytest
+   docker compose exec backend pytest -n auto --dist loadfile apps/<touched_app>/tests
    ```
-5. Summarize: what was simplified and why, and confirm tests are green.
+5. Summarize: what was simplified and why, and confirm the targeted tests are green; give the user `make ci` for the full suite (D12).
 
 For anything beyond a quick pass, delegate to the `django-refactoring-expert` agent (under green tests).
 <!-- Last reviewed/updated: 2026-05-27 -->

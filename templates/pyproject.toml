@@ -24,6 +24,9 @@ dev = [
     "pytest>=8.0",
     "pytest-django>=4.8",
     "pytest-cov>=5.0",
+    # Parallel tests (ADR 0027): `make test`/`make ci` pass -n auto --dist loadfile.
+    # Pays off only on ext4; on a Windows-drive bind mount (9P) workers serialize on I/O.
+    "pytest-xdist>=3.6",
     "factory-boy>=3.3",
     "ruff>=0.5",
     # Contract conformance against the external claude-api-contract (ADR 0017).

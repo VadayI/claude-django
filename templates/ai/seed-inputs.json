@@ -27,6 +27,7 @@
     "scripts/policy/runtime_gate.py": "scripts/policy/runtime_gate.py",
     "scripts/session-start.py": "scripts/session-start.py",
     "scripts/setup-wsl.sh": "scripts/setup-wsl.sh",
+    "templates/.dockerignore": "templates/.dockerignore",
     "templates/.env.example": "templates/.env.example",
     "templates/.github/dependabot.yml": "templates/.github/dependabot.yml",
     "templates/.github/workflows/backend-ci.yml": "templates/.github/workflows/backend-ci.yml",
