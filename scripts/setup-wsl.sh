@@ -155,6 +155,13 @@ case "$claude_final" in
     ok "\`claude\` resolves to a Linux path -- good." ;;
 esac
 
+# Projekt na dysku Windows (/mnt/<dysk>) — ADR 0027 / D17: tylko ostrzeżenie, nic nie przenosimy.
+case "$PWD" in
+  /mnt/[a-zA-Z]|/mnt/[a-zA-Z]/*)
+    warn "this project is on a Windows drive ($PWD): Docker bind mounts and tests run 10-50x"
+    warn "slower there, and agent sessions are blocked without ALLOW_MNT_SESSION=1."
+    warn "Move the clone to ~/src/<repo> (ext4): docs/ai/wsl-ext4-migration.md" ;;
+esac
 echo
 log "Next steps:"
 echo "  1) Open a new WSL2 shell (or: source ~/.bashrc) so PATH changes apply."
