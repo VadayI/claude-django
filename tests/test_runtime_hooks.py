@@ -102,7 +102,8 @@ class RuntimeHookTests(unittest.TestCase):
         self.assertNotIn("Stop", settings.get("hooks", {}))
         self.assertNotIn("SessionEnd", settings.get("hooks", {}))
         start = settings["hooks"]["SessionStart"][0]["hooks"]
-        self.assertEqual([entry["command"] for entry in start], ["python scripts/session-start.py"])
+        self.assertEqual([entry["command"] for entry in start],
+                         ['"${AI_PYTHON:-python3}" "$CLAUDE_PROJECT_DIR/scripts/session-start.py"'])
 
 
     def test_d17_workdir_gate_is_wired_into_prompt_and_tool_hooks(self):
@@ -116,8 +117,9 @@ class RuntimeHookTests(unittest.TestCase):
         settings = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))
         gate = '"${AI_PYTHON:-python3}" "$CLAUDE_PROJECT_DIR/scripts/ai/workdir.py" --hook'
         for event in ("UserPromptSubmit", "PreToolUse"):
-            commands = [hook["command"] for entry in settings["hooks"][event] for hook in entry["hooks"]]
-            self.assertIn(gate, commands, event)
+            hooks = [hook for entry in settings["hooks"][event] for hook in entry["hooks"]]
+            self.assertIn(gate, [hook["command"] for hook in hooks], event)
+            self.assertEqual("block", next(hook for hook in hooks if hook["command"] == gate)["onFailure"], event)
         self.assertTrue((ROOT / "scripts/ai/workdir.py").is_file())
 
 

@@ -2,7 +2,7 @@
 name: auditor
 description: "[claude-django] Workflow auditor: reads the command log (.ai-runtime/command-log.jsonl) and the live project state, then suggests which command to run next. Use when the user asks 'what should I do now?' or runs /audit.\n\nTrigger: /audit, workflow audit, what should I run, what's next, command suggest, workflow check.\n\n<example>\nuser: 'what should I run now?'\nassistant: 'Using auditor: checking the command log and project state, then suggesting next commands.'\n</example>"
 model: sonnet
-color: gray
+color: cyan
 tools: [Read, Glob, Grep, Bash, SendMessage]
 ---
 

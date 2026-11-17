@@ -75,6 +75,21 @@ Concretely:
 - `python` must resolve on Windows PATH (not the Microsoft Store alias) — the same
   hard Python requirement the template already had.
 
+## Amendment 2026-11-17 (Q02, D18)
+
+Hooks are still Python, but they are now started as
+`"${AI_PYTHON:-python3}" "$CLAUDE_PROJECT_DIR/scripts/....py"` with
+`"onFailure": "block"` on the policy hooks: a relative path broke after `cd`, and a
+bare `python` is missing on many Linux/WSL hosts. The default
+(`${AI_PYTHON:-python3}`) needs a shell, so on native Windows Claude Code must run
+hooks in **Git Bash** (Git for Windows), and `AI_PYTHON` must point at the real
+`python.exe` because `python3` there is usually the Microsoft Store alias. Without
+Git Bash, Claude Code falls back to PowerShell and every gated action is blocked
+(fail-closed). Requirements and recovery: `docs/ai/rules/environment.md`,
+`docs/ai/hooks.md`. The "no hook depends on bash" statement above is narrowed to:
+no hook *script* is bash; the hook *command line* is evaluated by Git Bash on
+native Windows.
+
 ## Relationship to ADR 0005
 
 This ADR **amends**, not reverts, ADR 0005. ADR 0005's simplification (one hook
