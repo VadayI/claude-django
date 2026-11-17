@@ -462,7 +462,7 @@ curl -fsS -o /dev/null -w '%{http_code}\n' \
 <!-- END SOURCE docs/ai/rules/docker-commands.md -->
 
 
-<!-- SOURCE docs/ai/rules/environment.md SHA256 d5c06b0c28902dfe84a3be9cf362bf0124f792ada1e308facecad7527021a1dd -->
+<!-- SOURCE docs/ai/rules/environment.md SHA256 2f3e6d39c2ca0bfb849ce4b8fb9539cf92a0037819e03d34aca06b0d1ae60839 -->
 
 # Environment specification (the source of truth)
 
@@ -491,7 +491,7 @@ The Check column gives bash (Linux / macOS / WSL2 Ubuntu) commands; on native Wi
 
 Native Windows is a first-class runner (ADR `0022`). Launch `claude` from
 PowerShell or Git Bash in the project directory; the `SessionStart` hook runs
-`python scripts/session-start.py` (cross-platform — no bash), writes
+`"${AI_PYTHON:-python3}" "$CLAUDE_PROJECT_DIR/scripts/session-start.py"` (D18), writes
 `.ai-runtime/env-detect.json` with `platform_supported: true`,
 `platform: windows`, and `shell: powershell` (or `git-bash`), and `/doctor`
 passes the platform gate.
@@ -499,7 +499,16 @@ passes the platform gate.
 Requirements on native Windows:
 
 - `python` must resolve on PATH (`python --version` in PowerShell) — NOT the
-  Microsoft Store alias. The hooks invoke `python …` directly.
+  Microsoft Store alias.
+- Hooks start Python as `"${AI_PYTHON:-python3}"` with an absolute
+  `$CLAUDE_PROJECT_DIR` path, and the policy hooks are fail-closed (D18,
+  `docs/ai/hooks.md`). That shell form needs **Git for Windows (Git Bash)**:
+  without it Claude Code runs hooks in PowerShell, which cannot expand the
+  default. On Windows `python3` is usually the Microsoft Store alias, so set
+  `AI_PYTHON` to the real interpreter, e.g. `setx AI_PYTHON
+  C:/Users/<you>/AppData/Local/Programs/Python/Python313/python.exe`, and start
+  `claude` from a new terminal. If the interpreter cannot start, every gated
+  action is blocked; recovery is in `docs/ai/hooks.md`.
 - `git`, `gh`, Node 18+ (only if installing the CLI via npm — the native
   installer needs no Node), and Docker Desktop, as on any platform. Docker
   Desktop needs a backend: WSL2 or Hyper-V — so WSL2 may still be installed

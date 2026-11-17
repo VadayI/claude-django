@@ -225,9 +225,9 @@ class DeliveryTests(unittest.TestCase):
             ["django.core-receipt", "django.delivery-unittest", "django.adapter-drift"],
         ])
         receipt = json.loads((ROOT / "docs/ai/core-source.json").read_text(encoding="utf-8"))
-        self.assertEqual(receipt["source_commit"], "8f6a8fb051139ef3e8efc634cc5b63b217b2480b")
-        self.assertEqual(receipt["pin_status"], "integrated")
-        self.assertEqual(receipt["observed_upstream_main"], receipt["source_commit"])
+        # Tymczasowy pin deweloperski (Q02): po merge contract — integrated pin i pełne asercje.
+        self.assertEqual(receipt["source_commit"], "eb9bc47e08603a5c0b0459b37f815ce1a476049f")
+        self.assertEqual(receipt["pin_status"], "development")
         instruction = json.loads((ROOT / "templates/ai/instruction-delivery.json").read_text(encoding="utf-8"))
         seed = json.loads((ROOT / "templates/ai/seed-inputs.json").read_text(encoding="utf-8"))
         self.assertIn(catalog_path, instruction["files"])

@@ -14,6 +14,7 @@ import sys
 PATH_KEYS = frozenset({"file_path", "notebook_path", "path", "old_path", "new_path", "source_path", "destination_path"})
 PATCH_KEYS = frozenset({"patch", "diff", "patch_text"})
 EDIT_TOOLS = frozenset({"Write", "Edit", "MultiEdit", "NotebookEdit"})
+SHELL_TOOLS = frozenset({"Bash", "PowerShell"})
 PATCH_LINE = re.compile(r"^(?:\*\*\* (?:Add File|Delete File|Update File|Move to): |\+\+\+ |--- )(.+)$")
 
 
@@ -87,8 +88,8 @@ def main() -> int:
     Raises: None for supported JSON/shape errors; reports them on stderr.
     Side effects: Reads stdin and may write a diagnostic to stderr; no DB,
         filesystem, Git, network, install, release, or deployment effects.
-    Business rule: Arbitrary Bash commands are outside tool-hook coverage;
-        recognized apply_patch commands are checked by file header.
+    Business rule: Arbitrary Bash/PowerShell commands are outside tool-hook
+        coverage; recognized apply_patch commands are checked by file header.
     """
     try:
         payload = json.load(sys.stdin)
@@ -102,10 +103,11 @@ def main() -> int:
             paths = collect_paths(tool_input)
             if not paths:
                 raise ValueError("edit payload has no recognized file path")
-        elif name == "Bash":
+        elif name in SHELL_TOOLS:
+            # PowerShell jak Bash: rozpoznawany jest tylko apply_patch (D18.4).
             command = tool_input.get("command")
             if not isinstance(command, str):
-                raise ValueError("Bash payload has no command")
+                raise ValueError(f"{name} payload has no command")
             if "apply_patch" not in command:
                 return 0
             paths = patch_paths(command)
